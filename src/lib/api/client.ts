@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { env } from "@/config/env";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -8,36 +8,53 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Important for cookies/sessions if using better-auth
+  withCredentials: true, // Important for cookies/sessions with better-auth
 });
 
-// Request Interceptor: Attach token or handle request configs if needed
+// Request Interceptor
 api.interceptors.request.use(
-  (config) => {
-    // If you use token-based auth instead of cookies, you can attach the token here:
-    // const token = useAuthStore.getState().token;
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+  (config: InternalAxiosRequestConfig) => {
+    // Modify config here if needed (e.g. adding CSRF tokens or custom headers)
     return config;
   },
-  (error) => Promise.reject(error),
+  (error: AxiosError) => Promise.reject(error),
 );
 
-// Response Interceptor: Handle global errors like 401 Unauthorized
+export interface ApiErrorResponse {
+  success: boolean;
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+  message?: string;
+}
+
+// Response Interceptor
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
+  (response) => response.data, // Automatically unwrap the data from axios
+  (error: AxiosError<ApiErrorResponse>) => {
+    if (error.response?.status === 401) {
       // Clear auth state on unauthorized error
       const clearAuth = useAuthStore.getState().clearAuth;
       clearAuth();
-      // Optionally redirect to login page (can also be handled in the protected route)
+
+      // Dispatch a custom event instead of hard-reloading, or fallback to reload
+      window.dispatchEvent(new CustomEvent("unauthorized"));
+
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
     }
-    return Promise.reject(error);
+
+    // Standardize error format for the application
+    const errorMessage =
+      error.response?.data?.error?.message ||
+      error.response?.data?.message ||
+      error.message ||
+      "An unexpected error occurred.";
+
+    return Promise.reject(new Error(errorMessage));
   },
 );
 

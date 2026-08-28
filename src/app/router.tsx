@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import ProtectedRoute from '@/features/auth/components/ProtectedRoute';
+import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
 // Pages
 import LoginPage from '@/features/auth/pages/LoginPage';
