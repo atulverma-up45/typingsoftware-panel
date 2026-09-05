@@ -1,48 +1,69 @@
-import React, { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
-import api from '@/lib/api/client';
+import React from 'react';
+import { RefreshCw, CheckCircle2 } from 'lucide-react';
+import { useDashboardPendingSyncs } from '../api/dashboardApi';
 
 const PendingSyncs: React.FC = () => {
-  const [syncs, setSyncs] = useState<Array<{ id: string; title: string; date: string; days: number }>>([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get('/v1/dashboard/pending-syncs');
-        if (response.data?.success && response.data?.data) {
-          setSyncs(response.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch pending syncs", error);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: syncs = [], isLoading } = useDashboardPendingSyncs(7, 10);
 
   return (
     <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6 flex flex-col h-[500px]">
-      <h3 className="text-[16px] font-bold text-gray-800 mb-6 tracking-tight">Pending Syncs</h3>
-      
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-[16px] font-bold text-gray-800 tracking-tight">Pending Syncs</h3>
+        {syncs.length > 0 && (
+          <span className="bg-[#fcdabf] text-[#d65e2b] text-[11px] font-bold px-2.5 py-1 rounded-full">
+            {syncs.length} stale
+          </span>
+        )}
+      </div>
+
       <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1">
-        {syncs.map((sync) => (
-          <div key={sync.id} className="bg-[#fff6f2] rounded-xl p-4 flex items-center justify-between border border-[#fdece5]">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-[#f77f52] shrink-0 border border-[#fdece5]">
-                <RefreshCw size={18} />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-gray-800">{sync.title}</p>
-                <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>{sync.date}</span>
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="bg-gray-50 rounded-xl p-4 flex items-center justify-between border border-gray-100 animate-pulse"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gray-200 shrink-0" />
+                <div className="space-y-2">
+                  <div className="w-28 h-3.5 bg-gray-200 rounded" />
+                  <div className="w-20 h-2.5 bg-gray-200 rounded" />
                 </div>
               </div>
+              <div className="w-16 h-5 bg-gray-200 rounded-full" />
             </div>
-            <div className="bg-[#fcdabf] text-[#d65e2b] text-[11px] font-bold px-2.5 py-1 rounded-full">
-              In {sync.days} days
+          ))
+        ) : syncs.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mb-3">
+              <CheckCircle2 size={24} />
             </div>
+            <p className="text-sm font-semibold text-gray-700">All Workstations Synchronized</p>
+            <p className="text-xs text-gray-400 mt-1">
+              No devices have overdue synchronization states.
+            </p>
           </div>
-        ))}
+        ) : (
+          syncs.map((sync) => (
+            <div
+              key={sync.id}
+              className="bg-[#fff6f2] rounded-xl p-4 flex items-center justify-between border border-[#fdece5] hover:border-[#fc9b7f]/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-[#f77f52] shrink-0 border border-[#fdece5] shadow-2xs">
+                  <RefreshCw size={18} />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-gray-800">{sync.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Last seen: {sync.date}</p>
+                </div>
+              </div>
+              <div className="bg-[#fcdabf] text-[#d65e2b] text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ml-2">
+                {sync.days} days ago
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

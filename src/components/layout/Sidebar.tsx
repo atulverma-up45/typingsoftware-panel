@@ -17,7 +17,11 @@ import {
   FileText,
   Book,
   Keyboard,
+  Users,
+  Radio,
 } from 'lucide-react';
+
+import { useAuthStore } from '@/stores/auth.store';
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -25,9 +29,15 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen }) => {
   const location = useLocation();
+  const currentUser = useAuthStore((state) => state.user);
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} strokeWidth={1.75} /> },
+    { name: 'Users', path: '/users', icon: <Users size={20} strokeWidth={1.75} /> },
+    ...(isSuperAdmin
+      ? [{ name: 'Auth & Devices', path: '/auth-tracking', icon: <Radio size={20} strokeWidth={1.75} /> }]
+      : []),
     { name: 'Institutions', path: '/institutions', icon: <GraduationCap size={20} strokeWidth={1.75} /> },
     { name: 'Licenses', path: '/licenses', icon: <Shield size={20} strokeWidth={1.75} /> },
     { name: 'Activations', path: '/activations', icon: <BrainCircuit size={20} strokeWidth={1.75} /> },

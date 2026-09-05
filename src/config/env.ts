@@ -2,8 +2,8 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  VITE_API_BASE_URL: z.string().url().default("http://localhost:3000/api"),
-  VITE_AUTH_URL: z.string().url().default("http://localhost:3000"),
+  VITE_API_BASE_URL: z.string().url().default("http://localhost:8787/api"),
+  VITE_AUTH_URL: z.string().url().default("http://localhost:8787"),
 });
 
 // Validate the environment variables using Vite's import.meta.env
