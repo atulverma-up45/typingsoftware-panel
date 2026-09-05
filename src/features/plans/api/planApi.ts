@@ -1,8 +1,8 @@
-import api from '@/lib/api/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import api from "@/lib/api/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-export type PlanStatus = 'ACTIVE' | 'ARCHIVED';
+export type PlanStatus = "ACTIVE" | "ARCHIVED";
 
 export interface PlanFeatures {
   englishTyping?: boolean;
@@ -58,8 +58,8 @@ export interface PlanListParams {
   search?: string;
   status?: PlanStatus;
   includeDeleted?: boolean;
-  sortBy?: 'createdAt' | 'name' | 'price' | 'maxActivations' | 'durationDays';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "name" | "price" | "maxActivations" | "durationDays";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CreatePlanInput {
@@ -98,9 +98,9 @@ export interface UpdatePlanStatusInput {
  */
 export const usePlans = (params: PlanListParams = {}) => {
   return useQuery<PaginatedPlansResponse>({
-    queryKey: ['plans', params],
+    queryKey: ["plans", params],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/plans', { params });
+      const response = await api.get<any, any>("/v1/plans", { params });
       return response;
     },
   });
@@ -111,9 +111,9 @@ export const usePlans = (params: PlanListParams = {}) => {
  */
 export const usePlanStats = (enabled = true) => {
   return useQuery<PlanStats>({
-    queryKey: ['plans', 'stats'],
+    queryKey: ["plans", "stats"],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/plans/stats');
+      const response = await api.get<any, any>("/v1/plans/stats");
       return response.data;
     },
     enabled,
@@ -126,9 +126,9 @@ export const usePlanStats = (enabled = true) => {
  */
 export const usePlan = (id: string | null | undefined) => {
   return useQuery<Plan>({
-    queryKey: ['plans', 'detail', id],
+    queryKey: ["plans", "detail", id],
     queryFn: async () => {
-      if (!id) throw new Error('Plan ID is required');
+      if (!id) throw new Error("Plan ID is required");
       const response = await api.get<any, any>(`/v1/plans/${id}`);
       return response.data;
     },
@@ -148,16 +148,16 @@ export const useCreatePlan = () => {
 
   return useMutation({
     mutationFn: async (data: CreatePlanInput) => {
-      const response = await api.post<any, any>('/v1/plans', data);
+      const response = await api.post<any, any>("/v1/plans", data);
       return response.data as Plan;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'stats'] });
-      toast.success('Commercial plan created successfully');
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      toast.success("Commercial plan created successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to create plan';
+      const message = error.response?.data?.message || "Failed to create plan";
       toast.error(message);
     },
   });
@@ -175,13 +175,15 @@ export const useUpdatePlan = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'stats'] });
-      toast.success('Plan configuration updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({
+        queryKey: ["plans", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      toast.success("Plan configuration updated successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update plan';
+      const message = error.response?.data?.message || "Failed to update plan";
       toast.error(message);
     },
   });
@@ -194,18 +196,27 @@ export const useUpdatePlanStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdatePlanStatusInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdatePlanStatusInput;
+    }) => {
       const response = await api.put<any, any>(`/v1/plans/${id}/status`, data);
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({
+        queryKey: ["plans", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
       toast.success(`Plan marked as ${variables.data.status}`);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update plan status';
+      const message =
+        error.response?.data?.message || "Failed to update plan status";
       toast.error(message);
     },
   });
@@ -223,12 +234,12 @@ export const useSoftDeletePlan = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'stats'] });
-      toast.success('Plan archived / moved to trash');
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      toast.success("Plan archived / moved to trash");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to archive plan';
+      const message = error.response?.data?.message || "Failed to archive plan";
       toast.error(message);
     },
   });
@@ -246,12 +257,12 @@ export const useRestorePlan = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'stats'] });
-      toast.success('Plan restored successfully');
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      toast.success("Plan restored successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to restore plan';
+      const message = error.response?.data?.message || "Failed to restore plan";
       toast.error(message);
     },
   });
@@ -269,14 +280,14 @@ export const usePermanentDeletePlan = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['plans', 'stats'] });
-      toast.success('Plan permanently purged');
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      toast.success("Plan permanently purged");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to permanently delete plan';
+      const message =
+        error.response?.data?.message || "Failed to permanently delete plan";
       toast.error(message);
     },
   });
 };
-

@@ -17,7 +17,10 @@ import {
   ArrowUpDown,
   Sparkles,
   Building2,
+  Download,
+  AlertCircle,
 } from 'lucide-react';
+import StatCard from '@/features/dashboard/components/StatCard';
 import {
   useModules,
   useModuleStats,
@@ -97,10 +100,21 @@ export const ModulesPage: React.FC = () => {
     data: modulesResponse,
     isLoading: isLoadingModules,
     isFetching: isFetchingModules,
+    isError: isModulesError,
+    error: modulesError,
     refetch: refetchModules,
   } = useModules(queryParams);
 
-  const { data: moduleStats, isLoading: isLoadingStats } = useModuleStats();
+  const {
+    data: moduleStats,
+    isLoading: isLoadingStats,
+    refetch: refetchModuleStats,
+  } = useModuleStats();
+
+  const handleRefreshAll = () => {
+    refetchModuleStats();
+    refetchModules();
+  };
 
   // Mutations
   const updateStatusMutation = useUpdateModuleStatus();
@@ -110,6 +124,48 @@ export const ModulesPage: React.FC = () => {
 
   const modules = modulesResponse?.data || [];
   const meta = modulesResponse?.meta;
+
+  const handleExportCsv = () => {
+    if (!modules.length) {
+      toast.error('No typing modules available to export');
+      return;
+    }
+    const headers = [
+      'Module ID',
+      'Key Identifier',
+      'Module Name',
+      'Description',
+      'Engine Version',
+      'Status',
+      'Created At',
+      'Updated At',
+    ];
+    const rows = modules.map((mod) => [
+      `"${mod.id}"`,
+      `"${mod.key}"`,
+      `"${mod.name}"`,
+      `"${(mod.description || '').replace(/"/g, '""')}"`,
+      `"${mod.version}"`,
+      `"${mod.status}"`,
+      `"${new Date(mod.createdAt).toISOString()}"`,
+      `"${new Date(mod.updatedAt).toISOString()}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `typing-modules-export-${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Typing modules exported to CSV');
+  };
 
   // Handlers
   const handleToggleStatus = (module: TypingModule) => {
@@ -170,12 +226,23 @@ export const ModulesPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
-            onClick={() => refetchModules()}
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            title="Export modules list to CSV"
+          >
+            <Download size={14} className="text-gray-500" />
+            Export CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRefreshAll}
             disabled={isFetchingModules}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            title="Refresh Modules & Statistics"
           >
             <RefreshCw size={14} className={isFetchingModules ? 'animate-spin text-[#ff8a5c]' : ''} />
             Refresh
@@ -193,55 +260,76 @@ export const ModulesPage: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Total Modules
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-900">
-              {isLoadingStats ? '...' : moduleStats?.totalModules || 0}
-            </span>
-            <span className="text-xs text-gray-400">Registered</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Active Engines
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-emerald-600">
-              {isLoadingStats ? '...' : moduleStats?.activeModules || 0}
-            </span>
-            <span className="text-xs text-emerald-600 font-medium">Operational</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Inactive Modules
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-600">
-              {isLoadingStats ? '...' : moduleStats?.inactiveModules || 0}
-            </span>
-            <span className="text-xs text-gray-400">Disabled</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Tenant Overrides
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-blue-600">
-              {isLoadingStats ? '...' : moduleStats?.totalInstitutionOverrides || 0}
-            </span>
-            <span className="text-xs text-blue-600 font-medium">Lab Configs</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Modules"
+          value={moduleStats?.totalModules || 0}
+          type="blue"
+          icon={<Layers size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="All registered engines"
+          onClick={() => {
+            setActiveTab('ALL');
+            setPage(1);
+          }}
+          active={activeTab === 'ALL'}
+        />
+        <StatCard
+          title="Active Engines"
+          value={moduleStats?.activeModules || 0}
+          type="emerald"
+          icon={<CheckCircle2 size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Operational student modules"
+          onClick={() => {
+            setActiveTab('ACTIVE');
+            setPage(1);
+          }}
+          active={activeTab === 'ACTIVE'}
+        />
+        <StatCard
+          title="Inactive Modules"
+          value={moduleStats?.inactiveModules || 0}
+          type="coral"
+          icon={<XCircle size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Disabled in client"
+          onClick={() => {
+            setActiveTab('INACTIVE');
+            setPage(1);
+          }}
+          active={activeTab === 'INACTIVE'}
+        />
+        <StatCard
+          title="Tenant Overrides"
+          value={moduleStats?.totalInstitutionOverrides || 0}
+          type="orange"
+          icon={<Building2 size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Custom lab configurations"
+        />
       </div>
+
+      {/* Error Alert Banner with Retry */}
+      {isModulesError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={18} className="text-red-500 shrink-0" />
+            <span>
+              Failed to load typing modules:{' '}
+              {modulesError instanceof Error ? modulesError.message : 'Network error'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw size={12} />
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Tabs & View Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-gray-200/80 pb-3">

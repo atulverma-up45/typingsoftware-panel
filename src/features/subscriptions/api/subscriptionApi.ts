@@ -1,15 +1,10 @@
-import api from '@/lib/api/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import type { Plan } from '@/features/plans/api/planApi';
+import api from "@/lib/api/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { Plan } from "@/features/plans/api/planApi";
 
 export type SubscriptionStatus =
-  | 'TRIAL'
-  | 'ACTIVE'
-  | 'PAST_DUE'
-  | 'EXPIRED'
-  | 'CANCELLED'
-  | 'SUSPENDED';
+  "TRIAL" | "ACTIVE" | "PAST_DUE" | "EXPIRED" | "CANCELLED" | "SUSPENDED";
 
 export interface SubscriptionLicense {
   id: string;
@@ -87,8 +82,8 @@ export interface SubscriptionListParams {
   institutionId?: string;
   planId?: string;
   includeDeleted?: boolean;
-  sortBy?: 'createdAt' | 'expiresAt' | 'startsAt' | 'status';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "expiresAt" | "startsAt" | "status";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CreateSubscriptionInput {
@@ -127,9 +122,9 @@ export interface UpdateSubscriptionStatusInput {
  */
 export const useSubscriptions = (params: SubscriptionListParams = {}) => {
   return useQuery<PaginatedSubscriptionsResponse>({
-    queryKey: ['subscriptions', params],
+    queryKey: ["subscriptions", params],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/subscriptions', { params });
+      const response = await api.get<any, any>("/v1/subscriptions", { params });
       return response;
     },
   });
@@ -138,11 +133,14 @@ export const useSubscriptions = (params: SubscriptionListParams = {}) => {
 /**
  * Fetch subscription health analytics
  */
-export const useSubscriptionStats = (institutionId?: string, enabled = true) => {
+export const useSubscriptionStats = (
+  institutionId?: string,
+  enabled = true,
+) => {
   return useQuery<SubscriptionStats>({
-    queryKey: ['subscriptions', 'stats', institutionId],
+    queryKey: ["subscriptions", "stats", institutionId],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/subscriptions/stats', {
+      const response = await api.get<any, any>("/v1/subscriptions/stats", {
         params: institutionId ? { institutionId } : undefined,
       });
       return response.data;
@@ -157,9 +155,9 @@ export const useSubscriptionStats = (institutionId?: string, enabled = true) => 
  */
 export const useSubscription = (id: string | null | undefined) => {
   return useQuery<Subscription>({
-    queryKey: ['subscriptions', 'detail', id],
+    queryKey: ["subscriptions", "detail", id],
     queryFn: async () => {
-      if (!id) throw new Error('Subscription ID is required');
+      if (!id) throw new Error("Subscription ID is required");
       const response = await api.get<any, any>(`/v1/subscriptions/${id}`);
       return response.data;
     },
@@ -179,18 +177,19 @@ export const useCreateSubscription = () => {
 
   return useMutation({
     mutationFn: async (data: CreateSubscriptionInput) => {
-      const response = await api.post<any, any>('/v1/subscriptions', data);
+      const response = await api.post<any, any>("/v1/subscriptions", data);
       return response.data as Subscription;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'stats'] });
-      queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Subscription contract provisioned successfully');
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Subscription contract provisioned successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to provision subscription';
+      const message =
+        error.response?.data?.message || "Failed to provision subscription";
       toast.error(message);
     },
   });
@@ -203,20 +202,32 @@ export const useRenewSubscription = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: RenewSubscriptionInput }) => {
-      const response = await api.post<any, any>(`/v1/subscriptions/${id}/renew`, data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: RenewSubscriptionInput;
+    }) => {
+      const response = await api.post<any, any>(
+        `/v1/subscriptions/${id}/renew`,
+        data,
+      );
       return response.data as Subscription;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'stats'] });
-      queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Subscription contract renewed successfully');
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["subscriptions", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Subscription contract renewed successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to renew subscription';
+      const message =
+        error.response?.data?.message || "Failed to renew subscription";
       toast.error(message);
     },
   });
@@ -229,18 +240,27 @@ export const useUpdateSubscription = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateSubscriptionInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateSubscriptionInput;
+    }) => {
       const response = await api.put<any, any>(`/v1/subscriptions/${id}`, data);
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'stats'] });
-      toast.success('Subscription updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["subscriptions", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      toast.success("Subscription updated successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update subscription';
+      const message =
+        error.response?.data?.message || "Failed to update subscription";
       toast.error(message);
     },
   });
@@ -253,18 +273,30 @@ export const useUpdateSubscriptionStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateSubscriptionStatusInput }) => {
-      const response = await api.put<any, any>(`/v1/subscriptions/${id}/status`, data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateSubscriptionStatusInput;
+    }) => {
+      const response = await api.put<any, any>(
+        `/v1/subscriptions/${id}/status`,
+        data,
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["subscriptions", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
       toast.success(`Subscription transitioned to ${variables.data.status}`);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update subscription status';
+      const message =
+        error.response?.data?.message || "Failed to update subscription status";
       toast.error(message);
     },
   });
@@ -282,12 +314,13 @@ export const useSoftDeleteSubscription = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'stats'] });
-      toast.success('Subscription moved to trash / cancelled');
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      toast.success("Subscription moved to trash / cancelled");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to delete subscription';
+      const message =
+        error.response?.data?.message || "Failed to delete subscription";
       toast.error(message);
     },
   });
@@ -301,16 +334,20 @@ export const useRestoreSubscription = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.put<any, any>(`/v1/subscriptions/${id}/restore`, {});
+      const response = await api.put<any, any>(
+        `/v1/subscriptions/${id}/restore`,
+        {},
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'stats'] });
-      toast.success('Subscription restored successfully');
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      toast.success("Subscription restored successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to restore subscription';
+      const message =
+        error.response?.data?.message || "Failed to restore subscription";
       toast.error(message);
     },
   });
@@ -324,18 +361,21 @@ export const usePermanentDeleteSubscription = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/subscriptions/${id}/permanent`);
+      const response = await api.delete<any, any>(
+        `/v1/subscriptions/${id}/permanent`,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'stats'] });
-      toast.success('Subscription permanently purged');
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      toast.success("Subscription permanently purged");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to permanently purge subscription';
+      const message =
+        error.response?.data?.message ||
+        "Failed to permanently purge subscription";
       toast.error(message);
     },
   });
 };
-

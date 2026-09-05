@@ -18,7 +18,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Download,
+  AlertTriangle,
 } from 'lucide-react';
+import StatCard from '@/features/dashboard/components/StatCard';
 import {
   usePlans,
   usePlanStats,
@@ -98,10 +101,23 @@ export const PlansPage: React.FC = () => {
     data: plansResponse,
     isLoading: isLoadingPlans,
     isFetching: isFetchingPlans,
+    isError: isPlansError,
+    error: plansError,
     refetch: refetchPlans,
   } = usePlans(queryParams);
 
-  const { data: planStats, isLoading: isLoadingStats } = usePlanStats();
+  const {
+    data: planStats,
+    isLoading: isLoadingStats,
+    isError: isStatsError,
+    error: statsError,
+    refetch: refetchStats,
+  } = usePlanStats();
+
+  const handleRefreshAll = () => {
+    refetchPlans();
+    refetchStats();
+  };
 
   // Mutations
   const updateStatusMutation = useUpdatePlanStatus();
@@ -111,6 +127,62 @@ export const PlansPage: React.FC = () => {
 
   const plans = plansResponse?.data || [];
   const meta = plansResponse?.meta;
+
+  const handleExportCsv = () => {
+    if (!plans || plans.length === 0) {
+      toast.error('No commercial plans available to export');
+      return;
+    }
+
+    const headers = [
+      'Plan ID',
+      'Name',
+      'Price (INR)',
+      'Duration (Days)',
+      'Max Activations',
+      'Status',
+      'English Typing',
+      'Hindi Typing',
+      'Govt Exams',
+      'Student Mgmt',
+      'Advanced Reports',
+      'Custom Branding',
+      'Offline Grace Days',
+      'Created At',
+    ];
+
+    const rows = plans.map((p) => {
+      const f = p.features || {};
+      return [
+        p.id,
+        `"${(p.name || '').replace(/"/g, '""')}"`,
+        (p.price / 100).toFixed(2),
+        p.durationDays,
+        p.maxActivations,
+        p.deletedAt ? 'TRASH' : p.status,
+        f.englishTyping ? 'Yes' : 'No',
+        f.hindiTyping ? 'Yes' : 'No',
+        f.governmentExams ? 'Yes' : 'No',
+        f.studentManagement ? 'Yes' : 'No',
+        f.advancedReports ? 'Yes' : 'No',
+        f.customBranding ? 'Yes' : 'No',
+        f.offlineGraceDays ?? 0,
+        p.createdAt,
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `commercial-plans-${activeTab.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${plans.length} commercial plans to CSV`);
+  };
 
   // Handlers
   const handleToggleStatus = (plan: Plan) => {
@@ -174,7 +246,16 @@ export const PlansPage: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <button
             type="button"
-            onClick={() => refetchPlans()}
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+          >
+            <Download size={14} />
+            Export CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRefreshAll}
             disabled={isFetchingPlans}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
           >
@@ -193,71 +274,99 @@ export const PlansPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Error Alert Banner */}
+      {(isPlansError || isStatsError) && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between gap-3 text-sm text-red-700 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-red-500 shrink-0" />
+            <span>
+              {((plansError as any)?.message || (statsError as any)?.message) ||
+                'Failed to load commercial plan tiers. Please retry.'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            className="px-3 py-1.5 text-xs font-semibold bg-red-100 hover:bg-red-200 text-red-800 rounded-xl transition-colors shrink-0"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* KPI Metric Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Total Tiers
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-900">
-              {isLoadingStats ? '...' : planStats?.totalPlans || 0}
-            </span>
-            <span className="text-xs text-gray-400">All Created</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard
+          title="Total Tiers"
+          value={planStats?.totalPlans || 0}
+          type="purple"
+          isLoading={isLoadingStats}
+          icon={<Layers size={24} className="text-white" />}
+          subtitle="All created catalog plans"
+          onClick={() => {
+            setActiveTab('ALL');
+            setPage(1);
+          }}
+          active={activeTab === 'ALL'}
+        />
 
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Active Catalog
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-emerald-600">
-              {isLoadingStats ? '...' : planStats?.activePlans || 0}
-            </span>
-            <span className="text-xs text-emerald-600 font-medium">Assignable</span>
-          </div>
-        </div>
+        <StatCard
+          title="Active Catalog"
+          value={planStats?.activePlans || 0}
+          type="emerald"
+          isLoading={isLoadingStats}
+          icon={<CheckCircle2 size={24} className="text-white" />}
+          subtitle="Assignable commercial tiers"
+          onClick={() => {
+            setActiveTab('ACTIVE');
+            setPage(1);
+          }}
+          active={activeTab === 'ACTIVE'}
+        />
 
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Archived Tiers
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-600">
-              {isLoadingStats ? '...' : planStats?.archivedPlans || 0}
-            </span>
-            <span className="text-xs text-gray-400">Deprecated</span>
-          </div>
-        </div>
+        <StatCard
+          title="Archived Tiers"
+          value={planStats?.archivedPlans || 0}
+          type="coral"
+          isLoading={isLoadingStats}
+          icon={<Archive size={24} className="text-white" />}
+          subtitle="Deprecated / legacy tiers"
+          onClick={() => {
+            setActiveTab('ARCHIVED');
+            setPage(1);
+          }}
+          active={activeTab === 'ARCHIVED'}
+        />
 
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Avg Plan Price
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-900">
-              {isLoadingStats
-                ? '...'
-                : `₹${((planStats?.averagePrice || 0) / 100).toLocaleString('en-IN', {
-                    maximumFractionDigits: 0,
-                  })}`}
-            </span>
-            <span className="text-xs text-gray-400">Per Tier</span>
-          </div>
-        </div>
+        <StatCard
+          title="Avg Plan Price"
+          value={
+            isLoadingStats
+              ? '...'
+              : `₹${((planStats?.averagePrice || 0) / 100).toLocaleString('en-IN', {
+                  maximumFractionDigits: 0,
+                })}`
+          }
+          type="orange"
+          isLoading={isLoadingStats}
+          icon={<IndianRupee size={24} className="text-white" />}
+          subtitle="Mean catalog pricing"
+        />
 
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Avg Workstations
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-blue-600">
-              {isLoadingStats ? '...' : planStats?.averageMaxActivations || 0}
-            </span>
-            <span className="text-xs text-blue-600 font-medium">PCs / License</span>
-          </div>
-        </div>
+        <StatCard
+          title="Avg Workstations"
+          value={
+            isLoadingStats
+              ? '...'
+              : planStats?.averageMaxActivations
+              ? Math.round(planStats.averageMaxActivations)
+              : 0
+          }
+          type="blue"
+          isLoading={isLoadingStats}
+          icon={<Laptop size={24} className="text-white" />}
+          subtitle="Seats quota per plan"
+        />
       </div>
 
       {/* Tabs & View Controls */}

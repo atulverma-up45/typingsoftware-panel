@@ -22,6 +22,7 @@ import {
   EyeOff,
   Radio,
   Sparkles,
+  Download,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import {
@@ -32,6 +33,7 @@ import {
   usePermanentDeleteLicense,
 } from '../api/licenseApi';
 import type { License, LicenseStatus } from '../api/licenseApi';
+import StatCard from '@/features/dashboard/components/StatCard';
 import { useInstitutions } from '@/features/institutions/api/institutionApi';
 import { GenerateLicenseModal } from '../components/GenerateLicenseModal';
 import { EditLicenseModal } from '../components/EditLicenseModal';
@@ -99,12 +101,19 @@ export const LicensesPage: React.FC = () => {
     data: licensesData,
     isLoading: isLoadingLicenses,
     isFetching: isFetchingLicenses,
+    isError: isErrorLicenses,
+    error: licensesError,
     refetch: refetchLicenses,
   } = useLicenses(queryParams);
 
-  const { data: licenseStats, isLoading: isLoadingStats } = useLicenseStats(
+  const { data: licenseStats, isLoading: isLoadingStats, refetch: refetchStats } = useLicenseStats(
     selectedInstitutionId || undefined,
   );
+
+  const handleRefreshAll = () => {
+    refetchStats();
+    refetchLicenses();
+  };
 
   const { data: institutionsData } = useInstitutions({ limit: 100, status: 'ACTIVE' });
 
@@ -140,6 +149,48 @@ export const LicensesPage: React.FC = () => {
   const meta = licensesData?.meta || { page: 1, limit: 10, total: 0, totalPages: 1 };
   const institutions = institutionsData?.data || [];
 
+  const handleExportCsv = () => {
+    if (!rawLicensesList.length) {
+      toast.error('No license records available to export');
+      return;
+    }
+    const headers = [
+      'License ID',
+      'License Key',
+      'Institution',
+      'Status',
+      'Max Seats',
+      'Active Seats',
+      'Expires At',
+      'Created At',
+    ];
+    const rows = rawLicensesList.map((lic) => [
+      `"${lic.id}"`,
+      `"${lic.licenseKey}"`,
+      `"${institutions.find((i) => i.id === lic.institutionId)?.name || lic.institutionId}"`,
+      `"${lic.status}"`,
+      `"${lic.maxActivations}"`,
+      `"${lic.activations?.length || 0}"`,
+      `"${new Date(lic.expiresAt).toISOString()}"`,
+      `"${new Date(lic.createdAt).toISOString()}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `workstation-licenses-export-${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Licenses exported to CSV successfully');
+  };
+
   // Filter client-side for "EXPIRING" tab (expiring in next 30 days)
   const licensesList = useMemo(() => {
     if (activeTab === 'EXPIRING') {
@@ -174,6 +225,26 @@ export const LicensesPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
+            onClick={handleExportCsv}
+            title="Export licenses as CSV"
+            className="px-3 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl border border-gray-200 shadow-xs transition-colors font-medium text-xs flex items-center gap-1.5"
+          >
+            <Download size={15} className="text-gray-500" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            title="Refresh licenses"
+            className="p-2.5 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 rounded-xl border border-gray-200 shadow-xs transition-colors"
+          >
+            <RefreshCw
+              size={18}
+              className={isFetchingLicenses ? 'animate-spin text-[#ff8a5c]' : ''}
+            />
+          </button>
+          <button
+            type="button"
             onClick={() => setIsGenerateModalOpen(true)}
             className="px-4 py-2.5 text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2"
           >
@@ -183,87 +254,79 @@ export const LicensesPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Network Error Alert Banner */}
+      {isErrorLicenses && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-between gap-4 text-rose-800 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-rose-100 text-rose-600">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Failed to load workstation licenses</p>
+              <p className="text-xs text-rose-600 mt-0.5">
+                {(licensesError as Error)?.message || 'An error occurred while connecting to the backend API.'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => refetchLicenses()}
+            className="px-3.5 py-1.5 bg-white hover:bg-rose-100/50 text-rose-700 text-xs font-semibold rounded-xl border border-rose-200 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
+
       {/* Fleet Overview KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Total Issued Keys */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Total Keys
-            </span>
-            <div className="text-2xl font-bold text-gray-900">
-              {isLoadingStats ? '—' : licenseStats?.totalLicenses ?? meta.total}
-            </div>
-            <span className="text-[11px] text-gray-400">Minted licenses</span>
-          </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <Key size={22} />
-          </div>
-        </div>
-
-        {/* Active & Valid */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Active & Valid
-            </span>
-            <div className="text-2xl font-bold text-emerald-600">
-              {isLoadingStats ? '—' : licenseStats?.activeLicenses ?? 0}
-            </div>
-            <span className="text-[11px] text-emerald-600/80 font-medium">Authorizing lab PCs</span>
-          </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-            <CheckCircle2 size={22} />
-          </div>
-        </div>
-
-        {/* Workstation Seat Capacity */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Seat Capacity
-            </span>
-            <div className="text-2xl font-bold text-indigo-600">
-              {isLoadingStats ? '—' : licenseStats?.totalWorkstationSeatCapacity ?? 0}
-            </div>
-            <span className="text-[11px] text-indigo-600/80 font-medium">Aggregated stations</span>
-          </div>
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-            <Monitor size={22} />
-          </div>
-        </div>
-
-        {/* Expiring Soon */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Expiring &lt;30d
-            </span>
-            <div className="text-2xl font-bold text-amber-600">
-              {isLoadingStats ? '—' : licenseStats?.expiringWithin30Days ?? 0}
-            </div>
-            <span className="text-[11px] text-amber-600/80 font-medium">Needs renewal review</span>
-          </div>
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-            <Clock size={22} />
-          </div>
-        </div>
-
-        {/* Revoked / Inactive */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Revoked Keys
-            </span>
-            <div className="text-2xl font-bold text-rose-600">
-              {isLoadingStats ? '—' : licenseStats?.revokedLicenses ?? 0}
-            </div>
-            <span className="text-[11px] text-gray-400">Terminated credentials</span>
-          </div>
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
-            <AlertOctagon size={22} />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <StatCard
+          title="Total Keys"
+          value={isLoadingStats ? '—' : licenseStats?.totalLicenses ?? meta.total}
+          type="orange"
+          icon={<Key size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Minted licenses"
+          onClick={() => {
+            setActiveTab('ALL');
+            setPage(1);
+          }}
+          active={activeTab === 'ALL'}
+        />
+        <StatCard
+          title="Active & Valid"
+          value={isLoadingStats ? '—' : licenseStats?.activeLicenses ?? 0}
+          type="blue"
+          icon={<CheckCircle2 size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Authorizing lab PCs"
+          onClick={() => {
+            setActiveTab('ACTIVE');
+            setPage(1);
+          }}
+          active={activeTab === 'ACTIVE'}
+        />
+        <StatCard
+          title="Seat Capacity"
+          value={isLoadingStats ? '—' : licenseStats?.totalWorkstationSeatCapacity ?? 0}
+          type="coral"
+          icon={<Monitor size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Aggregated stations"
+        />
+        <StatCard
+          title="Expiring <30d"
+          value={isLoadingStats ? '—' : licenseStats?.expiringWithin30Days ?? 0}
+          type="cyan"
+          icon={<Clock size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Needs renewal review"
+          onClick={() => {
+            setActiveTab('EXPIRING');
+            setPage(1);
+          }}
+          active={activeTab === 'EXPIRING'}
+        />
       </div>
 
       {/* Main Container */}

@@ -22,6 +22,7 @@ import {
   Power,
   RotateCcw,
   AlertOctagon,
+  Download,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import {
@@ -35,6 +36,7 @@ import type {
   Institution,
   InstitutionStatus,
 } from '../api/institutionApi';
+import StatCard from '@/features/dashboard/components/StatCard';
 import { CreateInstitutionModal } from '../components/CreateInstitutionModal';
 import { EditInstitutionModal } from '../components/EditInstitutionModal';
 import { InstitutionStatusModal } from '../components/InstitutionStatusModal';
@@ -98,10 +100,17 @@ export const InstitutionsPage: React.FC = () => {
     data: institutionsData,
     isLoading: isLoadingInstitutions,
     isFetching: isFetchingInstitutions,
+    isError: isErrorInstitutions,
+    error: institutionsError,
     refetch: refetchInstitutions,
   } = useInstitutions(queryParams);
 
-  const { data: globalStats, isLoading: isLoadingStats } = useGlobalInstitutionStats(isSuperAdmin);
+  const { data: globalStats, isLoading: isLoadingStats, refetch: refetchStats } = useGlobalInstitutionStats(isSuperAdmin);
+
+  const handleRefreshAll = () => {
+    refetchStats();
+    refetchInstitutions();
+  };
 
   // Mutations
   const softDeleteMutation = useSoftDeleteInstitution();
@@ -132,6 +141,52 @@ export const InstitutionsPage: React.FC = () => {
   const institutionsList = institutionsData?.data || [];
   const meta = institutionsData?.meta || { page: 1, limit: 10, total: 0, totalPages: 1 };
 
+  const handleExportCsv = () => {
+    if (!institutionsList.length) {
+      toast.error('No institution records available to export');
+      return;
+    }
+    const headers = [
+      'Institution ID',
+      'Name',
+      'Slug',
+      'Status',
+      'Primary Email',
+      'Phone',
+      'Address',
+      'Brand Name',
+      'Primary Color',
+      'Created At',
+    ];
+    const rows = institutionsList.map((inst) => [
+      `"${inst.id}"`,
+      `"${inst.name.replace(/"/g, '""')}"`,
+      `"${inst.slug}"`,
+      `"${inst.status}"`,
+      `"${inst.email}"`,
+      `"${inst.phone || ''}"`,
+      `"${(inst.address || '').replace(/"/g, '""')}"`,
+      `"${inst.branding?.displayName || inst.name}"`,
+      `"${inst.branding?.primaryColor || '#2563EB'}"`,
+      `"${new Date(inst.createdAt).toISOString()}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `institutions-directory-${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Institutions directory exported to CSV successfully');
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-300">
       {/* Top Header */}
@@ -148,8 +203,26 @@ export const InstitutionsPage: React.FC = () => {
           </p>
         </div>
 
-        {isSuperAdmin && (
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCsv}
+            title="Export institutions directory as CSV"
+            className="px-3 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl border border-gray-200 shadow-xs transition-colors font-medium text-xs flex items-center gap-1.5"
+          >
+            <Download size={15} className="text-gray-500" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            onClick={handleRefreshAll}
+            title="Refresh directory"
+            className="p-2.5 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 rounded-xl border border-gray-200 shadow-xs transition-colors"
+          >
+            <RefreshCw
+              size={18}
+              className={isFetchingInstitutions ? 'animate-spin text-[#ff8a5c]' : ''}
+            />
+          </button>
+          {isSuperAdmin && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="px-4 py-2.5 text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2"
@@ -157,80 +230,88 @@ export const InstitutionsPage: React.FC = () => {
               <Plus size={18} strokeWidth={2.5} />
               <span>Provision Institution</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Network Error Alert Banner */}
+      {isErrorInstitutions && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-between gap-4 text-rose-800 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-rose-100 text-rose-600">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Failed to load institutions directory</p>
+              <p className="text-xs text-rose-600 mt-0.5">
+                {(institutionsError as Error)?.message || 'An error occurred while connecting to the backend API.'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => refetchInstitutions()}
+            className="px-3.5 py-1.5 bg-white hover:bg-rose-100/50 text-rose-700 text-xs font-semibold rounded-xl border border-rose-200 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
 
       {/* KPI Overview Cards (Super Admin) */}
       {isSuperAdmin && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Institutions */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Total Centers
-              </span>
-              <div className="text-2xl font-bold text-gray-900">
-                {isLoadingStats ? '—' : globalStats?.totalInstitutions ?? meta.total}
-              </div>
-              <span className="text-[11px] text-gray-400">Onboarded client tenants</span>
-            </div>
-            <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl">
-              <GraduationCap size={24} />
-            </div>
-          </div>
-
-          {/* Active Centers */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Active & Operational
-              </span>
-              <div className="text-2xl font-bold text-emerald-600">
-                {isLoadingStats ? '—' : globalStats?.activeInstitutions ?? 0}
-              </div>
-              <span className="text-[11px] text-emerald-600/80 font-medium">
-                Live authentications enabled
-              </span>
-            </div>
-            <div className="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl">
-              <CheckCircle2 size={24} />
-            </div>
-          </div>
-
-          {/* Suspended */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Suspended Centers
-              </span>
-              <div className="text-2xl font-bold text-amber-600">
-                {isLoadingStats ? '—' : globalStats?.suspendedInstitutions ?? 0}
-              </div>
-              <span className="text-[11px] text-amber-600/80 font-medium">
-                Pending renewal or review
-              </span>
-            </div>
-            <div className="p-3.5 bg-amber-50 text-amber-600 rounded-xl">
-              <AlertCircle size={24} />
-            </div>
-          </div>
-
-          {/* Recycle Bin / Trash */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Recycle Bin
-              </span>
-              <div className="text-2xl font-bold text-rose-600">
-                {isLoadingStats ? '—' : globalStats?.deletedInstitutions ?? 0}
-              </div>
-              <span className="text-[11px] text-gray-400">Soft-deleted centers</span>
-            </div>
-            <div className="p-3.5 bg-rose-50 text-rose-600 rounded-xl">
-              <Trash2 size={24} />
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <StatCard
+            title="Total Centers"
+            value={isLoadingStats ? '—' : globalStats?.totalInstitutions ?? meta.total}
+            type="orange"
+            icon={<GraduationCap size={24} className="text-white" />}
+            isLoading={isLoadingStats}
+            subtitle="Onboarded client tenants"
+            onClick={() => {
+              setActiveTab('ALL');
+              setPage(1);
+            }}
+            active={activeTab === 'ALL'}
+          />
+          <StatCard
+            title="Active Centers"
+            value={isLoadingStats ? '—' : globalStats?.activeInstitutions ?? 0}
+            type="blue"
+            icon={<CheckCircle2 size={24} className="text-white" />}
+            isLoading={isLoadingStats}
+            subtitle="Live authentications enabled"
+            onClick={() => {
+              setActiveTab('ACTIVE');
+              setPage(1);
+            }}
+            active={activeTab === 'ACTIVE'}
+          />
+          <StatCard
+            title="Suspended Centers"
+            value={isLoadingStats ? '—' : globalStats?.suspendedInstitutions ?? 0}
+            type="coral"
+            icon={<AlertCircle size={24} className="text-white" />}
+            isLoading={isLoadingStats}
+            subtitle="Pending renewal or review"
+            onClick={() => {
+              setActiveTab('SUSPENDED');
+              setPage(1);
+            }}
+            active={activeTab === 'SUSPENDED'}
+          />
+          <StatCard
+            title="Recycle Bin"
+            value={isLoadingStats ? '—' : globalStats?.deletedInstitutions ?? 0}
+            type="cyan"
+            icon={<Trash2 size={24} className="text-white" />}
+            isLoading={isLoadingStats}
+            subtitle="Soft-deleted client centers"
+            onClick={() => {
+              setActiveTab('TRASH');
+              setPage(1);
+            }}
+            active={activeTab === 'TRASH'}
+          />
         </div>
       )}
 

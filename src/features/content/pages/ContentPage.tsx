@@ -18,7 +18,10 @@ import {
   Filter,
   Sliders,
   Type,
+  Download,
+  AlertCircle,
 } from 'lucide-react';
+import StatCard from '@/features/dashboard/components/StatCard';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   useContentList,
@@ -127,10 +130,22 @@ export const ContentPage: React.FC = () => {
     data: contentResponse,
     isLoading: isLoadingContent,
     isFetching: isFetchingContent,
+    isError: isContentError,
+    error: contentError,
     refetch: refetchContent,
   } = useContentList(queryParams);
 
-  const { data: statsData, isLoading: isLoadingStats } = useContentStats();
+  const {
+    data: statsData,
+    isLoading: isLoadingStats,
+    refetch: refetchStats,
+  } = useContentStats();
+
+  const handleRefreshAll = () => {
+    refetchStats();
+    refetchContent();
+  };
+
   const { data: modulesData } = useModules({ limit: 100, status: 'ACTIVE' });
   const { data: institutionsData } = useInstitutions({ limit: 100, status: 'ACTIVE' });
 
@@ -144,6 +159,54 @@ export const ContentPage: React.FC = () => {
 
   const contentItems = contentResponse?.data || [];
   const meta = contentResponse?.meta;
+
+  const handleExportCsv = () => {
+    if (!contentItems.length) {
+      toast.error('No content items available to export');
+      return;
+    }
+    const headers = [
+      'Content ID',
+      'Title',
+      'Content Type',
+      'Language',
+      'Difficulty',
+      'Duration (Mins)',
+      'Module',
+      'Institution',
+      'Status',
+      'Created At',
+      'Updated At',
+    ];
+    const rows = contentItems.map((item) => [
+      `"${item.id}"`,
+      `"${item.title.replace(/"/g, '""')}"`,
+      `"${item.contentType}"`,
+      `"${item.language}"`,
+      `"${item.difficulty}"`,
+      `"${item.durationMinutes}"`,
+      `"${item.module?.name || modules.find((m) => m.id === item.moduleId)?.name || item.moduleId}"`,
+      `"${item.institution?.name || institutions.find((i) => i.id === item.institutionId)?.name || 'Global'}"`,
+      `"${item.status}"`,
+      `"${new Date(item.createdAt).toISOString()}"`,
+      `"${new Date(item.updatedAt).toISOString()}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `content-passages-export-${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Content items exported to CSV');
+  };
 
   // Handlers
   const handleConfirmSoftDelete = async () => {
@@ -196,12 +259,23 @@ export const ContentPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
-            onClick={() => refetchContent()}
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            title="Export educational content to CSV"
+          >
+            <Download size={14} className="text-gray-500" />
+            Export CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRefreshAll}
             disabled={isFetchingContent}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            title="Refresh Content & Statistics"
           >
             <RefreshCw size={14} className={isFetchingContent ? 'animate-spin text-[#ff8a5c]' : ''} />
             Refresh
@@ -219,55 +293,81 @@ export const ContentPage: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Total Content Items
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-900">
-              {isLoadingStats ? '...' : statsData?.totalContentItems || 0}
-            </span>
-            <span className="text-xs text-gray-400">All Exercises</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Published Passages
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-emerald-600">
-              {isLoadingStats ? '...' : statsData?.publishedItems || 0}
-            </span>
-            <span className="text-xs text-emerald-600 font-medium">In Desktop Clients</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Draft Content
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-amber-600">
-              {isLoadingStats ? '...' : statsData?.draftItems || 0}
-            </span>
-            <span className="text-xs text-amber-600 font-medium">Pending Review</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Archived / Retired
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-600">
-              {isLoadingStats ? '...' : statsData?.archivedItems || 0}
-            </span>
-            <span className="text-xs text-gray-400">Preserved Logs</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Content Items"
+          value={statsData?.totalContentItems || 0}
+          type="blue"
+          icon={<FileText size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="All Exercises & Lessons"
+          onClick={() => {
+            setActiveTab('ALL');
+            setPage(1);
+          }}
+          active={activeTab === 'ALL'}
+        />
+        <StatCard
+          title="Published Passages"
+          value={statsData?.publishedItems || 0}
+          type="emerald"
+          icon={<CheckCircle2 size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Live in Desktop Clients"
+          onClick={() => {
+            setActiveTab('PUBLISHED');
+            setPage(1);
+          }}
+          active={activeTab === 'PUBLISHED'}
+        />
+        <StatCard
+          title="Draft Content"
+          value={statsData?.draftItems || 0}
+          type="orange"
+          icon={<Clock size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Pending Instructor Review"
+          onClick={() => {
+            setActiveTab('DRAFT');
+            setPage(1);
+          }}
+          active={activeTab === 'DRAFT'}
+        />
+        <StatCard
+          title="Archived / Retired"
+          value={statsData?.archivedItems || 0}
+          type="coral"
+          icon={<Trash2 size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Recycle Bin & Old Versions"
+          onClick={() => {
+            setActiveTab('TRASH');
+            setPage(1);
+          }}
+          active={activeTab === 'TRASH'}
+        />
       </div>
+
+      {/* Error Alert Banner with Retry */}
+      {isContentError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={18} className="text-red-500 shrink-0" />
+            <span>
+              Failed to load educational content:{' '}
+              {contentError instanceof Error ? contentError.message : 'Network error'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw size={12} />
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200/80">

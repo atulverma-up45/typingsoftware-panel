@@ -15,6 +15,10 @@ import PlansPage from '@/features/plans/pages/PlansPage';
 import SubscriptionsPage from '@/features/subscriptions/pages/SubscriptionsPage';
 import ModulesPage from '@/features/modules/pages/ModulesPage';
 import ContentPage from '@/features/content/pages/ContentPage';
+import ReleasesPage from '@/features/releases/pages/ReleasesPage';
+import SyncPage from '@/features/sync/pages/SyncPage';
+import AuditPage from '@/features/audit/pages/AuditPage';
+import SettingsPage from '@/features/settings/pages/SettingsPage';
 
 export const AppRouter = () => {
   return (
@@ -37,12 +41,18 @@ export const AppRouter = () => {
           {/* Typing Modules & Content */}
           <Route path="/content" element={<ContentPage />} />
           <Route path="/modules" element={<ModulesPage />} />
-          <Route path="/sync" element={<div className="p-8">Sync Logs Module (Coming Soon)</div>} />
-          <Route path="/releases" element={<div className="p-8">Releases Module (Coming Soon)</div>} />
+          {/* Workstation Synchronization & Telemetry */}
+          <Route path="/sync" element={<SyncPage />} />
+          {/* Software Releases & Distribution */}
+          <Route path="/releases" element={<ReleasesPage />} />
+          <Route path="/uploads" element={<Navigate to="/releases" replace />} />
           {/* Commercial Subscriptions & Plans Modules */}
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
           <Route path="/plans" element={<PlansPage />} />
-          <Route path="/audit" element={<div className="p-8">Audit Module (Coming Soon)</div>} />
+          {/* System Audit Trail & Forensics */}
+          <Route path="/audit" element={<AuditPage />} />
+          {/* System Settings & Diagnostics */}
+          <Route path="/settings" element={<SettingsPage />} />
 
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

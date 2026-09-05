@@ -1,21 +1,21 @@
-import api from '@/lib/api/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import api from "@/lib/api/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export type ContentType =
-  | 'PASSAGE'
-  | 'EXAM'
-  | 'LESSON'
-  | 'PRACTICE_SET'
-  | 'TEMPLATE'
-  | 'GAME'
-  | 'GAME_LEVEL'
-  | 'VOCATIONAL_COURSE'
-  | 'EXAM_PAPER';
+  | "PASSAGE"
+  | "EXAM"
+  | "LESSON"
+  | "PRACTICE_SET"
+  | "TEMPLATE"
+  | "GAME"
+  | "GAME_LEVEL"
+  | "VOCATIONAL_COURSE"
+  | "EXAM_PAPER";
 
-export type ContentDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'EXAM';
+export type ContentDifficulty = "EASY" | "MEDIUM" | "HARD" | "EXAM";
 
-export type ContentStatus = 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
+export type ContentStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
 
 export interface ContentPayload {
   text?: string;
@@ -90,8 +90,8 @@ export interface ContentListParams {
   institutionId?: string;
   includeGlobal?: boolean;
   includeDeleted?: boolean;
-  sortBy?: 'createdAt' | 'title' | 'difficulty' | 'version' | 'durationMinutes';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "title" | "difficulty" | "version" | "durationMinutes";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CreateContentInput {
@@ -132,9 +132,9 @@ export interface UpdateContentStatusInput {
  */
 export const useContentList = (params: ContentListParams = {}) => {
   return useQuery<PaginatedContentResponse>({
-    queryKey: ['content', params],
+    queryKey: ["content", params],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/content', { params });
+      const response = await api.get<any, any>("/v1/content", { params });
       return response;
     },
   });
@@ -145,9 +145,9 @@ export const useContentList = (params: ContentListParams = {}) => {
  */
 export const useContentStats = (enabled = true) => {
   return useQuery<ContentStats>({
-    queryKey: ['content', 'stats'],
+    queryKey: ["content", "stats"],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/content/stats');
+      const response = await api.get<any, any>("/v1/content/stats");
       return response.data;
     },
     enabled,
@@ -160,9 +160,9 @@ export const useContentStats = (enabled = true) => {
  */
 export const useContentItem = (id: string | null | undefined) => {
   return useQuery<ContentItem>({
-    queryKey: ['content', 'detail', id],
+    queryKey: ["content", "detail", id],
     queryFn: async () => {
-      if (!id) throw new Error('Content ID is required');
+      if (!id) throw new Error("Content ID is required");
       const response = await api.get<any, any>(`/v1/content/${id}`);
       return response.data;
     },
@@ -182,16 +182,17 @@ export const useCreateContent = () => {
 
   return useMutation({
     mutationFn: async (data: CreateContentInput) => {
-      const response = await api.post<any, any>('/v1/content', data);
+      const response = await api.post<any, any>("/v1/content", data);
       return response.data as ContentItem;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['content'] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'stats'] });
-      toast.success('Content item created successfully');
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      toast.success("Content item created successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to create content item';
+      const message =
+        error.response?.data?.message || "Failed to create content item";
       toast.error(message);
     },
   });
@@ -204,18 +205,27 @@ export const useUpdateContent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateContentInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateContentInput;
+    }) => {
       const response = await api.put<any, any>(`/v1/content/${id}`, data);
       return response.data as ContentItem;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['content'] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'stats'] });
-      toast.success('Content updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({
+        queryKey: ["content", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      toast.success("Content updated successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update content item';
+      const message =
+        error.response?.data?.message || "Failed to update content item";
       toast.error(message);
     },
   });
@@ -228,18 +238,30 @@ export const useUpdateContentStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateContentStatusInput }) => {
-      const response = await api.put<any, any>(`/v1/content/${id}/status`, data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateContentStatusInput;
+    }) => {
+      const response = await api.put<any, any>(
+        `/v1/content/${id}/status`,
+        data,
+      );
       return response.data as ContentItem;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['content'] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({
+        queryKey: ["content", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
       toast.success(`Content transitioned to ${variables.data.status}`);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update content status';
+      const message =
+        error.response?.data?.message || "Failed to update content status";
       toast.error(message);
     },
   });
@@ -257,12 +279,13 @@ export const useSoftDeleteContent = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['content'] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'stats'] });
-      toast.success('Content item moved to trash');
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      toast.success("Content item moved to trash");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to delete content';
+      const message =
+        error.response?.data?.message || "Failed to delete content";
       toast.error(message);
     },
   });
@@ -276,16 +299,20 @@ export const useRestoreContent = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<any, any>(`/v1/content/${id}/restore`, {});
+      const response = await api.post<any, any>(
+        `/v1/content/${id}/restore`,
+        {},
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['content'] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'stats'] });
-      toast.success('Content item restored successfully');
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      toast.success("Content item restored successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to restore content';
+      const message =
+        error.response?.data?.message || "Failed to restore content";
       toast.error(message);
     },
   });
@@ -299,18 +326,20 @@ export const usePermanentDeleteContent = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/content/${id}/permanent`);
+      const response = await api.delete<any, any>(
+        `/v1/content/${id}/permanent`,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['content'] });
-      queryClient.invalidateQueries({ queryKey: ['content', 'stats'] });
-      toast.success('Content item permanently purged');
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      toast.success("Content item permanently purged");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to permanently delete content';
+      const message =
+        error.response?.data?.message || "Failed to permanently delete content";
       toast.error(message);
     },
   });
 };
-

@@ -4,10 +4,12 @@ import { Users2, BrainCircuit, Layers, FileText } from 'lucide-react';
 interface StatCardProps {
   title: string;
   value: string | number;
-  type: 'orange' | 'blue' | 'cyan' | 'coral';
+  type: 'orange' | 'blue' | 'cyan' | 'coral' | 'emerald' | 'purple';
   isLoading?: boolean;
   subtitle?: string;
   icon?: React.ReactNode;
+  onClick?: () => void;
+  active?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -17,6 +19,8 @@ const StatCard: React.FC<StatCardProps> = ({
   isLoading = false,
   subtitle,
   icon: customIcon,
+  onClick,
+  active = false,
 }) => {
   const styles = {
     orange: {
@@ -39,13 +43,28 @@ const StatCard: React.FC<StatCardProps> = ({
       iconBg: 'bg-white/20',
       icon: <FileText size={24} className="text-white" />,
     },
+    emerald: {
+      bg: 'bg-gradient-to-br from-[#48bb78] to-[#38a169]',
+      iconBg: 'bg-white/20',
+      icon: <BrainCircuit size={24} className="text-white" />,
+    },
+    purple: {
+      bg: 'bg-gradient-to-br from-[#9f7aea] to-[#805ad5]',
+      iconBg: 'bg-white/20',
+      icon: <Layers size={24} className="text-white" />,
+    },
   };
 
   const currentStyle = styles[type];
 
   return (
     <div
-      className={`${currentStyle.bg} rounded-[20px] p-6 flex items-center justify-between shadow-xs relative overflow-hidden h-[130px] transition-transform hover:scale-[1.01] duration-150`}
+      onClick={onClick}
+      className={`${currentStyle.bg} rounded-[20px] p-6 flex items-center justify-between shadow-xs relative overflow-hidden h-[130px] transition-all duration-150 ${
+        onClick
+          ? 'cursor-pointer hover:scale-[1.02] hover:shadow-md active:scale-[0.99]'
+          : 'hover:scale-[1.01]'
+      } ${active ? 'ring-2 ring-white/90 shadow-md scale-[1.01]' : ''}`}
     >
       <div className="z-10 relative flex flex-col justify-center h-full">
         <p className="text-white/90 text-[13px] font-medium mb-1.5">{title}</p>
@@ -68,4 +87,5 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 };
 
+export { StatCard };
 export default StatCard;

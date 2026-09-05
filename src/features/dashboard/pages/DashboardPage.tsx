@@ -17,10 +17,12 @@ import {
   BookOpen,
   ArrowRight,
   Download,
+  AlertCircle,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
@@ -28,6 +30,8 @@ const Dashboard: React.FC = () => {
     data: metricsPayload,
     isLoading: isLoadingMetrics,
     isFetching: isFetchingMetrics,
+    isError: isErrorMetrics,
+    error: metricsError,
     refetch: refetchMetrics,
   } = useDashboardMetrics(isSuperAdmin ? null : currentUser?.institutionId);
 
@@ -69,6 +73,29 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Network Error Alert Banner */}
+      {isErrorMetrics && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-between gap-4 text-rose-800 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-rose-100 text-rose-600">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Failed to load platform telemetry metrics</p>
+              <p className="text-xs text-rose-600 mt-0.5">
+                {(metricsError as Error)?.message || 'An error occurred while connecting to the backend API.'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => refetchMetrics()}
+            className="px-3.5 py-1.5 bg-white hover:bg-rose-100/50 text-rose-700 text-xs font-semibold rounded-xl border border-rose-200 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
+
       {/* Scoping notice for Institute Admins */}
       {!isSuperAdmin && (
         <div className="p-4 rounded-2xl bg-orange-50/60 border border-orange-200/70 flex items-center justify-between gap-4">
@@ -106,6 +133,7 @@ const Dashboard: React.FC = () => {
               type="orange"
               isLoading={isLoadingMetrics}
               subtitle="Active enterprise seats"
+              onClick={() => navigate('/licenses')}
             />
             <StatCard
               title="Enrolled Institutions"
@@ -113,6 +141,7 @@ const Dashboard: React.FC = () => {
               type="blue"
               isLoading={isLoadingMetrics}
               subtitle="Registered academies & schools"
+              onClick={() => navigate('/institutions')}
             />
             <StatCard
               title="Published Content"
@@ -120,6 +149,7 @@ const Dashboard: React.FC = () => {
               type="cyan"
               isLoading={isLoadingMetrics}
               subtitle="Lessons, exams & passages"
+              onClick={() => navigate('/content')}
             />
             <StatCard
               title="Active Workstations"
@@ -127,6 +157,7 @@ const Dashboard: React.FC = () => {
               type="coral"
               isLoading={isLoadingMetrics}
               subtitle="Connected client terminals"
+              onClick={() => navigate('/activations')}
             />
           </>
         ) : (
@@ -137,6 +168,7 @@ const Dashboard: React.FC = () => {
               type="orange"
               isLoading={isLoadingMetrics}
               subtitle="Student workstation capacity"
+              onClick={() => navigate('/licenses')}
             />
             <StatCard
               title="Active Workstations"
@@ -144,6 +176,7 @@ const Dashboard: React.FC = () => {
               type="blue"
               isLoading={isLoadingMetrics}
               subtitle="Online lab computers"
+              onClick={() => navigate('/activations')}
             />
             <StatCard
               title="Enabled Typing Modules"
@@ -151,6 +184,7 @@ const Dashboard: React.FC = () => {
               type="cyan"
               isLoading={isLoadingMetrics}
               subtitle="Active curriculums & courses"
+              onClick={() => navigate('/modules')}
             />
             <StatCard
               title="Available Content"
@@ -158,6 +192,7 @@ const Dashboard: React.FC = () => {
               type="coral"
               isLoading={isLoadingMetrics}
               subtitle="Practice lessons & tests"
+              onClick={() => navigate('/content')}
             />
           </>
         )}

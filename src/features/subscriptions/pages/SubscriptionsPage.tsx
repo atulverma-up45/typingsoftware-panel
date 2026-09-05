@@ -22,7 +22,10 @@ import {
   Filter,
   AlertOctagon,
   Sparkles,
+  Download,
+  AlertCircle,
 } from 'lucide-react';
+import StatCard from '@/features/dashboard/components/StatCard';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   useSubscriptions,
@@ -121,12 +124,21 @@ export const SubscriptionsPage: React.FC = () => {
     data: subscriptionsResponse,
     isLoading: isLoadingSubscriptions,
     isFetching: isFetchingSubscriptions,
+    isError: isSubscriptionsError,
+    error: subscriptionsError,
     refetch: refetchSubscriptions,
   } = useSubscriptions(queryParams);
 
-  const { data: statsData, isLoading: isLoadingStats } = useSubscriptionStats(
-    selectedInstitutionId || undefined
-  );
+  const {
+    data: statsData,
+    isLoading: isLoadingStats,
+    refetch: refetchSubscriptionStats,
+  } = useSubscriptionStats(selectedInstitutionId || undefined);
+
+  const handleRefreshAll = () => {
+    refetchSubscriptionStats();
+    refetchSubscriptions();
+  };
 
   const { data: institutionsData } = useInstitutions({ limit: 100, status: 'ACTIVE' });
   const { data: plansData } = usePlans({ limit: 100 });
@@ -141,6 +153,48 @@ export const SubscriptionsPage: React.FC = () => {
 
   const subscriptions = subscriptionsResponse?.data || [];
   const meta = subscriptionsResponse?.meta;
+
+  const handleExportCsv = () => {
+    if (!subscriptions.length) {
+      toast.error('No subscriptions available to export');
+      return;
+    }
+    const headers = [
+      'Subscription ID',
+      'Institution',
+      'Plan Name',
+      'Status',
+      'Starts At',
+      'Expires At',
+      'Auto Renew',
+      'Created At',
+    ];
+    const rows = subscriptions.map((sub) => [
+      `"${sub.id}"`,
+      `"${sub.institution?.name || institutions.find((i) => i.id === sub.institutionId)?.name || sub.institutionId}"`,
+      `"${sub.plan?.name || plans.find((p) => p.id === sub.planId)?.name || sub.planId}"`,
+      `"${sub.status}"`,
+      `"${new Date(sub.startsAt).toISOString()}"`,
+      `"${new Date(sub.expiresAt).toISOString()}"`,
+      `"${sub.autoRenew ? 'YES' : 'NO'}"`,
+      `"${new Date(sub.createdAt).toISOString()}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `subscriptions-export-${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Subscriptions exported to CSV');
+  };
 
   // Handlers
   const handleConfirmSoftDelete = async () => {
@@ -195,12 +249,23 @@ export const SubscriptionsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
-            onClick={() => refetchSubscriptions()}
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            title="Export subscriptions list to CSV"
+          >
+            <Download size={14} className="text-gray-500" />
+            Export CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRefreshAll}
             disabled={isFetchingSubscriptions}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            title="Refresh Subscriptions & Statistics"
           >
             <RefreshCw size={14} className={isFetchingSubscriptions ? 'animate-spin text-[#ff8a5c]' : ''} />
             Refresh
@@ -218,81 +283,81 @@ export const SubscriptionsPage: React.FC = () => {
       </div>
 
       {/* Commercial Health KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5">
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Total Contracts
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-gray-900">
-              {isLoadingStats ? '...' : statsData?.totalSubscriptions || 0}
-            </span>
-            <span className="text-xs text-gray-400">All Time</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Active Contracts
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-emerald-600">
-              {isLoadingStats ? '...' : statsData?.activeSubscriptions || 0}
-            </span>
-            <span className="text-xs text-emerald-600 font-medium">In Good Standing</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Expiring in 30d
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-amber-600">
-              {isLoadingStats ? '...' : statsData?.expiringWithin30Days || 0}
-            </span>
-            <span className="text-xs text-amber-600 font-medium">Renewal Due</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Free Trials
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-blue-600">
-              {isLoadingStats ? '...' : statsData?.trialSubscriptions || 0}
-            </span>
-            <span className="text-xs text-blue-600 font-medium">Evaluating</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Past Due / Grace
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-purple-600">
-              {isLoadingStats ? '...' : statsData?.pastDueSubscriptions || 0}
-            </span>
-            <span className="text-xs text-purple-600 font-medium">Awaiting Payment</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Expired / Ended
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-rose-600">
-              {isLoadingStats
-                ? '...'
-                : (statsData?.expiredSubscriptions || 0) + (statsData?.cancelledSubscriptions || 0)}
-            </span>
-            <span className="text-xs text-gray-400">Terminated</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Contracts"
+          value={statsData?.totalSubscriptions || 0}
+          type="blue"
+          icon={<DollarSign size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="All Time Subscriptions"
+          onClick={() => {
+            setActiveTab('ALL');
+            setPage(1);
+          }}
+          active={activeTab === 'ALL'}
+        />
+        <StatCard
+          title="Active Contracts"
+          value={statsData?.activeSubscriptions || 0}
+          type="emerald"
+          icon={<CheckCircle2 size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="In Good Standing"
+          onClick={() => {
+            setActiveTab('ACTIVE');
+            setPage(1);
+          }}
+          active={activeTab === 'ACTIVE'}
+        />
+        <StatCard
+          title="Expiring in 30d"
+          value={statsData?.expiringWithin30Days || 0}
+          type="orange"
+          icon={<Clock size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Renewal Due Soon"
+          onClick={() => {
+            setActiveTab('EXPIRING');
+            setPage(1);
+          }}
+          active={activeTab === 'EXPIRING'}
+        />
+        <StatCard
+          title="Past Due / Unpaid"
+          value={statsData?.pastDueSubscriptions || 0}
+          type="coral"
+          icon={<AlertOctagon size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Grace Period & Lapsed"
+          onClick={() => {
+            setActiveTab('PAST_DUE');
+            setPage(1);
+          }}
+          active={activeTab === 'PAST_DUE'}
+        />
       </div>
+
+      {/* Error Alert Banner with Retry */}
+      {isSubscriptionsError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={18} className="text-red-500 shrink-0" />
+            <span>
+              Failed to load subscriptions:{' '}
+              {subscriptionsError instanceof Error ? subscriptionsError.message : 'Network error'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw size={12} />
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200/80">

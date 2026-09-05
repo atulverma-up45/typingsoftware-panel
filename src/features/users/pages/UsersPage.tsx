@@ -13,6 +13,8 @@ import {
   Laptop,
   Smartphone,
   Trash2,
+  Download,
+  AlertCircle,
 } from 'lucide-react';
 import {
   useUsers,
@@ -20,6 +22,7 @@ import {
   useInstitutionMap,
   type User,
 } from '../api/userApi';
+import StatCard from '@/features/dashboard/components/StatCard';
 import { UserActionsDropdown } from '../components/UserActionsDropdown';
 import { CreateUserModal } from '../components/CreateUserModal';
 import { EditUserModal } from '../components/EditUserModal';
@@ -27,6 +30,7 @@ import { ResetPasswordModal } from '../components/ResetPasswordModal';
 import { UserDetailModal } from '../components/UserDetailModal';
 import { StatusChangeModal } from '../components/StatusChangeModal';
 import { useAuthStore } from '@/stores/auth.store';
+import { toast } from 'sonner';
 
 export default function UsersPage() {
   const currentUser = useAuthStore((state) => state.user);
@@ -82,6 +86,8 @@ export default function UsersPage() {
     data: usersData,
     isLoading: isLoadingUsers,
     isFetching: isFetchingUsers,
+    isError: isErrorUsers,
+    error: usersError,
     refetch: refetchUsers,
   } = useUsers({
     page,
@@ -97,6 +103,54 @@ export default function UsersPage() {
   const meta = usersData?.meta || { page: 1, limit: pageSize, total: 0 };
   const totalUsers = meta.total || 0;
   const totalPages = Math.ceil(totalUsers / pageSize) || 1;
+
+  const handleExportCsv = () => {
+    if (!usersList.length) {
+      toast.error('No user records available to export');
+      return;
+    }
+    const headers = [
+      'User ID',
+      'Name',
+      'Email',
+      'Role',
+      'Status',
+      'Institution',
+      'Active Sessions',
+      'Last Active Device',
+      'Last IP',
+      'Last Location',
+      'Registered At',
+    ];
+    const rows = usersList.map((u) => [
+      `"${u.id}"`,
+      `"${u.name.replace(/"/g, '""')}"`,
+      `"${u.email}"`,
+      `"${u.role}"`,
+      `"${u.status}"`,
+      `"${(u.institutionId && institutionMap.get(u.institutionId)?.name) || u.institutionId || 'Global Platform'}"`,
+      `"${u.activeSessionsCount || 0}"`,
+      `"${u.lastLogin ? `${u.lastLogin.browser || 'Browser'} (${u.lastLogin.os || 'OS'})` : 'Never'}"`,
+      `"${u.lastLogin?.ipAddress || ''}"`,
+      `"${[u.lastLogin?.city, u.lastLogin?.country].filter(Boolean).join(', ')}"`,
+      `"${new Date(u.createdAt).toISOString()}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `user-directory-export-${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('User directory exported to CSV successfully');
+  };
 
   const handleRefreshAll = () => {
     refetchStats();
@@ -150,6 +204,14 @@ export default function UsersPage() {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={handleExportCsv}
+            title="Export user directory as CSV"
+            className="px-3 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl border border-gray-200 shadow-xs transition-colors font-medium text-xs flex items-center gap-1.5"
+          >
+            <Download size={15} className="text-gray-500" />
+            <span>Export CSV</span>
+          </button>
+          <button
             onClick={handleRefreshAll}
             title="Refresh list"
             className="p-2.5 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 rounded-xl border border-gray-200 shadow-xs transition-colors"
@@ -164,6 +226,29 @@ export default function UsersPage() {
           </button>
         </div>
       </div>
+
+      {/* Network Error Alert Banner */}
+      {isErrorUsers && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-between gap-4 text-rose-800 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-rose-100 text-rose-600">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Failed to load user directory</p>
+              <p className="text-xs text-rose-600 mt-0.5">
+                {(usersError as Error)?.message || 'An error occurred while connecting to the backend API.'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => refetchUsers()}
+            className="px-3.5 py-1.5 bg-white hover:bg-rose-100/50 text-rose-700 text-xs font-semibold rounded-xl border border-rose-200 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
 
       {/* Tenant Isolation Banner for Institute Admins */}
       {!isSuperAdmin && (
@@ -186,51 +271,54 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Top Stat Cards (matching Dashboard StatCard aesthetic) */}
+      {/* Top Stat Cards (Standardized StatCard Component) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {[
-          {
-            title: 'Total Users',
-            value: statsData?.data?.total ?? 0,
-            bg: 'bg-gradient-to-br from-[#ffb48b] to-[#f89c6d]',
-            icon: Users,
-          },
-          {
-            title: 'Active Accounts',
-            value: statsData?.data?.active ?? 0,
-            bg: 'bg-gradient-to-br from-[#8ba7fa] to-[#7191f4]',
-            icon: UserCheck,
-          },
-          {
-            title: 'Suspended / Banned',
-            value: (statsData?.data?.suspended ?? 0) + (statsData?.data?.banned ?? 0),
-            bg: 'bg-gradient-to-br from-[#fc9b7f] to-[#f97b58]',
-            icon: UserX,
-          },
-          {
-            title: isSuperAdmin ? 'Administrators' : 'Staff Members',
-            value:
-              (statsData?.data?.admins ?? 0) +
-              (isSuperAdmin ? statsData?.data?.superAdmins ?? 0 : 0),
-            bg: 'bg-gradient-to-br from-[#77dbe8] to-[#5ecbe0]',
-            icon: Shield,
-          },
-        ].map((card, idx) => (
-          <div
-            key={idx}
-            className={`${card.bg} rounded-[20px] p-6 flex items-center justify-between shadow-sm relative overflow-hidden h-[120px] transition-transform hover:scale-[1.01]`}
-          >
-            <div className="z-10 relative flex flex-col justify-center h-full">
-              <p className="text-white/90 text-[13px] font-medium mb-1.5">{card.title}</p>
-              <h3 className="text-white text-[30px] font-bold tracking-tight leading-none">
-                {isLoadingStats ? '...' : card.value.toLocaleString()}
-              </h3>
-            </div>
-            <div className="h-[48px] w-[48px] rounded-full bg-white/20 flex items-center justify-center z-10 relative backdrop-blur-sm">
-              <card.icon size={22} className="text-white" />
-            </div>
-          </div>
-        ))}
+        <StatCard
+          title="Total Users"
+          value={statsData?.data?.total ?? 0}
+          type="orange"
+          icon={<Users size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="All directory accounts"
+          onClick={() => handleTabChange('all')}
+          active={activeTab === 'all' && !roleFilter && !statusFilter}
+        />
+        <StatCard
+          title="Active Accounts"
+          value={statsData?.data?.active ?? 0}
+          type="blue"
+          icon={<UserCheck size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Verified & active staff"
+          onClick={() => handleTabChange('active')}
+          active={activeTab === 'active'}
+        />
+        <StatCard
+          title="Suspended / Banned"
+          value={(statsData?.data?.suspended ?? 0) + (statsData?.data?.banned ?? 0)}
+          type="coral"
+          icon={<UserX size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Restricted or locked access"
+          onClick={() => handleTabChange('suspended')}
+          active={activeTab === 'suspended'}
+        />
+        <StatCard
+          title={isSuperAdmin ? 'Administrators' : 'Staff Members'}
+          value={
+            (statsData?.data?.admins ?? 0) +
+            (isSuperAdmin ? statsData?.data?.superAdmins ?? 0 : 0)
+          }
+          type="cyan"
+          icon={<Shield size={24} className="text-white" />}
+          isLoading={isLoadingStats}
+          subtitle="Privileged accounts"
+          onClick={() => {
+            setRoleFilter(roleFilter === 'ADMIN' ? '' : 'ADMIN');
+            setPage(1);
+          }}
+          active={roleFilter === 'ADMIN'}
+        />
       </div>
 
       {/* Main Table Container */}

@@ -1,8 +1,8 @@
-import api from '@/lib/api/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import api from "@/lib/api/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-export type ModuleStatus = 'ACTIVE' | 'INACTIVE';
+export type ModuleStatus = "ACTIVE" | "INACTIVE";
 
 export interface TypingModule {
   id: string; // mod_xxx
@@ -55,8 +55,8 @@ export interface ModuleListParams {
   search?: string;
   status?: ModuleStatus;
   includeDeleted?: boolean;
-  sortBy?: 'createdAt' | 'name' | 'key' | 'version';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "name" | "key" | "version";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CreateModuleInput {
@@ -98,9 +98,9 @@ export interface SetInstitutionModuleInput {
  */
 export const useModules = (params: ModuleListParams = {}) => {
   return useQuery<PaginatedModulesResponse>({
-    queryKey: ['modules', params],
+    queryKey: ["modules", params],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/modules', { params });
+      const response = await api.get<any, any>("/v1/modules", { params });
       return response;
     },
   });
@@ -111,9 +111,9 @@ export const useModules = (params: ModuleListParams = {}) => {
  */
 export const useModuleStats = (enabled = true) => {
   return useQuery<ModuleStats>({
-    queryKey: ['modules', 'stats'],
+    queryKey: ["modules", "stats"],
     queryFn: async () => {
-      const response = await api.get<any, any>('/v1/modules/stats');
+      const response = await api.get<any, any>("/v1/modules/stats");
       return response.data;
     },
     enabled,
@@ -126,9 +126,9 @@ export const useModuleStats = (enabled = true) => {
  */
 export const useModule = (id: string | null | undefined) => {
   return useQuery<TypingModule>({
-    queryKey: ['modules', 'detail', id],
+    queryKey: ["modules", "detail", id],
     queryFn: async () => {
-      if (!id) throw new Error('Module ID is required');
+      if (!id) throw new Error("Module ID is required");
       const response = await api.get<any, any>(`/v1/modules/${id}`);
       return response.data;
     },
@@ -139,12 +139,16 @@ export const useModule = (id: string | null | undefined) => {
 /**
  * Fetch modules enabled & overridden for a specific institution
  */
-export const useInstitutionModules = (institutionId: string | null | undefined) => {
+export const useInstitutionModules = (
+  institutionId: string | null | undefined,
+) => {
   return useQuery<InstitutionModuleOverride[]>({
-    queryKey: ['institutions', institutionId, 'modules'],
+    queryKey: ["institutions", institutionId, "modules"],
     queryFn: async () => {
       if (!institutionId) return [];
-      const response = await api.get<any, any>(`/v1/institutions/${institutionId}/modules`);
+      const response = await api.get<any, any>(
+        `/v1/institutions/${institutionId}/modules`,
+      );
       return response.data || [];
     },
     enabled: !!institutionId,
@@ -163,16 +167,17 @@ export const useCreateModule = () => {
 
   return useMutation({
     mutationFn: async (data: CreateModuleInput) => {
-      const response = await api.post<any, any>('/v1/modules', data);
+      const response = await api.post<any, any>("/v1/modules", data);
       return response.data as TypingModule;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'stats'] });
-      toast.success('Typing module created successfully');
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      toast.success("Typing module created successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to create typing module';
+      const message =
+        error.response?.data?.message || "Failed to create typing module";
       toast.error(message);
     },
   });
@@ -185,18 +190,27 @@ export const useUpdateModule = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateModuleInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateModuleInput;
+    }) => {
       const response = await api.put<any, any>(`/v1/modules/${id}`, data);
       return response.data as TypingModule;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'stats'] });
-      toast.success('Module updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({
+        queryKey: ["modules", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      toast.success("Module updated successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update module';
+      const message =
+        error.response?.data?.message || "Failed to update module";
       toast.error(message);
     },
   });
@@ -209,18 +223,30 @@ export const useUpdateModuleStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateModuleStatusInput }) => {
-      const response = await api.put<any, any>(`/v1/modules/${id}/status`, data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateModuleStatusInput;
+    }) => {
+      const response = await api.put<any, any>(
+        `/v1/modules/${id}/status`,
+        data,
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({
+        queryKey: ["modules", "detail", variables.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
       toast.success(`Module marked as ${variables.data.status}`);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update module status';
+      const message =
+        error.response?.data?.message || "Failed to update module status";
       toast.error(message);
     },
   });
@@ -238,12 +264,13 @@ export const useSoftDeleteModule = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'stats'] });
-      toast.success('Module moved to trash');
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      toast.success("Module moved to trash");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to archive module';
+      const message =
+        error.response?.data?.message || "Failed to archive module";
       toast.error(message);
     },
   });
@@ -261,12 +288,13 @@ export const useRestoreModule = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'stats'] });
-      toast.success('Module restored successfully');
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      toast.success("Module restored successfully");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to restore module';
+      const message =
+        error.response?.data?.message || "Failed to restore module";
       toast.error(message);
     },
   });
@@ -280,16 +308,19 @@ export const usePermanentDeleteModule = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/modules/${id}/permanent`);
+      const response = await api.delete<any, any>(
+        `/v1/modules/${id}/permanent`,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'stats'] });
-      toast.success('Module permanently purged');
+      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      toast.success("Module permanently purged");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to permanently delete module';
+      const message =
+        error.response?.data?.message || "Failed to permanently delete module";
       toast.error(message);
     },
   });
@@ -303,20 +334,24 @@ export const useSetInstitutionModule = () => {
 
   return useMutation({
     mutationFn: async ({ institutionId, data }: SetInstitutionModuleInput) => {
-      const response = await api.post<any, any>(`/v1/institutions/${institutionId}/modules`, data);
+      const response = await api.post<any, any>(
+        `/v1/institutions/${institutionId}/modules`,
+        data,
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['institutions', variables.institutionId, 'modules'],
+        queryKey: ["institutions", variables.institutionId, "modules"],
       });
-      queryClient.invalidateQueries({ queryKey: ['modules', 'stats'] });
-      toast.success('Institution module configuration saved');
+      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      toast.success("Institution module configuration saved");
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to configure institution module';
+      const message =
+        error.response?.data?.message ||
+        "Failed to configure institution module";
       toast.error(message);
     },
   });
 };
-
