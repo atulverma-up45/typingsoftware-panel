@@ -21,6 +21,7 @@
     background-color: var(--background);
     color: var(--foreground);
     font-family: 'Inter', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -58,5 +59,13 @@
   }
   .custom-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome, Safari and Opera */
+  }
+
+  /* Safe Area Utilities for Mobile Notches & Navigation Bars */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 1rem);
   }
 }

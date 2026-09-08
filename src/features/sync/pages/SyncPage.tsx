@@ -10,8 +10,6 @@ import {
   Trash2,
   Building2,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Copy,
   Check,
@@ -28,6 +26,9 @@ import { SyncCleanupModal } from '../components/SyncCleanupModal';
 import { useInstitutions } from '@/features/institutions/api/institutionApi';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 
 export const SyncPage: React.FC = () => {
   const currentUser = useAuthStore((state) => state.user);
@@ -43,6 +44,7 @@ export const SyncPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
+  const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
   const [refreshInterval, setRefreshInterval] = useState<number | false>(15000); // 15s default
 
   // Modals
@@ -177,51 +179,46 @@ export const SyncPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
-            <RefreshCw className="text-[#ff8a5c]" size={28} />
-            Workstation Sync Logs & Telemetry
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Real-time audit log of offline terminal delta syncs, outbox processing, and idempotent records
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-            title="Export sync log records to CSV"
-          >
-            <Download size={14} className="text-gray-500" />
-            Export CSV
-          </button>
-
-          {isSuperAdmin && (
+      <PageHeader
+        title="Workstation Sync Logs & Telemetry"
+        subtitle="Real-time audit log of offline terminal delta syncs, outbox processing, and idempotent records"
+        icon={<RefreshCw size={20} />}
+        actions={
+          <>
             <button
               type="button"
-              onClick={() => setIsCleanupOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs"
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs min-h-[38px]"
+              title="Export sync log records to CSV"
             >
-              <Trash2 size={15} />
-              Prune Stale Logs
+              <Download size={14} className="text-gray-500" />
+              <span>Export CSV</span>
             </button>
-          )}
 
-          <button
-            type="button"
-            onClick={() => setIsSimulatorOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
-          >
-            <Play size={15} />
-            Simulate Terminal Sync
-          </button>
-        </div>
-      </div>
+            {isSuperAdmin && (
+              <button
+                type="button"
+                onClick={() => setIsCleanupOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs min-h-[38px]"
+              >
+                <Trash2 size={14} />
+                <span>Prune Logs</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsSimulatorOpen(true)}
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-2xs transition-colors min-h-[38px]"
+            >
+              <Play size={15} />
+              <span>Simulate Sync</span>
+            </button>
+          </>
+        }
+      />
 
       {/* KPI Telemetry Header */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -281,98 +278,153 @@ export const SyncPage: React.FC = () => {
       </div>
 
       {/* Filters Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-gray-200 shadow-2xs">
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Search */}
-          <div className="relative min-w-[220px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search device ID, idempotency..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c]"
-            />
+      <FilterToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search device ID, idempotency... (Press / to focus)"
+        activeChips={[
+          ...(selectedEntityType !== 'ALL'
+            ? [
+                {
+                  id: 'entityType',
+                  label: 'Entity',
+                  value: selectedEntityType,
+                  onRemove: () => {
+                    setSelectedEntityType('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedOperation !== 'ALL'
+            ? [
+                {
+                  id: 'operation',
+                  label: 'Operation',
+                  value: selectedOperation,
+                  onRemove: () => {
+                    setSelectedOperation('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedInstitutionId !== 'ALL'
+            ? [
+                {
+                  id: 'institution',
+                  label: 'Institution',
+                  value:
+                    institutions.find((i) => i.id === selectedInstitutionId)?.name ||
+                    selectedInstitutionId,
+                  onRemove: () => {
+                    setSelectedInstitutionId('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+        ]}
+        hasActiveFilters={Boolean(
+          selectedEntityType !== 'ALL' ||
+            selectedOperation !== 'ALL' ||
+            selectedInstitutionId !== 'ALL' ||
+            searchTerm
+        )}
+        onClearFilters={() => {
+          setSelectedEntityType('ALL');
+          setSelectedOperation('ALL');
+          setSelectedInstitutionId('ALL');
+          setSearchTerm('');
+          setPage(1);
+        }}
+        totalResults={meta.total}
+        totalLabel="Telemetry operations"
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        actions={
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-[11px] text-gray-500">
+              <span className="hidden sm:inline font-medium">Poll:</span>
+              <FilterSelect
+                value={refreshInterval === false ? 'off' : refreshInterval.toString()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setRefreshInterval(val === 'off' ? false : parseInt(val, 10));
+                }}
+                className="text-xs"
+                title="Telemetry auto-polling frequency"
+              >
+                <option value="off">Manual</option>
+                <option value="10000">10s Auto</option>
+                <option value="15000">15s Auto</option>
+                <option value="30000">30s Auto</option>
+              </FilterSelect>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="h-[38px] px-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors border border-gray-200 shrink-0 shadow-2xs"
+              title="Refresh logs"
+            >
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+            </button>
           </div>
-
-          {/* Entity Type Filter */}
-          <select
-            value={selectedEntityType}
-            onChange={(e) => {
-              setSelectedEntityType(e.target.value);
-              setPage(1);
-            }}
-            className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c]"
-          >
-            <option value="ALL">All Entity Types</option>
-            <option value="DEVICE_ACTIVITY">Device Activity</option>
-            <option value="LOCAL_SETTING">Local Setting</option>
-          </select>
-
-          {/* Operation Filter */}
-          <select
-            value={selectedOperation}
-            onChange={(e) => {
-              setSelectedOperation(e.target.value);
-              setPage(1);
-            }}
-            className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c]"
-          >
-            <option value="ALL">All Operations</option>
-            <option value="CREATE">CREATE</option>
-            <option value="UPDATE">UPDATE</option>
-            <option value="DELETE">DELETE</option>
-          </select>
-
-          {/* Institution Filter (Super Admin) */}
-          {isSuperAdmin && (
-            <select
-              value={selectedInstitutionId}
+        }
+        filterElements={
+          <>
+            {/* Entity Type Filter */}
+            <FilterSelect
+              value={selectedEntityType}
               onChange={(e) => {
-                setSelectedInstitutionId(e.target.value);
+                setSelectedEntityType(e.target.value);
                 setPage(1);
               }}
-              className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c] max-w-[180px]"
+              title="Filter by Entity Type"
             >
-              <option value="ALL">All Institutions</option>
-              {institutions.map((inst) => (
-                <option key={inst.id} value={inst.id}>
-                  {inst.name}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+              <option value="ALL">All Entity Types</option>
+              <option value="DEVICE_ACTIVITY">Device Activity</option>
+              <option value="LOCAL_SETTING">Local Setting</option>
+            </FilterSelect>
 
-        {/* Live Polling Selector & Refresh */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-[11px] text-gray-500">
-            <span>Auto-poll:</span>
-            <select
-              value={refreshInterval === false ? 'off' : refreshInterval.toString()}
+            {/* Operation Filter */}
+            <FilterSelect
+              value={selectedOperation}
               onChange={(e) => {
-                const val = e.target.value;
-                setRefreshInterval(val === 'off' ? false : parseInt(val, 10));
+                setSelectedOperation(e.target.value);
+                setPage(1);
               }}
-              className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-gray-50"
+              title="Filter by Operation"
             >
-              <option value="off">Manual</option>
-              <option value="10000">10s</option>
-              <option value="15000">15s</option>
-              <option value="30000">30s</option>
-            </select>
-          </div>
+              <option value="ALL">All Operations</option>
+              <option value="CREATE">CREATE</option>
+              <option value="UPDATE">UPDATE</option>
+              <option value="DELETE">DELETE</option>
+            </FilterSelect>
 
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors"
-            title="Refresh logs"
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-          </button>
-        </div>
-      </div>
+            {/* Institution Filter (Super Admin) */}
+            {isSuperAdmin && (
+              <FilterSelect
+                icon={<Building2 size={13} />}
+                value={selectedInstitutionId}
+                onChange={(e) => {
+                  setSelectedInstitutionId(e.target.value);
+                  setPage(1);
+                }}
+                title="Filter by Institution"
+              >
+                <option value="ALL">All Institutions</option>
+                {institutions.map((inst) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.name}
+                  </option>
+                ))}
+              </FilterSelect>
+            )}
+          </>
+        }
+      />
 
       {/* Main Table View */}
       {isLoading ? (
@@ -393,8 +445,76 @@ export const SyncPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto custom-scrollbar">
+        <div>
+          {/* Mobile Card List (< md screens, or when CARDS view is active) */}
+          <div className={viewMode === 'CARDS' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5' : 'md:hidden divide-y divide-gray-100 bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden'}>
+            {operations.map((op) => (
+              <div
+                key={op.id}
+                onClick={() => setInspectingOp(op)}
+                className={`p-4 space-y-2.5 hover:bg-gray-50/70 transition-colors cursor-pointer ${viewMode === 'CARDS' ? 'bg-white rounded-2xl border border-gray-200 shadow-2xs' : ''}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Laptop size={16} className="text-[#ff8a5c] shrink-0" />
+                    <span className="font-mono font-bold text-gray-900 text-xs truncate">{op.deviceId}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleCopy(`dev_${op.id}`, op.deviceId, e)}
+                      className="text-gray-400 hover:text-[#ff8a5c]"
+                      title="Copy Device ID"
+                    >
+                      {copiedId === `dev_${op.id}` ? (
+                        <Check size={12} className="text-emerald-600" />
+                      ) : (
+                        <Copy size={12} />
+                      )}
+                    </button>
+                  </div>
+                  {getOperationBadge(op.operation)}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50/80 p-2.5 rounded-xl border border-gray-100">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 block">Entity</span>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {op.entityType === 'DEVICE_ACTIVITY' ? (
+                        <Activity size={12} className="text-[#ff8a5c]" />
+                      ) : (
+                        <Sliders size={12} className="text-purple-500" />
+                      )}
+                      <span className="font-semibold text-gray-800 text-[11px] truncate block">{op.entityType}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 block">Institution</span>
+                    <span className="text-gray-700 text-[11px] truncate block mt-0.5">{op.institution?.name || op.institutionId}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-100">
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <Calendar size={12} />
+                    <span>{new Date(op.processedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInspectingOp(op);
+                    }}
+                    className="text-[#ff8a5c] font-bold inline-flex items-center gap-1 hover:underline"
+                  >
+                    <Eye size={12} /> Inspect
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table (>= md screens, hidden when in CARDS view) */}
+          <div className={viewMode === 'CARDS' ? 'hidden' : 'hidden md:block bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden'}>
+            <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -506,42 +626,22 @@ export const SyncPage: React.FC = () => {
             </table>
           </div>
         </div>
+        </div>
       )}
 
       {/* Pagination Footer */}
-      {meta.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-xs text-gray-500">
-            Showing <span className="font-semibold text-gray-800">{(page - 1) * limit + 1}</span> to{' '}
-            <span className="font-semibold text-gray-800">
-              {Math.min(page * limit, meta.total)}
-            </span>{' '}
-            of <span className="font-semibold text-gray-800">{meta.total}</span> sync records
-          </p>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-              className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-xs font-semibold px-2 text-gray-700">
-              Page {page} of {meta.totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= meta.totalPages}
-              onClick={() => setPage(page + 1)}
-              className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={meta.totalPages}
+        totalItems={meta.total}
+        pageSize={limit}
+        onPageChange={setPage}
+        onPageSizeChange={(l) => {
+          setLimit(l);
+          setPage(1);
+        }}
+        itemName="sync records"
+      />
 
       {/* Modals */}
       <SyncOperationDetailModal

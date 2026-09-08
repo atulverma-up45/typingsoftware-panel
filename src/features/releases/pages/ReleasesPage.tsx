@@ -15,14 +15,15 @@ import {
   Laptop,
   Download,
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   HardDrive,
   Copy,
   Check,
   AlertCircle,
 } from 'lucide-react';
 import StatCard from '@/features/dashboard/components/StatCard';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 import {
   useReleases,
   useReleaseStats,
@@ -193,58 +194,53 @@ export const ReleasesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
-            <Package className="text-[#ff8a5c]" size={28} />
-            Software Releases & Updates
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage desktop software distribution binaries, auto-updater rules, and version channels
-          </p>
-        </div>
+      <PageHeader
+        title="Software Releases & Updates"
+        subtitle="Manage desktop software distribution binaries, auto-updater rules, and version channels"
+        icon={<Package className="text-[#ff8a5c]" size={24} />}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              title="Export software releases to CSV"
+            >
+              <Download size={14} className="text-gray-500" />
+              Export CSV
+            </button>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-            title="Export software releases to CSV"
-          >
-            <Download size={14} className="text-gray-500" />
-            Export CSV
-          </button>
+            <button
+              type="button"
+              onClick={handleRefreshAll}
+              disabled={isLoading}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              title="Refresh Releases & Statistics"
+            >
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+              Refresh
+            </button>
 
-          <button
-            type="button"
-            onClick={handleRefreshAll}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-            title="Refresh Releases & Statistics"
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
-            Refresh
-          </button>
+            <button
+              type="button"
+              onClick={() => setIsSimulatorModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors shadow-2xs"
+            >
+              <Laptop size={15} />
+              Test Client Auto-Updater
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsSimulatorModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors shadow-2xs"
-          >
-            <Laptop size={15} />
-            Test Client Auto-Updater
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            New Software Release
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              New Software Release
+            </button>
+          </>
+        }
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -323,115 +319,119 @@ export const ReleasesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter Toolbar & Tabs */}
-      <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 rounded-xl w-fit">
-            {(['ALL', 'PUBLISHED', 'DRAFT', 'ARCHIVED'] as StatusTab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => {
-                  setActiveTab(tab);
-                  setPage(1);
-                }}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === tab
-                    ? 'bg-white text-gray-900 shadow-2xs'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                {tab === 'ALL' ? 'All Builds' : tab.charAt(0) + tab.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
+      {/* Status Tabs */}
+      <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 rounded-xl w-fit overflow-x-auto custom-scrollbar">
+        {(['ALL', 'PUBLISHED', 'DRAFT', 'ARCHIVED'] as StatusTab[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => {
+              setActiveTab(tab);
+              setPage(1);
+            }}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+              activeTab === tab
+                ? 'bg-white text-gray-900 shadow-2xs'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            {tab === 'ALL' ? 'All Builds' : tab.charAt(0) + tab.slice(1).toLowerCase()}
+          </button>
+        ))}
+      </div>
 
-          {/* Search and Selectors */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Search */}
-            <div className="relative min-w-[220px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search version, notes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 bg-white focus:outline-none focus:border-[#ff8a5c]"
-              />
-            </div>
-
+      {/* Filter & Search Toolbar */}
+      <FilterToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search version, notes, checksum... (Press / to focus)"
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        activeChips={[
+          ...(selectedChannel !== 'ALL'
+            ? [
+                {
+                  id: 'channel',
+                  label: 'Channel',
+                  value: selectedChannel.toUpperCase(),
+                  onRemove: () => {
+                    setSelectedChannel('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedPlatform !== 'ALL'
+            ? [
+                {
+                  id: 'platform',
+                  label: 'Platform',
+                  value: selectedPlatform,
+                  onRemove: () => {
+                    setSelectedPlatform('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+        ]}
+        hasActiveFilters={Boolean(
+          selectedChannel !== 'ALL' || selectedPlatform !== 'ALL' || searchTerm || sortBy !== 'createdAt'
+        )}
+        onClearFilters={() => {
+          setSelectedChannel('ALL');
+          setSelectedPlatform('ALL');
+          setSearchTerm('');
+          setSortBy('createdAt');
+          setPage(1);
+        }}
+        totalResults={meta?.total}
+        totalLabel="Releases"
+        filterElements={
+          <>
             {/* Channel Filter */}
-            <select
+            <FilterSelect
               value={selectedChannel}
               onChange={(e) => {
                 setSelectedChannel(e.target.value);
                 setPage(1);
               }}
-              className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:border-[#ff8a5c]"
+              title="Filter by Release Channel"
             >
               <option value="ALL">All Channels</option>
               <option value="stable">Stable Only</option>
               <option value="beta">Beta Only</option>
-            </select>
+            </FilterSelect>
 
             {/* Platform Filter */}
-            <select
+            <FilterSelect
               value={selectedPlatform}
               onChange={(e) => {
                 setSelectedPlatform(e.target.value);
                 setPage(1);
               }}
-              className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:border-[#ff8a5c]"
+              title="Filter by Target Platform"
             >
               <option value="ALL">All Platforms</option>
               <option value="windows-x64">Windows (x64)</option>
               <option value="windows-arm64">Windows (ARM64)</option>
               <option value="windows-x86">Windows (x86)</option>
-            </select>
+            </FilterSelect>
 
             {/* Sorting */}
-            <select
+            <FilterSelect
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:border-[#ff8a5c]"
+              title="Sort by Attribute"
             >
               <option value="createdAt">Date Created</option>
               <option value="version">Version</option>
               <option value="publishedAt">Publish Date</option>
               <option value="fileSize">File Size</option>
-            </select>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center p-1 bg-gray-100 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setViewMode('CARDS')}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  viewMode === 'CARDS'
-                    ? 'bg-white text-gray-900 shadow-2xs'
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-                title="Card View"
-              >
-                <LayoutGrid size={15} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('TABLE')}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  viewMode === 'TABLE'
-                    ? 'bg-white text-gray-900 shadow-2xs'
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-                title="Table View"
-              >
-                <List size={15} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </FilterSelect>
+          </>
+        }
+      />
 
       {/* Main Content Area */}
       {isLoading ? (
@@ -488,8 +488,22 @@ export const ReleasesPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        /* TABLE VIEW */
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+        /* TABLE VIEW WITH MOBILE DUAL-MODE */
+        <div>
+          <div className="md:hidden grid grid-cols-1 gap-4 mb-4">
+            {releases.map((rel) => (
+              <ReleaseCard
+                key={rel.id}
+                release={rel}
+                onEdit={(r) => setEditingRelease(r)}
+                onStatusChange={(r) => setStatusRelease(r)}
+                onPublish={(id) => publishMutation.mutate(id)}
+                onViewDetails={(r) => setInspectingRelease(r)}
+                onDelete={(r) => setReleaseToDelete(r)}
+              />
+            ))}
+          </div>
+          <div className="hidden md:block bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -620,42 +634,22 @@ export const ReleasesPage: React.FC = () => {
             </table>
           </div>
         </div>
+        </div>
       )}
 
       {/* Pagination Footer */}
-      {meta.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-xs text-gray-500">
-            Showing <span className="font-semibold text-gray-800">{(page - 1) * limit + 1}</span> to{' '}
-            <span className="font-semibold text-gray-800">
-              {Math.min(page * limit, meta.total)}
-            </span>{' '}
-            of <span className="font-semibold text-gray-800">{meta.total}</span> releases
-          </p>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-              className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-xs font-semibold px-2 text-gray-700">
-              Page {page} of {meta.totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= meta.totalPages}
-              onClick={() => setPage(page + 1)}
-              className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={meta.totalPages}
+        totalItems={meta.total}
+        pageSize={limit}
+        onPageChange={setPage}
+        onPageSizeChange={(l) => {
+          setLimit(l);
+          setPage(1);
+        }}
+        itemName="releases"
+      />
 
       {/* Modals */}
       <CreateReleaseModal

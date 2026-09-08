@@ -21,6 +21,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api/client';
 import { toast } from 'sonner';
+import PageHeader from '@/components/ui/PageHeader';
 
 interface HealthStatus {
   status: string;
@@ -59,15 +60,18 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
-          <Settings className="text-[#ff8a5c]" size={28} />
-          System Settings & Platform Status
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage administrator profile, interface preferences, and monitor backend cloud health
-        </p>
-      </div>
+      <PageHeader
+        title="System Settings & Platform Status"
+        subtitle="Manage administrator profile, interface preferences, and monitor backend cloud health"
+        icon={<Settings className="text-[#ff8a5c]" size={24} />}
+        badge={
+          isSuperAdmin ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200/60">
+              Super Admin
+            </span>
+          ) : undefined
+        }
+      />
 
       {/* Grid: 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -11,6 +11,7 @@ import {
   Code2,
 } from 'lucide-react';
 import type { TypingModule } from '../api/moduleApi';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 interface ModuleCardProps {
   module: TypingModule;
@@ -63,19 +64,10 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
           </div>
 
           <div>
-            {isDeletedView ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                In Trash
-              </span>
-            ) : isActive ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Active
-              </span>
-            ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                Inactive
-              </span>
-            )}
+            <StatusBadge
+              status={isDeletedView ? 'TRASH' : module.status}
+              size="sm"
+            />
           </div>
         </div>
 
@@ -97,23 +89,23 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
+      <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => onViewDetails(module)}
-          className="text-xs font-semibold text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          className="h-[36px] px-3 text-xs font-semibold text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors inline-flex items-center justify-center shadow-2xs"
         >
           View Specs
         </button>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center flex-wrap gap-1.5">
           {isDeletedView ? (
             <>
               {onRestore && (
                 <button
                   type="button"
                   onClick={() => onRestore(module)}
-                  className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 transition-colors"
+                  className="h-[36px] px-3 flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 rounded-xl border border-emerald-200 transition-colors shadow-2xs"
                   title="Restore module"
                 >
                   <RotateCcw size={13} />
@@ -123,7 +115,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
               <button
                 type="button"
                 onClick={() => onDelete(module)}
-                className="flex items-center gap-1 text-xs font-medium text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors"
+                className="h-[36px] px-3 flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl border border-rose-200 transition-colors shadow-2xs"
                 title="Permanent purge"
               >
                 <Trash2 size={13} />
@@ -135,7 +127,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
               <button
                 type="button"
                 onClick={() => onToggleStatus(module)}
-                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
+                className={`h-[36px] px-3 text-xs font-semibold rounded-xl border transition-colors inline-flex items-center justify-center shadow-2xs ${
                   isActive
                     ? 'text-gray-600 bg-gray-50 border-gray-200 hover:bg-gray-100'
                     : 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
@@ -147,7 +139,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
               <button
                 type="button"
                 onClick={() => onEdit(module)}
-                className="flex items-center gap-1 text-xs font-medium text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] px-2.5 py-1.5 rounded-lg transition-colors"
+                className="h-[36px] px-3 flex items-center gap-1.5 text-xs font-semibold text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] rounded-xl border border-[#ff8a5c]/20 transition-colors shadow-2xs"
                 title="Edit module"
               >
                 <Edit3 size={13} />
@@ -157,7 +149,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
                 <button
                   type="button"
                   onClick={() => onConfigureOverride(module)}
-                  className="flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 px-2.5 py-1.5 rounded-lg border border-purple-200 transition-colors"
+                  className="h-[36px] px-2.5 flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-colors shadow-2xs"
                   title="Tenant Overrides"
                 >
                   <Sliders size={13} />
@@ -167,7 +159,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
               <button
                 type="button"
                 onClick={() => onDelete(module)}
-                className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                className="h-[36px] w-[36px] flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 transition-colors shrink-0"
                 title="Move to trash"
               >
                 <Trash2 size={14} />

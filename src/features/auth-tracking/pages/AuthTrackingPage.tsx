@@ -6,7 +6,6 @@ import {
   Radio,
   History,
   Trash2,
-  Search,
   CheckCircle2,
   XCircle,
   Clock,
@@ -16,12 +15,13 @@ import {
   Users,
   Download,
   ShieldAlert,
-  X,
   Sparkles,
-  Zap,
   Plane,
   Crosshair,
   Compass,
+  Copy,
+  Check,
+  Building2,
 } from 'lucide-react';
 import {
   useAuthTrackingOverview,
@@ -35,6 +35,12 @@ import {
   type LiveSessionItem,
   type GlobalLoginHistoryItem,
 } from '../api/authTrackingApi';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
+import StatCard from '@/features/dashboard/components/StatCard';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import EmptyState from '@/components/ui/EmptyState';
+import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 
 export default function AuthTrackingPage() {
   const [activeTab, setActiveTab] = useState<'sessions' | 'threats' | 'locations' | 'history'>('sessions');
@@ -43,15 +49,18 @@ export default function AuthTrackingPage() {
   const [sessionSearch, setSessionSearch] = useState('');
   const [deviceFilter, setDeviceFilter] = useState('');
   const [sessionPage, setSessionPage] = useState(1);
+  const [sessionViewMode, setSessionViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
   // History query state
   const [historySearch, setHistorySearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [historyPage, setHistoryPage] = useState(1);
+  const [historyViewMode, setHistoryViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
   // Interactive Confirmation Modal state
   const [sessionToRevoke, setSessionToRevoke] = useState<LiveSessionItem | null>(null);
   const [userToNuke, setUserToNuke] = useState<{ userId: string; userName: string } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Queries
   const {
@@ -122,16 +131,22 @@ export default function AuthTrackingPage() {
     refetchHistory();
   };
 
-  // ---------------------------------------------------------------------------
-  // CSV Export Functions
-  // ---------------------------------------------------------------------------
+  const handleCopy = (id: string, text: string | null | undefined, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1800);
+  };
+
   const exportSessionsToCSV = () => {
     if (sessions.length === 0) return;
     const headers = [
       'Session ID',
+      'User ID',
       'User Name',
       'User Email',
-      'Role',
+      'User Role',
       'Institution ID',
       'IP Address',
       'Device Type',
@@ -139,13 +154,14 @@ export default function AuthTrackingPage() {
       'Browser',
       'City',
       'Country',
-      'Signed In At',
-      'Last Active Heartbeat',
+      'Created At',
+      'Last Active',
     ];
     const rows = sessions.map((s) => [
       `"${s.id}"`,
-      `"${s.userName.replace(/"/g, '""')}"`,
-      `"${s.userEmail}"`,
+      `"${s.userId}"`,
+      `"${(s.userName || '').replace(/"/g, '""')}"`,
+      `"${s.userEmail || ''}"`,
       `"${s.userRole}"`,
       `"${s.institutionId || ''}"`,
       `"${s.ipAddress || ''}"`,
@@ -212,808 +228,876 @@ export default function AuthTrackingPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-              Auth & Device Tracking Center
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Live Telemetry
-            </span>
-            {totalActiveThreats > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1.5">
-                <AlertTriangle size={13} className="animate-bounce" />
-                {totalActiveThreats} Threat{totalActiveThreats === 1 ? '' : 's'} Active
-              </span>
-            )}
-          </div>
-          <p className="text-gray-400 mt-1">
-            Real-time platform session telemetry, geo-velocity threat radar, and forensic authentication auditing.
-          </p>
-        </div>
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-6">
+      {/* Top Header */}
+      <PageHeader
+        title="Auth & Device Security Center"
+        subtitle="Real-time platform session telemetry, geo-velocity threat radar, and forensic authentication auditing"
+        icon={<Radio className="text-[#ff8a5c]" size={24} />}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => pruneExpired()}
+              disabled={isPruning}
+              title="Prune dead expired sessions older than 7 days"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs h-[38px] disabled:opacity-50"
+            >
+              <Sparkles size={14} className={isPruning ? 'animate-spin text-[#ff8a5c]' : 'text-amber-500'} />
+              <span>Prune Dead Sessions</span>
+            </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => pruneExpired()}
-            disabled={isPruning}
-            title="Prune dead expired sessions older than 7 days"
-            className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl border border-white/5 transition-colors flex items-center gap-1.5 text-xs font-medium disabled:opacity-50"
-          >
-            <Sparkles size={14} className={isPruning ? 'animate-spin' : 'text-amber-400'} />
-            Prune Dead Sessions
-          </button>
-          <button
-            onClick={activeTab === 'sessions' ? exportSessionsToCSV : exportHistoryToCSV}
-            title="Download CSV report"
-            className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl border border-white/5 transition-colors flex items-center gap-1.5 text-xs font-medium"
-          >
-            <Download size={14} /> Export CSV
-          </button>
-          <button
-            onClick={handleRefreshAll}
-            title="Refresh telemetry"
-            className="p-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl border border-white/5 transition-colors flex items-center gap-2 text-sm"
-          >
-            <RefreshCw
-              size={16}
-              className={isFetchingSessions || isFetchingHistory ? 'animate-spin' : ''}
-            />
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={activeTab === 'sessions' ? exportSessionsToCSV : exportHistoryToCSV}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs h-[38px]"
+              title="Export report to CSV"
+            >
+              <Download size={14} className="text-gray-500" />
+              <span>Export CSV</span>
+            </button>
 
-      {/* Top Metric Cards */}
+            <button
+              type="button"
+              onClick={handleRefreshAll}
+              disabled={isFetchingSessions || isFetchingHistory}
+              className="h-[38px] px-3 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors shadow-2xs flex items-center justify-center"
+              title="Refresh telemetry metrics"
+            >
+              <RefreshCw
+                size={14}
+                className={isFetchingSessions || isFetchingHistory ? 'animate-spin text-[#ff8a5c]' : ''}
+              />
+            </button>
+          </>
+        }
+      />
+
+      {/* KPI Telemetry StatCards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            title: 'Live Active Devices',
-            value: overview?.totalActiveSessions ?? 0,
-            icon: Radio,
-            color: 'from-blue-600 to-indigo-600',
-            subtitle: 'Tokens currently valid',
-          },
-          {
-            title: 'Unique Users Online',
-            value: overview?.uniqueActiveUsers ?? 0,
-            icon: Users,
-            color: 'from-emerald-500 to-teal-500',
-            subtitle: 'Active accounts',
-          },
-          {
-            title: '24h Successful Logins',
-            value: overview?.loginsLast24h ?? 0,
-            icon: CheckCircle2,
-            color: 'from-purple-500 to-indigo-500',
-            subtitle: 'Legitimate authentications',
-          },
-          {
-            title: 'Security Threat Radar',
-            value: totalActiveThreats,
-            icon: totalActiveThreats > 0 ? AlertTriangle : Zap,
-            color: totalActiveThreats > 0 ? 'from-red-600 to-amber-600' : 'from-gray-600 to-gray-700',
-            subtitle:
-              totalActiveThreats > 0
-                ? `${threats?.impossibleTravelIncidents.length || 0} impossible travel, ${threats?.bruteForceAttacks.length || 0} brute force`
-                : 'No active threats detected',
-          },
-        ].map((stat, i) => (
-          <div
-            key={i}
-            className="relative overflow-hidden rounded-2xl bg-gray-900/50 backdrop-blur-xl border border-white/5 p-6 group hover:border-white/10 transition-all"
-          >
-            <div
-              className={`absolute top-0 right-0 p-4 bg-gradient-to-br ${stat.color} rounded-bl-3xl opacity-10 group-hover:opacity-20 transition-opacity`}
-            />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                  {stat.title}
-                </p>
-                <h3 className="text-3xl font-bold text-white mt-1">
-                  {isLoadingOverview || isLoadingThreats ? '...' : stat.value}
-                </h3>
-                <p className="text-[11px] text-gray-500 mt-1">{stat.subtitle}</p>
-              </div>
-              <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color} shadow-lg`}>
-                <stat.icon className="text-white" size={22} />
-              </div>
-            </div>
-          </div>
-        ))}
+        <StatCard
+          title="Live Active Devices"
+          value={overview?.totalActiveSessions ?? 0}
+          type="blue"
+          icon={<Radio size={24} className="text-white" />}
+          isLoading={isLoadingOverview}
+          subtitle="Tokens currently valid"
+          onClick={() => setActiveTab('sessions')}
+          active={activeTab === 'sessions'}
+        />
+        <StatCard
+          title="Unique Users Online"
+          value={overview?.uniqueActiveUsers ?? 0}
+          type="emerald"
+          icon={<Users size={24} className="text-white" />}
+          isLoading={isLoadingOverview}
+          subtitle="Active user accounts"
+          onClick={() => setActiveTab('sessions')}
+        />
+        <StatCard
+          title="24h Successful Logins"
+          value={overview?.loginsLast24h ?? 0}
+          type="orange"
+          icon={<CheckCircle2 size={24} className="text-white" />}
+          isLoading={isLoadingOverview}
+          subtitle="Legitimate authentications"
+          onClick={() => setActiveTab('history')}
+          active={activeTab === 'history'}
+        />
+        <StatCard
+          title="Security Threat Radar"
+          value={totalActiveThreats}
+          type={totalActiveThreats > 0 ? 'coral' : 'emerald'}
+          icon={<ShieldAlert size={24} className="text-white" />}
+          isLoading={isLoadingThreats}
+          subtitle={
+            totalActiveThreats > 0
+              ? `${threats?.impossibleTravelIncidents.length || 0} travel, ${threats?.bruteForceAttacks.length || 0} brute force`
+              : 'Zero active threats'
+          }
+          onClick={() => setActiveTab('threats')}
+          active={activeTab === 'threats'}
+        />
       </div>
 
-      {/* Main Tabbed Command Center */}
-      <div className="rounded-2xl bg-gray-900/40 backdrop-blur-xl border border-white/5 overflow-hidden shadow-2xl">
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap border-b border-white/10 px-6 bg-white/[0.02]">
-          <button
-            onClick={() => setActiveTab('sessions')}
-            className={`py-4 px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'sessions'
-                ? 'border-indigo-500 text-white'
-                : 'border-transparent text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <Radio size={16} /> Live Active Sessions ({sessionsTotal})
-          </button>
-          <button
-            onClick={() => setActiveTab('threats')}
-            className={`py-4 px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'threats'
-                ? 'border-red-500 text-white'
-                : 'border-transparent text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <ShieldAlert size={16} className={totalActiveThreats > 0 ? 'text-red-400' : ''} />
-            Threat Radar ({totalActiveThreats})
-          </button>
-          <button
-            onClick={() => setActiveTab('locations')}
-            className={`py-4 px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'locations'
-                ? 'border-emerald-500 text-white'
-                : 'border-transparent text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <Compass size={16} /> Geo Explorer ({locations.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`py-4 px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'history'
-                ? 'border-indigo-500 text-white'
-                : 'border-transparent text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <History size={16} /> Global Audit Logs ({historyTotal})
-          </button>
-        </div>
-
-        {/* Tab 1: Live Sessions Table */}
-        {activeTab === 'sessions' && (
-          <div>
-            {/* Filter Toolbar */}
-            <div className="p-4 border-b border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between bg-black/20">
-              <div className="relative w-full md:w-96">
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-                <input
-                  type="text"
-                  placeholder="Search user, email, IP address, city..."
-                  value={sessionSearch}
-                  onChange={(e) => {
-                    setSessionSearch(e.target.value);
-                    setSessionPage(1);
-                  }}
-                  className="w-full bg-black/30 border border-white/10 rounded-xl pl-11 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                />
-              </div>
-
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <select
-                  value={deviceFilter}
-                  onChange={(e) => {
-                    setDeviceFilter(e.target.value);
-                    setSessionPage(1);
-                  }}
-                  className="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer"
+      {/* Standardized Pill Navigation Tabs */}
+      <div className="border-b border-gray-200/80">
+        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-3">
+          {[
+            { id: 'sessions', label: 'Live Sessions', count: sessionsTotal, icon: <Radio size={14} /> },
+            { id: 'threats', label: 'Threat Radar', count: totalActiveThreats, icon: <ShieldAlert size={14} />, alert: totalActiveThreats > 0 },
+            { id: 'locations', label: 'Geo Explorer', count: locations.length, icon: <Compass size={14} /> },
+            { id: 'history', label: 'Global Audit Logs', count: historyTotal, icon: <History size={14} /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+                activeTab === tab.id
+                  ? 'bg-[#fff0eb] text-[#ff8a5c] shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+              {typeof tab.count === 'number' && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    tab.alert
+                      ? 'bg-red-500 text-white font-bold'
+                      : activeTab === tab.id
+                      ? 'bg-[#ff8a5c] text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
                 >
-                  <option value="">All Device Types</option>
-                  <option value="desktop">Desktop</option>
-                  <option value="mobile">Mobile</option>
-                  <option value="tablet">Tablet</option>
-                </select>
-              </div>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ======================================================================= */}
+      {/* TAB 1: LIVE ACTIVE SESSIONS                                             */}
+      {/* ======================================================================= */}
+      {activeTab === 'sessions' && (
+        <div className="space-y-4">
+          <FilterToolbar
+            searchValue={sessionSearch}
+            onSearchChange={setSessionSearch}
+            searchPlaceholder="Search by user name, email, IP, institution... (Press / to focus)"
+            viewMode={sessionViewMode}
+            onViewModeChange={setSessionViewMode}
+            activeChips={[
+              ...(deviceFilter
+                ? [
+                    {
+                      id: 'deviceFilter',
+                      label: 'Device',
+                      value: deviceFilter.toUpperCase(),
+                      onRemove: () => {
+                        setDeviceFilter('');
+                        setSessionPage(1);
+                      },
+                    },
+                  ]
+                : []),
+            ]}
+            hasActiveFilters={Boolean(deviceFilter || sessionSearch)}
+            onClearFilters={() => {
+              setDeviceFilter('');
+              setSessionSearch('');
+              setSessionPage(1);
+            }}
+            totalResults={sessionsTotal}
+            totalLabel="Active Sessions"
+            filterElements={
+              <FilterSelect
+                icon={<Laptop size={13} />}
+                value={deviceFilter}
+                onChange={(e) => {
+                  setDeviceFilter(e.target.value);
+                  setSessionPage(1);
+                }}
+                title="Filter by Device Form Factor"
+              >
+                <option value="">All Devices</option>
+                <option value="desktop">Desktop Stations</option>
+                <option value="mobile">Mobile Devices</option>
+                <option value="tablet">Tablet Terminals</option>
+              </FilterSelect>
+            }
+          />
+
+          {isLoadingSessions ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-3 shadow-2xs">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+              ))}
             </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-white/5 bg-black/30 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                    <th className="px-6 py-4">User & Institution</th>
-                    <th className="px-6 py-4">Hardware & Browser</th>
-                    <th className="px-6 py-4">IP & Location</th>
-                    <th className="px-6 py-4">Session Age / Heartbeat</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {isLoadingSessions ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-16 text-center text-gray-500">
-                        <div className="flex flex-col items-center justify-center space-y-3">
-                          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                          <p className="text-sm">Fetching live sessions...</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : sessions.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-16 text-center text-gray-500">
-                        <Radio size={40} className="mx-auto mb-2 opacity-30 text-indigo-400" />
-                        <p className="text-base text-gray-300 font-semibold">No active sessions matching criteria</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    sessions.map((s) => (
-                      <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
-                              {s.userName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-gray-100 flex items-center gap-2">
-                                <span>{s.userName}</span>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-300">
-                                  {s.userRole}
-                                </span>
-                              </div>
-                              <div className="text-xs text-gray-400">{s.userEmail}</div>
-                              {s.institutionId && (
-                                <div className="text-[11px] text-indigo-400 font-mono mt-0.5">
-                                  {s.institutionName ? `${s.institutionName} (${s.institutionId})` : s.institutionId}
-                                </div>
-                              )}
-                            </div>
+          ) : sessions.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-2xs">
+              <EmptyState
+                icon={<Radio size={28} className="text-[#ff8a5c]" />}
+                title="No active sessions found"
+                description={
+                  sessionSearch || deviceFilter
+                    ? 'No device sessions match your current filter parameters.'
+                    : 'There are currently no active user sessions recorded on the platform.'
+                }
+              />
+            </div>
+          ) : (
+            <div>
+              {/* Mobile Card List (< md screens, or when CARDS view is active) */}
+              <div
+                className={
+                  sessionViewMode === 'CARDS'
+                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5'
+                    : 'md:hidden divide-y divide-gray-100 bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden'
+                }
+              >
+                {sessions.map((s) => (
+                  <div
+                    key={s.id}
+                    className={`p-4 space-y-3 hover:bg-gray-50/70 transition-colors ${
+                      sessionViewMode === 'CARDS'
+                        ? 'bg-white rounded-2xl border border-gray-200 shadow-2xs flex flex-col justify-between'
+                        : ''
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2.5 mb-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#ff8a5c] font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
+                            {s.userName.slice(0, 2).toUpperCase()}
                           </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2.5">
-                            <div className="p-2 rounded-lg bg-white/5 text-indigo-400 border border-white/5">
-                              {s.deviceType === 'mobile' ? (
-                                <Smartphone size={16} />
-                              ) : (
-                                <Laptop size={16} />
-                              )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="font-bold text-gray-900 text-sm truncate">{s.userName}</span>
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-gray-100 text-gray-600 font-mono font-bold shrink-0">
+                                {s.userRole}
+                              </span>
                             </div>
-                            <div>
-                              <div className="font-medium text-gray-200">
-                                {s.browser || 'Web Browser'}
+                            <span className="text-[11px] text-gray-400 block truncate">{s.userEmail}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold shrink-0 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Live</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50/80 p-2.5 rounded-xl border border-gray-100 mb-2">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">Device</span>
+                          <div className="flex items-center gap-1 text-gray-800 font-medium mt-0.5">
+                            {s.deviceType === 'mobile' ? (
+                              <Smartphone size={13} className="text-[#ff8a5c] shrink-0" />
+                            ) : (
+                              <Laptop size={13} className="text-[#ff8a5c] shrink-0" />
+                            )}
+                            <span className="truncate">{s.browser || 'Browser'}</span>
+                          </div>
+                          <span className="text-[10px] text-gray-500 block truncate">{s.os || 'Unknown OS'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">Origin</span>
+                          <div className="flex items-center gap-1 text-gray-800 font-medium mt-0.5">
+                            <MapPin size={12} className="text-gray-400 shrink-0" />
+                            <span className="truncate">{[s.city, s.country].filter(Boolean).join(', ') || 'Edge'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[10px] text-gray-500 truncate">{s.ipAddress || '—'}</span>
+                            {s.ipAddress && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopy(`ip_${s.id}`, s.ipAddress, e)}
+                                className="text-gray-400 hover:text-[#ff8a5c]"
+                                title="Copy IP"
+                              >
+                                {copiedId === `ip_${s.id}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {s.institutionName && (
+                        <div className="text-[11px] text-gray-500 flex items-center gap-1 mb-2">
+                          <Building2 size={12} className="text-[#ff8a5c] shrink-0" />
+                          <span className="truncate font-medium">{s.institutionName}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <div className="text-[11px] text-gray-400 flex items-center gap-1">
+                        <Clock size={12} />
+                        <span>Active {new Date(s.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setSessionToRevoke(s)}
+                          className="h-[34px] px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1"
+                          title="Terminate this device session"
+                        >
+                          <Trash2 size={12} /> Kill
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUserToNuke({ userId: s.userId, userName: s.userName })}
+                          className="h-[34px] px-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-medium transition-colors"
+                          title="Kill all devices for this user"
+                        >
+                          Nuke All
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View (>= md screens, hidden in CARDS view) */}
+              <div className={sessionViewMode === 'CARDS' ? 'hidden' : 'hidden md:block bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden'}>
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        <th className="py-3.5 px-4">User & Institution</th>
+                        <th className="py-3.5 px-4">Hardware & Browser</th>
+                        <th className="py-3.5 px-4">IP & Location</th>
+                        <th className="py-3.5 px-4">Session Age / Heartbeat</th>
+                        <th className="py-3.5 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-xs">
+                      {sessions.map((s) => (
+                        <tr key={s.id} className="hover:bg-gray-50/70 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#ff8a5c] font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
+                                {s.userName.slice(0, 2).toUpperCase()}
                               </div>
-                              <div className="text-xs text-gray-400 flex items-center gap-1.5">
-                                <span>{s.os || 'Unknown OS'}</span>
-                                {s.cpuArchitecture && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="text-[11px] font-mono text-gray-400">{s.cpuArchitecture}</span>
-                                  </>
+                              <div className="min-w-0">
+                                <div className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                  <span>{s.userName}</span>
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-gray-100 text-gray-600 font-mono font-semibold">
+                                    {s.userRole}
+                                  </span>
+                                </div>
+                                <div className="text-gray-500 text-[11px]">{s.userEmail}</div>
+                                {s.institutionName && (
+                                  <div className="text-[11px] text-blue-600 flex items-center gap-1 mt-0.5">
+                                    <Building2 size={11} />
+                                    <span>{s.institutionName}</span>
+                                  </div>
                                 )}
                               </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="px-6 py-4">
-                          <div className="space-y-0.5">
-                            <div className="font-mono text-xs text-gray-300 flex items-center gap-1.5">
-                              <Globe size={13} className="text-gray-500" />
-                              {s.ipAddress || '—'}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-2 rounded-lg bg-orange-50 text-[#ff8a5c] border border-orange-100">
+                                {s.deviceType === 'mobile' ? <Smartphone size={15} /> : <Laptop size={15} />}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-gray-800">{s.browser || 'Web Browser'}</div>
+                                <div className="text-[11px] text-gray-500 flex items-center gap-1">
+                                  <span>{s.os || 'Unknown OS'}</span>
+                                  {s.cpuArchitecture && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="font-mono">{s.cpuArchitecture}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-400 flex items-center gap-1.5">
-                              <MapPin size={13} className="text-gray-500" />
-                              {[s.city, s.country].filter(Boolean).join(', ') || 'Cloudflare Edge'}
-                            </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="space-y-0.5 text-xs">
-                            <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              Active {new Date(s.updatedAt).toLocaleTimeString()}
+                          <td className="py-3.5 px-4">
+                            <div className="space-y-0.5">
+                              <div className="font-mono text-xs text-gray-700 flex items-center gap-1.5">
+                                <Globe size={13} className="text-gray-400" />
+                                <span>{s.ipAddress || '—'}</span>
+                                {s.ipAddress && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleCopy(`ip_d_${s.id}`, s.ipAddress, e)}
+                                    className="text-gray-400 hover:text-[#ff8a5c]"
+                                    title="Copy IP"
+                                  >
+                                    {copiedId === `ip_d_${s.id}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500 flex items-center gap-1">
+                                <MapPin size={12} className="text-gray-400" />
+                                <span>{[s.city, s.country].filter(Boolean).join(', ') || 'Edge Network'}</span>
+                              </div>
                             </div>
-                            <div className="text-gray-400 flex items-center gap-1">
-                              <Clock size={12} className="text-gray-500" />
-                              Signed in {new Date(s.createdAt).toLocaleDateString()}
+                          </td>
+
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <div className="space-y-0.5 text-xs">
+                              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span>Active {new Date(s.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                              <div className="text-gray-400 text-[11px] flex items-center gap-1">
+                                <Clock size={11} />
+                                <span>Signed in {new Date(s.createdAt).toLocaleDateString()}</span>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => setSessionToRevoke(s)}
-                              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
-                              title="Immediately kill this device session"
-                            >
-                              <Trash2 size={13} /> Kill Session
-                            </button>
-                            <button
-                              onClick={() => setUserToNuke({ userId: s.userId, userName: s.userName })}
-                              className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg text-xs transition-colors"
-                              title="Kill all devices for this user"
-                            >
-                              Nuke All
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {sessionsTotal > 0 && (
-              <div className="p-4 border-t border-white/5 bg-black/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span className="text-xs text-gray-400">
-                  Showing <span className="text-white font-medium">{(sessionPage - 1) * 15 + 1}</span> to{' '}
-                  <span className="text-white font-medium">{Math.min(sessionPage * 15, sessionsTotal)}</span> of{' '}
-                  <span className="text-white font-medium">{sessionsTotal}</span> active devices (Page {sessionPage} of{' '}
-                  {sessionsTotalPages})
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSessionPage((p) => Math.max(1, p - 1))}
-                    disabled={sessionPage <= 1}
-                    className="px-3.5 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 rounded-lg transition-colors text-gray-300"
-                  >
-                    Previous
-                  </button>
-                  <div className="px-2 text-xs font-mono text-gray-400">
-                    {sessionPage} / {sessionsTotalPages}
-                  </div>
-                  <button
-                    onClick={() => setSessionPage((p) => Math.min(sessionsTotalPages, p + 1))}
-                    disabled={sessionPage >= sessionsTotalPages}
-                    className="px-3.5 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 rounded-lg transition-colors text-gray-300"
-                  >
-                    Next
-                  </button>
+                          <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setSessionToRevoke(s)}
+                                className="h-[34px] px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1"
+                                title="Terminate this device session"
+                              >
+                                <Trash2 size={12} /> Kill Session
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setUserToNuke({ userId: s.userId, userName: s.userName })}
+                                className="h-[34px] px-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-xl text-xs transition-colors"
+                                title="Kill all devices for this user"
+                              >
+                                Nuke All
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Tab 2: Security Threat Radar & Anomalies */}
-        {activeTab === 'threats' && (
-          <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
+          {/* Standardized Pagination */}
+          <Pagination
+            page={sessionPage}
+            totalPages={sessionsTotalPages}
+            totalItems={sessionsTotal}
+            pageSize={15}
+            onPageChange={setSessionPage}
+            itemName="active sessions"
+          />
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* TAB 2: THREAT RADAR & ANOMALIES                                         */}
+      {/* ======================================================================= */}
+      {activeTab === 'threats' && (
+        <div className="space-y-6">
+          {/* Impossible Travel Section */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <ShieldAlert className="text-red-400" size={20} /> Geo-Velocity & Threat Detection Radar
+                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <Plane className="text-amber-500" size={16} />
+                  <span>Impossible Travel Incidents ({threats?.impossibleTravelIncidents.length || 0})</span>
                 </h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Automated detection of Impossible Travel (physically impossible speed between logins) and Brute-Force attack bursts.
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Sign-in events from geographically distinct locations within impossible physical travel time windows.
                 </p>
               </div>
             </div>
 
-            {/* Impossible Travel Section */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-                <Plane size={15} className="text-amber-400" /> Impossible Travel Incidents ({threats?.impossibleTravelIncidents.length || 0})
-              </h4>
-
-              {isLoadingThreats ? (
-                <p className="text-xs text-gray-500">Scanning geographical logs...</p>
-              ) : (threats?.impossibleTravelIncidents.length || 0) === 0 ? (
-                <div className="p-6 rounded-xl bg-white/[0.02] border border-white/5 text-center text-gray-500">
-                  <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-400 opacity-60" />
-                  <p className="text-sm font-medium text-gray-300">No Impossible Travel Anomalies Detected</p>
-                  <p className="text-xs text-gray-500 mt-0.5">All recent sign-ins fall within expected physical travel velocities.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {threats?.impossibleTravelIncidents.map((inc, i) => (
-                    <div
-                      key={i}
-                      className="p-4 rounded-xl bg-red-950/20 border border-red-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">
-                            {inc.severity}
-                          </span>
-                          <span className="font-semibold text-white text-sm">{inc.userName}</span>
-                          <span className="text-xs text-gray-400">({inc.userEmail})</span>
-                        </div>
-                        <p className="text-xs text-red-300/90 font-medium">{inc.reason}</p>
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 pt-1 font-mono">
-                          <span>Origin: {inc.originLocation} ({inc.originIp || 'IP Hidden'})</span>
-                          <span>➔</span>
-                          <span>Destination: {inc.destinationLocation} ({inc.destinationIp || 'IP Hidden'})</span>
-                          <span>•</span>
-                          <span>Interval: {inc.timeDeltaMinutes}m</span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => setUserToNuke({ userId: inc.userId, userName: inc.userName })}
-                        className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-colors shrink-0"
-                      >
-                        Nuke All Devices
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Brute Force Attacks Section */}
-            <div className="space-y-3 pt-4 border-t border-white/5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-                <Crosshair size={15} className="text-red-400" /> Brute-Force Password Bursts ({threats?.bruteForceAttacks.length || 0})
-              </h4>
-
-              {(threats?.bruteForceAttacks.length || 0) === 0 ? (
-                <div className="p-6 rounded-xl bg-white/[0.02] border border-white/5 text-center text-gray-500">
-                  <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-400 opacity-60" />
-                  <p className="text-sm font-medium text-gray-300">No Brute-Force Attacks Detected</p>
-                  <p className="text-xs text-gray-500 mt-0.5">No IP addresses exceeding 3 consecutive failed login attempts in the past 2 hours.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {threats?.bruteForceAttacks.map((bf, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/20 space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-sm font-bold text-amber-300">{bf.ipAddress}</span>
-                        <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-xs font-semibold">
-                          {bf.failedAttempts} failed attempts
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-400 flex items-center gap-2">
-                        <MapPin size={13} /> {bf.location}
-                      </div>
-                      <div className="text-[11px] text-gray-500 flex items-center justify-between border-t border-white/5 pt-1.5">
-                        <span>Targeted Accounts: {bf.targetedAccountsCount}</span>
-                        <span>Last attempt: {new Date(bf.lastAttemptAt).toLocaleTimeString()}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: Edge Geographic Clusters & Live Coordinates */}
-        {activeTab === 'locations' && (
-          <div className="p-6 space-y-6">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Compass className="text-emerald-400" size={20} /> Edge Geographic Distribution & Telemetry
-              </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Real-time geographic clusters aggregated from Cloudflare Edge edge nodes and live device coordinates.
-              </p>
-            </div>
-
-            {isLoadingLocations ? (
-              <p className="text-xs text-gray-500">Mapping geographic clusters...</p>
-            ) : locations.length === 0 ? (
-              <div className="p-12 text-center text-gray-500">
-                <MapPin size={40} className="mx-auto mb-2 opacity-30 text-emerald-400" />
-                <p className="text-sm font-medium text-gray-300">No active geographic locations</p>
+            {isLoadingThreats ? (
+              <div className="py-6 text-center text-xs text-gray-400">Scanning geographical logs...</div>
+            ) : (threats?.impossibleTravelIncidents.length || 0) === 0 ? (
+              <div className="py-8 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-500 opacity-70" />
+                <p className="text-sm font-bold text-gray-800">No Impossible Travel Anomalies</p>
+                <p className="text-xs text-gray-500 mt-0.5">All recent sign-ins fall within expected physical velocities.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {locations.map((loc, idx) => (
+              <div className="space-y-3">
+                {threats?.impossibleTravelIncidents.map((inc, i) => (
                   <div
-                    key={idx}
-                    className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/20 transition-all space-y-3 group"
+                    key={i}
+                    className="p-4 rounded-xl bg-red-50/70 border border-red-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <MapPin size={18} />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-white text-sm">
-                            {loc.city !== 'Unknown' ? loc.city : loc.region}
-                          </h4>
-                          <span className="text-xs text-gray-400">{loc.country}</span>
-                        </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                          {inc.severity}
+                        </span>
+                        <span className="font-bold text-gray-900 text-sm">{inc.userName}</span>
+                        <span className="text-xs text-gray-500">({inc.userEmail})</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold">
-                        {loc.activeSessionsCount} active
-                      </span>
+                      <p className="text-xs text-red-800 font-medium">{inc.reason}</p>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 pt-1 font-mono">
+                        <span>Origin: {inc.originLocation} ({inc.originIp || 'IP Hidden'})</span>
+                        <span>➔</span>
+                        <span>Dest: {inc.destinationLocation} ({inc.destinationIp || 'IP Hidden'})</span>
+                        <span>•</span>
+                        <span>Delta: {inc.timeDeltaMinutes}m</span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-400 pt-2 border-t border-white/5 font-mono">
-                      <div>
-                        <span className="text-gray-500">Lat:</span> {loc.latitude.toFixed(4)}
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Lon:</span> {loc.longitude.toFixed(4)}
-                      </div>
-                      <div className="col-span-2 text-indigo-400">
-                        {loc.uniqueUsersCount} unique {loc.uniqueUsersCount === 1 ? 'user' : 'users'} connected
-                      </div>
+                    <button
+                      type="button"
+                      onClick={() => setUserToNuke({ userId: inc.userId, userName: inc.userName })}
+                      className="h-[36px] px-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors shrink-0"
+                    >
+                      Nuke All Devices
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Brute Force Attacks Section */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <Crosshair className="text-red-500" size={16} />
+                  <span>Brute-Force Password Bursts ({threats?.bruteForceAttacks.length || 0})</span>
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  IP addresses exceeding consecutive failed login thresholds in the telemetry buffer.
+                </p>
+              </div>
+            </div>
+
+            {(threats?.bruteForceAttacks.length || 0) === 0 ? (
+              <div className="py-8 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-500 opacity-70" />
+                <p className="text-sm font-bold text-gray-800">No Brute-Force Attacks Detected</p>
+                <p className="text-xs text-gray-500 mt-0.5">Zero IP addresses exceeding 3 consecutive failed login attempts in the past 2 hours.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {threats?.bruteForceAttacks.map((bf, idx) => (
+                  <div key={idx} className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-sm font-bold text-amber-900">{bf.ipAddress}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200">
+                        {bf.failedAttempts} failed attempts
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 flex items-center gap-1.5">
+                      <MapPin size={13} className="text-gray-400" />
+                      <span>{bf.location}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-500 flex items-center justify-between border-t border-amber-200/60 pt-2">
+                      <span>Targeted Accounts: {bf.targetedAccountsCount}</span>
+                      <span>Last Attempt: {new Date(bf.lastAttemptAt).toLocaleTimeString()}</span>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Tab 4: Global Security & Auth Audit Log */}
-        {activeTab === 'history' && (
-          <div>
-            {/* Filter Toolbar */}
-            <div className="p-4 border-b border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between bg-black/20">
-              <div className="relative w-full md:w-96">
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-                <input
-                  type="text"
-                  placeholder="Search user, email, IP, location, reason..."
-                  value={historySearch}
-                  onChange={(e) => {
-                    setHistorySearch(e.target.value);
-                    setHistoryPage(1);
-                  }}
-                  className="w-full bg-black/30 border border-white/10 rounded-xl pl-11 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                />
-              </div>
+      {/* ======================================================================= */}
+      {/* TAB 3: EDGE GEOGRAPHIC TELEMETRY                                        */}
+      {/* ======================================================================= */}
+      {activeTab === 'locations' && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-2xs space-y-4">
+          <div className="border-b border-gray-100 pb-3">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <Compass className="text-emerald-500" size={16} />
+              <span>Edge Geographic Distribution & Telemetry</span>
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Live geographic clusters aggregated from Cloudflare Edge edge nodes and device coordinates.
+            </p>
+          </div>
 
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setHistoryPage(1);
-                  }}
-                  className="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer"
-                >
-                  <option value="">All Results</option>
-                  <option value="SUCCESS">Success Only</option>
-                  <option value="FAILED">Failed Logins Only</option>
-                </select>
-              </div>
+          {isLoadingLocations ? (
+            <div className="py-8 text-center text-xs text-gray-400">Loading location coordinates...</div>
+          ) : locations.length === 0 ? (
+            <div className="py-8 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+              <Globe size={32} className="mx-auto mb-2 text-gray-400 opacity-60" />
+              <p className="text-sm font-bold text-gray-800">No Location Clusters Found</p>
+              <p className="text-xs text-gray-500 mt-0.5">Locations will appear as workstations establish secure connections.</p>
             </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-white/5 bg-black/30 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                    <th className="px-6 py-4">Status & Reason</th>
-                    <th className="px-6 py-4">Account / Target</th>
-                    <th className="px-6 py-4">Client Hardware & Browser</th>
-                    <th className="px-6 py-4">IP & Location</th>
-                    <th className="px-6 py-4">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {isLoadingHistory ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-16 text-center text-gray-500">
-                        <div className="flex flex-col items-center justify-center space-y-3">
-                          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                          <p className="text-sm">Loading security audit records...</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : history.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-16 text-center text-gray-500">
-                        <History size={40} className="mx-auto mb-2 opacity-30 text-indigo-400" />
-                        <p className="text-base text-gray-300 font-semibold">No login history records found</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    history.map((h) => (
-                      <tr key={h.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {h.status === 'SUCCESS' ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              <CheckCircle2 size={14} /> Authentication Succeeded
-                            </span>
-                          ) : (
-                            <div className="space-y-0.5">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                                <XCircle size={14} /> Failed Login
-                              </span>
-                              {h.failureReason && (
-                                <div className="text-[11px] font-mono text-red-300/80 ml-1">
-                                  {h.failureReason}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {h.userName ? (
-                            <div>
-                              <div className="font-semibold text-gray-200">{h.userName}</div>
-                              <div className="text-xs text-gray-400">{h.userEmail}</div>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-500 italic">Unknown account attempt</span>
-                          )}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="text-xs text-gray-300">
-                            {[h.browser, h.os].filter(Boolean).join(' on ') || 'Generic Web Client'}
-                          </div>
-                          <div className="text-[11px] text-gray-500 capitalize">
-                            Type: {h.deviceType || 'Desktop'}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="font-mono text-xs text-gray-300">{h.ipAddress || '—'}</div>
-                          <div className="text-xs text-gray-400">
-                            {[h.city, h.country].filter(Boolean).join(', ') || 'Edge Network'}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-400">
-                          {new Date(h.createdAt).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {historyTotal > 0 && (
-              <div className="p-4 border-t border-white/5 bg-black/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span className="text-xs text-gray-400">
-                  Showing <span className="text-white font-medium">{(historyPage - 1) * 20 + 1}</span> to{' '}
-                  <span className="text-white font-medium">{Math.min(historyPage * 20, historyTotal)}</span> of{' '}
-                  <span className="text-white font-medium">{historyTotal}</span> audit events (Page {historyPage} of{' '}
-                  {historyTotalPages})
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                    disabled={historyPage <= 1}
-                    className="px-3.5 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 rounded-lg transition-colors text-gray-300"
-                  >
-                    Previous
-                  </button>
-                  <div className="px-2 text-xs font-mono text-gray-400">
-                    {historyPage} / {historyTotalPages}
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {locations.map((loc, i) => (
+                <div key={i} className="p-4 rounded-xl bg-gray-50/80 border border-gray-200/70 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#ff8a5c] font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
+                        {loc.country ? loc.country.slice(0, 2).toUpperCase() : 'GL'}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-gray-900 text-xs truncate">{loc.city || 'Regional Hub'}</h4>
+                        <span className="text-[11px] text-gray-400 truncate block">{loc.country}</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Live Edge
+                    </span>
                   </div>
-                  <button
-                    onClick={() => setHistoryPage((p) => Math.min(historyTotalPages, p + 1))}
-                    disabled={historyPage >= historyTotalPages}
-                    className="px-3.5 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 rounded-lg transition-colors text-gray-300"
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-gray-200/50">
+                    <div>
+                      <span className="text-[10px] text-gray-400 block uppercase font-bold">Sessions</span>
+                      <span className="font-bold text-gray-800">{loc.activeSessionsCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-400 block uppercase font-bold">Unique Users</span>
+                      <span className="font-bold text-gray-800">{loc.uniqueUsersCount}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* TAB 4: GLOBAL LOGIN AUDIT LOGS                                          */}
+      {/* ======================================================================= */}
+      {activeTab === 'history' && (
+        <div className="space-y-4">
+          <FilterToolbar
+            searchValue={historySearch}
+            onSearchChange={setHistorySearch}
+            searchPlaceholder="Search audit by user name, email, IP, location... (Press / to focus)"
+            viewMode={historyViewMode}
+            onViewModeChange={setHistoryViewMode}
+            activeChips={[
+              ...(statusFilter
+                ? [
+                    {
+                      id: 'statusFilter',
+                      label: 'Status',
+                      value: statusFilter,
+                      onRemove: () => {
+                        setStatusFilter('');
+                        setHistoryPage(1);
+                      },
+                    },
+                  ]
+                : []),
+            ]}
+            hasActiveFilters={Boolean(statusFilter || historySearch)}
+            onClearFilters={() => {
+              setStatusFilter('');
+              setHistorySearch('');
+              setHistoryPage(1);
+            }}
+            totalResults={historyTotal}
+            totalLabel="Audit Events"
+            filterElements={
+              <FilterSelect
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setHistoryPage(1);
+                }}
+                title="Filter by Authentication Status"
+              >
+                <option value="">All Statuses</option>
+                <option value="SUCCESS">Success Only</option>
+                <option value="FAILED">Failed Only</option>
+              </FilterSelect>
+            }
+          />
+
+          {isLoadingHistory ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-3 shadow-2xs">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : history.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-2xs">
+              <EmptyState
+                icon={<History size={28} className="text-[#ff8a5c]" />}
+                title="No login audit records found"
+                description={
+                  historySearch || statusFilter
+                    ? 'No audit log entries match your active criteria.'
+                    : 'Historical login events will appear as users authenticate.'
+                }
+              />
+            </div>
+          ) : (
+            <div>
+              {/* Mobile Card View for History */}
+              <div
+                className={
+                  historyViewMode === 'CARDS'
+                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5'
+                    : 'md:hidden divide-y divide-gray-100 bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden'
+                }
+              >
+                {history.map((h) => (
+                  <div
+                    key={h.id}
+                    className={`p-4 space-y-2.5 hover:bg-gray-50/70 transition-colors ${
+                      historyViewMode === 'CARDS'
+                        ? 'bg-white rounded-2xl border border-gray-200 shadow-2xs'
+                        : ''
+                    }`}
                   >
-                    Next
-                  </button>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="font-bold text-gray-900 text-xs truncate block">{h.userName || h.userEmail || 'Anonymous'}</span>
+                        <span className="text-[11px] text-gray-400 truncate block">{h.userEmail}</span>
+                      </div>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                          h.status === 'SUCCESS'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}
+                      >
+                        {h.status}
+                      </span>
+                    </div>
+
+                    {h.failureReason && (
+                      <div className="text-[11px] font-mono text-rose-600 bg-rose-50/50 p-2 rounded-lg border border-rose-100">
+                        Reason: {h.failureReason}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50/80 p-2.5 rounded-xl border border-gray-100">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Device</span>
+                        <span className="text-[11px] text-gray-700 font-medium block truncate">
+                          {[h.browser, h.os].filter(Boolean).join(' / ') || 'Web Client'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Location</span>
+                        <span className="text-[11px] text-gray-700 font-medium block truncate">
+                          {[h.city, h.country].filter(Boolean).join(', ') || 'Edge Network'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-gray-400 flex items-center justify-between pt-1 border-t border-gray-100">
+                      <span className="font-mono text-gray-500">{h.ipAddress || '—'}</span>
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <Clock size={11} />
+                        <span>{new Date(h.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View for History */}
+              <div className={historyViewMode === 'CARDS' ? 'hidden' : 'hidden md:block bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden'}>
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        <th className="py-3.5 px-4">Status & Reason</th>
+                        <th className="py-3.5 px-4">Account / Target</th>
+                        <th className="py-3.5 px-4">Client Hardware & Browser</th>
+                        <th className="py-3.5 px-4">IP & Location</th>
+                        <th className="py-3.5 px-4">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-xs">
+                      {history.map((h) => (
+                        <tr key={h.id} className="hover:bg-gray-50/70 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                h.status === 'SUCCESS'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              }`}
+                            >
+                              {h.status}
+                            </span>
+                            {h.failureReason && (
+                              <div className="text-[10px] font-mono text-rose-600 mt-1 max-w-[180px] truncate">
+                                {h.failureReason}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            {h.userName ? (
+                              <div>
+                                <div className="font-semibold text-gray-900">{h.userName}</div>
+                                <div className="text-[11px] text-gray-400">{h.userEmail}</div>
+                              </div>
+                            ) : (
+                              <span className="font-mono text-gray-400 text-xs">{h.userEmail || 'Anonymous'}</span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="text-gray-800 font-medium">
+                              {[h.browser, h.os].filter(Boolean).join(' on ') || 'Generic Web Client'}
+                            </div>
+                            <div className="text-[11px] text-gray-400 capitalize">Type: {h.deviceType || 'Desktop'}</div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="font-mono text-xs text-gray-700">{h.ipAddress || '—'}</div>
+                            <div className="text-xs text-gray-500">
+                              {[h.city, h.country].filter(Boolean).join(', ') || 'Edge Network'}
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 whitespace-nowrap text-xs text-gray-500">
+                            {new Date(h.createdAt).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Glassmorphic Session Revocation Confirmation Dialog */}
-      {sessionToRevoke && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-gray-900 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-red-400">
-                <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
-                  <ShieldAlert size={20} />
-                </div>
-                <h3 className="font-bold text-lg text-white">Revoke Device Session?</h3>
-              </div>
-              <button
-                onClick={() => setSessionToRevoke(null)}
-                className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <X size={18} />
-              </button>
             </div>
+          )}
 
-            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-400">User:</span>
-                <span className="text-white font-medium">{sessionToRevoke.userName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Device Hardware:</span>
-                <span className="text-gray-200">
-                  {sessionToRevoke.browser || 'Browser'} on {sessionToRevoke.os || 'OS'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">IP & Edge Origin:</span>
-                <span className="text-gray-200 font-mono">
-                  {sessionToRevoke.ipAddress || '—'}{' '}
-                  {sessionToRevoke.city ? `(${sessionToRevoke.city})` : ''}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-400">
-              Terminating this session will immediately invalidate the bearer token and forcibly log out the user on this device.
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setSessionToRevoke(null)}
-                className="px-4 py-2 text-xs font-medium text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  killSession(sessionToRevoke.id);
-                  setSessionToRevoke(null);
-                }}
-                disabled={isKillingSession}
-                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all flex items-center gap-1.5 disabled:opacity-50"
-              >
-                <Trash2 size={13} /> Forcibly Kill Session
-              </button>
-            </div>
-          </div>
+          {/* Standardized Pagination */}
+          <Pagination
+            page={historyPage}
+            totalPages={historyTotalPages}
+            totalItems={historyTotal}
+            pageSize={20}
+            onPageChange={setHistoryPage}
+            itemName="audit logs"
+          />
         </div>
       )}
 
-      {/* Glassmorphic User Nuclear Revoke Confirmation Dialog */}
-      {userToNuke && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-gray-900 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-red-400">
-                <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
-                  <ShieldAlert size={20} />
-                </div>
-                <h3 className="font-bold text-lg text-white">Nuke All User Sessions?</h3>
-              </div>
-              <button
-                onClick={() => setUserToNuke(null)}
-                className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
+      {/* Standardized Confirmation Modal: Kill Single Session */}
+      <ConfirmationModal
+        isOpen={Boolean(sessionToRevoke)}
+        onClose={() => setSessionToRevoke(null)}
+        onConfirm={() => {
+          if (!sessionToRevoke) return;
+          killSession(sessionToRevoke.id, {
+            onSuccess: () => setSessionToRevoke(null),
+          });
+        }}
+        title="Revoke Device Session?"
+        description={`Are you sure you want to terminate this active session for ${sessionToRevoke?.userName} (${sessionToRevoke?.userEmail}) on ${sessionToRevoke?.browser || 'Web Browser'} (${sessionToRevoke?.os || 'Client'})? This will immediately log out the user from that device.`}
+        confirmText="Kill Session"
+        variant="danger"
+        isLoading={isKillingSession}
+      />
 
-            <p className="text-xs text-gray-300">
-              Are you sure you want to terminate <strong className="text-white">every active device session</strong> for user <span className="font-semibold text-indigo-400 font-mono">"{userToNuke.userName}"</span>?
-            </p>
-            <p className="text-xs text-gray-400">
-              The user will be immediately evicted from all desktop, tablet, and mobile clients simultaneously.
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setUserToNuke(null)}
-                className="px-4 py-2 text-xs font-medium text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  killAllUserSessions(userToNuke.userId);
-                  setUserToNuke(null);
-                }}
-                disabled={isKillingAll}
-                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all flex items-center gap-1.5 disabled:opacity-50"
-              >
-                <Trash2 size={13} /> Nuke All Devices
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Standardized Confirmation Modal: Kill All User Sessions */}
+      <ConfirmationModal
+        isOpen={Boolean(userToNuke)}
+        onClose={() => setUserToNuke(null)}
+        onConfirm={() => {
+          if (!userToNuke) return;
+          killAllUserSessions(userToNuke.userId, {
+            onSuccess: () => setUserToNuke(null),
+          });
+        }}
+        title="Terminate All Device Sessions?"
+        description={`This will immediately revoke all active device sessions and tokens across all laptops, phones, and workstations for ${userToNuke?.userName}.`}
+        confirmText="Nuke All Sessions"
+        variant="critical"
+        isLoading={isKillingAll}
+      />
     </div>
   );
 }

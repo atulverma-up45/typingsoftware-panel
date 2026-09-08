@@ -45,6 +45,13 @@ import { InstitutionDetailModal } from '../components/InstitutionDetailModal';
 import { InstitutionActionsDropdown } from '../components/InstitutionActionsDropdown';
 import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import ResponsiveDataView from '@/components/ui/ResponsiveDataView';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
+import StatusBadge from '@/components/ui/StatusBadge';
+import EmptyState from '@/components/ui/EmptyState';
+import { LayoutGrid, List } from 'lucide-react';
 
 type TabType = 'ALL' | 'ACTIVE' | 'SUSPENDED' | 'TRASH';
 
@@ -60,6 +67,7 @@ export const InstitutionsPage: React.FC = () => {
   const [limit, setLimit] = useState(10);
   const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'status' | 'slug'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
   // Debounce search input (300ms)
   React.useEffect(() => {
@@ -188,51 +196,49 @@ export const InstitutionsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-300">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-6">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Institutions Directory</h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold bg-[#fff0eb] text-[#ff8a5c] rounded-full border border-[#ff8a5c]/20">
-              Multi-Tenant
-            </span>
-          </div>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage authorized coaching centers, tenant domains, white-label client styling, and lab allocations
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleExportCsv}
-            title="Export institutions directory as CSV"
-            className="px-3 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl border border-gray-200 shadow-xs transition-colors font-medium text-xs flex items-center gap-1.5"
-          >
-            <Download size={15} className="text-gray-500" />
-            <span>Export CSV</span>
-          </button>
-          <button
-            onClick={handleRefreshAll}
-            title="Refresh directory"
-            className="p-2.5 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 rounded-xl border border-gray-200 shadow-xs transition-colors"
-          >
-            <RefreshCw
-              size={18}
-              className={isFetchingInstitutions ? 'animate-spin text-[#ff8a5c]' : ''}
-            />
-          </button>
-          {isSuperAdmin && (
+      <PageHeader
+        title="Institutions Directory"
+        subtitle="Manage authorized coaching centers, tenant domains, white-label client styling, and lab allocations"
+        icon={<GraduationCap size={20} />}
+        badge={
+          <span className="px-2.5 py-0.5 text-xs font-semibold bg-[#fff0eb] text-[#ff8a5c] rounded-full border border-[#ff8a5c]/20">
+            Multi-Tenant
+          </span>
+        }
+        actions={
+          <>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2.5 text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2"
+              onClick={handleExportCsv}
+              title="Export institutions directory as CSV"
+              className="px-3 py-2 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl border border-gray-200 shadow-2xs transition-colors font-medium text-xs flex items-center gap-1.5 min-h-[38px]"
             >
-              <Plus size={18} strokeWidth={2.5} />
-              <span>Provision Institution</span>
+              <Download size={14} className="text-gray-500" />
+              <span className="hidden xs:inline">Export CSV</span>
             </button>
-          )}
-        </div>
-      </div>
+            <button
+              onClick={handleRefreshAll}
+              title="Refresh directory"
+              className="p-2 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-xl border border-gray-200 shadow-2xs transition-colors min-w-[38px] min-h-[38px] flex items-center justify-center"
+            >
+              <RefreshCw
+                size={16}
+                className={isFetchingInstitutions ? 'animate-spin text-[#ff8a5c]' : ''}
+              />
+            </button>
+            {isSuperAdmin && (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 min-h-[38px]"
+              >
+                <Plus size={16} />
+                <span>Provision Institution</span>
+              </button>
+            )}
+          </>
+        }
+      />
 
       {/* Network Error Alert Banner */}
       {isErrorInstitutions && (
@@ -315,205 +321,253 @@ export const InstitutionsPage: React.FC = () => {
         </div>
       )}
 
+      {/* Status Tabs */}
+      <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-xl border border-gray-100 w-fit overflow-x-auto custom-scrollbar">
+        {[
+          { id: 'ALL', label: 'All Centers' },
+          { id: 'ACTIVE', label: 'Active', textClass: 'text-emerald-700' },
+          { id: 'SUSPENDED', label: 'Suspended', textClass: 'text-amber-700' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => {
+              setActiveTab(tab.id as TabType);
+              setPage(1);
+            }}
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
+              activeTab === tab.id
+                ? `bg-white ${tab.textClass || 'text-gray-900'} shadow-xs`
+                : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+        {isSuperAdmin && (
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('TRASH');
+              setPage(1);
+            }}
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+              activeTab === 'TRASH'
+                ? 'bg-white text-rose-700 shadow-xs'
+                : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Trash2 size={13} />
+            <span>Recycle Bin</span>
+            {globalStats && globalStats.deletedInstitutions > 0 && (
+              <span className="px-1.5 py-0.2 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-full">
+                {globalStats.deletedInstitutions}
+              </span>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Filter & Search Toolbar */}
+      <FilterToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search name, slug, email... (Press / to focus)"
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        activeChips={[
+          ...(sortBy !== 'createdAt' || sortOrder !== 'desc'
+            ? [
+                {
+                  id: 'sort',
+                  label: 'Sort',
+                  value: `${sortBy} (${sortOrder.toUpperCase()})`,
+                  onRemove: () => {
+                    setSortBy('createdAt');
+                    setSortOrder('desc');
+                  },
+                },
+              ]
+            : []),
+        ]}
+        hasActiveFilters={Boolean(searchTerm || sortBy !== 'createdAt' || sortOrder !== 'desc')}
+        onClearFilters={() => {
+          setSearchTerm('');
+          setSortBy('createdAt');
+          setSortOrder('desc');
+          setPage(1);
+        }}
+        totalResults={meta?.total}
+        totalLabel="Institutions"
+        actions={
+          <button
+            type="button"
+            onClick={() => refetchInstitutions()}
+            disabled={isFetchingInstitutions}
+            className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors shrink-0 shadow-2xs"
+            title="Refresh Table"
+          >
+            <RefreshCw
+              size={14}
+              className={isFetchingInstitutions ? 'animate-spin text-[#ff8a5c]' : ''}
+            />
+          </button>
+        }
+        filterElements={
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <FilterSelect
+              icon={<ArrowUpDown size={13} />}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              title="Sort by Column"
+            >
+              <option value="createdAt">Date Onboarded</option>
+              <option value="name">Institution Name</option>
+              <option value="status">Status</option>
+              <option value="slug">Tenant Slug</option>
+            </FilterSelect>
+            <button
+              type="button"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors shrink-0 font-bold text-xs shadow-2xs"
+              title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+            >
+              {sortOrder.toUpperCase()}
+            </button>
+          </div>
+        }
+      />
+
       {/* Main Content Container */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-xs overflow-hidden">
-        {/* Filter & Tabs Bar */}
-        <div className="p-4 sm:p-5 border-b border-gray-100 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            {/* Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-xl border border-gray-100 self-start">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('ALL');
-                  setPage(1);
-                }}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  activeTab === 'ALL'
-                    ? 'bg-white text-gray-900 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-800'
+        {/* Dual-Mode Responsive Data View */}
+        <ResponsiveDataView<Institution>
+          items={institutionsList}
+          isLoading={isLoadingInstitutions}
+          isError={isErrorInstitutions}
+          errorMessage={(institutionsError as Error)?.message}
+          onRetry={refetchInstitutions}
+          viewMode={viewMode}
+          keyExtractor={(inst) => inst.id}
+          cardGridClassName="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 p-3.5 sm:p-4"
+          emptyState={
+            <EmptyState
+              icon={<Building2 size={28} />}
+              title="No institutions found"
+              description={
+                searchTerm
+                  ? `No institutions matched "${searchTerm}". Try another search term.`
+                  : activeTab === 'TRASH'
+                  ? 'Recycle bin is completely empty.'
+                  : 'Get started by provisioning your first typing training institution.'
+              }
+              action={
+                isSuperAdmin && !searchTerm && activeTab !== 'TRASH' ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="px-4 py-2 text-xs font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-2xs transition-all inline-flex items-center gap-1.5"
+                  >
+                    <Plus size={15} />
+                    <span>Provision Center</span>
+                  </button>
+                ) : undefined
+              }
+            />
+          }
+          renderCard={(inst) => {
+            const isDeleted = !!inst.deletedAt;
+            return (
+              <div
+                key={inst.id}
+                className={`bg-white rounded-2xl border border-gray-100 p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between gap-3 ${
+                  isDeleted ? 'opacity-65 bg-gray-50/40' : ''
                 }`}
               >
-                All Centers
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('ACTIVE');
-                  setPage(1);
-                }}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  activeTab === 'ACTIVE'
-                    ? 'bg-white text-emerald-700 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-800'
-                }`}
-              >
-                Active
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('SUSPENDED');
-                  setPage(1);
-                }}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  activeTab === 'SUSPENDED'
-                    ? 'bg-white text-amber-700 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-800'
-                }`}
-              >
-                Suspended
-              </button>
-              {isSuperAdmin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('TRASH');
-                    setPage(1);
-                  }}
-                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
-                    activeTab === 'TRASH'
-                      ? 'bg-white text-rose-700 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-800'
-                  }`}
-                >
-                  <Trash2 size={13} />
-                  <span>Recycle Bin</span>
-                  {globalStats && globalStats.deletedInstitutions > 0 && (
-                    <span className="px-1.5 py-0.2 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-full">
-                      {globalStats.deletedInstitutions}
-                    </span>
-                  )}
-                </button>
-              )}
-            </div>
-
-            {/* Search & Sort Controls */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search Bar */}
-              <div className="relative min-w-[240px] sm:min-w-[280px]">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search name, slug, email..."
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
-                />
-              </div>
-
-              {/* Sort By Field */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="text-xs border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
-              >
-                <option value="createdAt">Date Onboarded</option>
-                <option value="name">Institution Name</option>
-                <option value="status">Status</option>
-                <option value="slug">Tenant Slug</option>
-              </select>
-
-              {/* Sort Order Toggle */}
-              <button
-                type="button"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
-                title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
-              >
-                <ArrowUpDown size={15} />
-              </button>
-
-              {/* Refresh Button */}
-              <button
-                type="button"
-                onClick={() => refetchInstitutions()}
-                disabled={isFetchingInstitutions}
-                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
-                title="Refresh Table"
-              >
-                <RefreshCw
-                  size={15}
-                  className={isFetchingInstitutions ? 'animate-spin text-[#ff8a5c]' : ''}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Table View */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                <th className="py-3.5 px-6">Center & Tenant Slug</th>
-                <th className="py-3.5 px-6">Official Contact</th>
-                <th className="py-3.5 px-6">Operational Status</th>
-                <th className="py-3.5 px-6">Onboarded</th>
-                <th className="py-3.5 px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-xs text-gray-600">
-              {isLoadingInstitutions ? (
-                Array.from({ length: 5 }).map((_, idx) => (
-                  <tr key={idx} className="animate-pulse">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-xl" />
-                        <div className="space-y-1.5">
-                          <div className="w-36 h-4 bg-gray-200 rounded" />
-                          <div className="w-20 h-3 bg-gray-100 rounded" />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="w-32 h-3.5 bg-gray-200 rounded mb-1" />
-                      <div className="w-24 h-3 bg-gray-100 rounded" />
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="w-20 h-5 bg-gray-200 rounded-full" />
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="w-24 h-3.5 bg-gray-200 rounded" />
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="w-6 h-6 bg-gray-200 rounded ml-auto" />
-                    </td>
-                  </tr>
-                ))
-              ) : institutionsList.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-16 text-center">
-                    <div className="max-w-sm mx-auto space-y-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center mx-auto border border-gray-100">
-                        <Building2 size={24} />
-                      </div>
-                      <h3 className="text-sm font-bold text-gray-800">No institutions found</h3>
-                      <p className="text-xs text-gray-500">
-                        {searchTerm
-                          ? `No institutions matched "${searchTerm}". Try another search term.`
-                          : activeTab === 'TRASH'
-                          ? 'Recycle bin is completely empty.'
-                          : 'Get started by provisioning your first typing training institution.'}
-                      </p>
-                      {isSuperAdmin && !searchTerm && activeTab !== 'TRASH' && (
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center border border-gray-200 shrink-0">
+                      {inst.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h4
+                        className="font-semibold text-gray-900 text-sm hover:text-[#ff8a5c] transition-colors truncate cursor-pointer"
+                        onClick={() => setDetailInstitution(inst)}
+                      >
+                        {inst.name}
+                      </h4>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="font-mono text-gray-400 text-[11px]">@{inst.slug}</span>
                         <button
                           type="button"
-                          onClick={() => setIsCreateModalOpen(true)}
-                          className="mt-2 px-4 py-2 text-xs font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-xs transition-all inline-flex items-center gap-2"
+                          onClick={() => handleCopySlug(inst.slug)}
+                          className="text-gray-300 hover:text-gray-600 p-0.5 rounded transition-colors"
+                          title="Copy slug"
                         >
-                          <Plus size={14} />
-                          <span>Provision Center</span>
+                          {copiedId === inst.slug ? (
+                            <Check size={11} className="text-emerald-600" />
+                          ) : (
+                            <Copy size={11} />
+                          )}
                         </button>
-                      )}
+                      </div>
                     </div>
-                  </td>
+                  </div>
+
+                  <div className="shrink-0">
+                    <InstitutionActionsDropdown
+                      institution={inst}
+                      isSuperAdmin={isSuperAdmin}
+                      onView={(target) => setDetailInstitution(target)}
+                      onEdit={(target) => setEditingInstitution(target)}
+                      onBranding={(target) => setBrandingInstitution(target)}
+                      onChangeStatus={(target) => setStatusInstitution(target)}
+                      onSoftDelete={(target) => setSoftDeleteTarget(target)}
+                      onRestore={(target) => setRestoreTarget(target)}
+                      onPermanentDelete={(target) => setPermanentDeleteTarget(target)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-50 text-xs">
+                  {isDeleted ? (
+                    <StatusBadge status="DELETED" size="sm" />
+                  ) : (
+                    <StatusBadge status={inst.status} size="sm" />
+                  )}
+                  <span className="text-[11px] text-gray-400">
+                    {new Date(inst.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+
+                {inst.email && (
+                  <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-100 bg-gray-50/50 -mx-4 -mb-4 p-2.5 rounded-b-2xl truncate">
+                    <a
+                      href={`mailto:${inst.email}`}
+                      className="hover:text-[#ff8a5c] flex items-center gap-1.5 truncate"
+                    >
+                      <Mail size={12} className="text-gray-400 shrink-0" />
+                      <span className="truncate">{inst.email}</span>
+                    </a>
+                    {inst.phone && <span className="text-gray-400 shrink-0">{inst.phone}</span>}
+                  </div>
+                )}
+              </div>
+            );
+          }}
+          renderTable={(items) => (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="py-3.5 px-6">Center & Tenant Slug</th>
+                  <th className="py-3.5 px-6">Official Contact</th>
+                  <th className="py-3.5 px-6">Operational Status</th>
+                  <th className="py-3.5 px-6">Onboarded</th>
+                  <th className="py-3.5 px-6 text-right">Actions</th>
                 </tr>
-              ) : (
-                institutionsList.map((inst) => {
+              </thead>
+              <tbody className="divide-y divide-gray-50 text-xs text-gray-600">
+                {items.map((inst) => {
                   const isDeleted = !!inst.deletedAt;
 
                   return (
@@ -582,20 +636,9 @@ export const InstitutionsPage: React.FC = () => {
                       {/* Status */}
                       <td className="py-3.5 px-6">
                         {isDeleted ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                            <Trash2 size={11} />
-                            <span>In Trash</span>
-                          </span>
-                        ) : inst.status === 'ACTIVE' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>Active</span>
-                          </span>
+                          <StatusBadge status="DELETED" size="sm" />
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            <span>Suspended</span>
-                          </span>
+                          <StatusBadge status={inst.status} size="sm" />
                         )}
                       </td>
 
@@ -624,46 +667,25 @@ export const InstitutionsPage: React.FC = () => {
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </tbody>
+            </table>
+          )}
+        />
 
-        {/* Pagination Footer */}
-        {meta.totalPages > 1 && (
-          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-            <div>
-              Showing <span className="font-semibold text-gray-800">{(page - 1) * limit + 1}</span> to{' '}
-              <span className="font-semibold text-gray-800">
-                {Math.min(page * limit, meta.total)}
-              </span>{' '}
-              of <span className="font-semibold text-gray-800">{meta.total}</span> institutions
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="px-3 py-1 font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg">
-                Page {page} of {meta.totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-                disabled={page >= meta.totalPages}
-                className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Standardized Pagination Bar */}
+        <Pagination
+          page={page}
+          totalPages={meta.totalPages}
+          totalItems={meta.total}
+          pageSize={limit}
+          onPageChange={(p) => setPage(p)}
+          onPageSizeChange={(l) => {
+            setLimit(l);
+            setPage(1);
+          }}
+          itemName="institutions"
+        />
       </div>
 
       {/* Modals Orchestration */}

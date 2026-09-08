@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   VITE_API_BASE_URL: z.string().url().default("http://localhost:8787/api"),
-  VITE_AUTH_URL: z.string().url().default("http://localhost:8787"),
+  VITE_AUTH_URL: z.string().url().optional(),
 });
 
 // Validate the environment variables using Vite's import.meta.env
@@ -18,7 +18,15 @@ if (!parsedEnv.success) {
   throw new Error("Invalid environment variables");
 }
 
+const defaultAuthUrl = (() => {
+  try {
+    return new URL(parsedEnv.data.VITE_API_BASE_URL).origin;
+  } catch {
+    return "http://localhost:8787";
+  }
+})();
+
 export const env = {
   API_BASE_URL: parsedEnv.data.VITE_API_BASE_URL,
-  AUTH_URL: parsedEnv.data.VITE_AUTH_URL,
+  AUTH_URL: parsedEnv.data.VITE_AUTH_URL || defaultAuthUrl,
 };

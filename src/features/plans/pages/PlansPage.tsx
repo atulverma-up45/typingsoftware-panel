@@ -15,13 +15,15 @@ import {
   Clock,
   ArrowUpDown,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
   Filter,
   Download,
   AlertTriangle,
 } from 'lucide-react';
 import StatCard from '@/features/dashboard/components/StatCard';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import StatusBadge from '@/components/ui/StatusBadge';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 import {
   usePlans,
   usePlanStats,
@@ -226,53 +228,42 @@ export const PlansPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
-              <Layers size={22} strokeWidth={2.2} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-                Commercial Plans & Tiers
-              </h1>
-              <p className="text-xs text-gray-500">
-                Manage commercial subscription packaging, pricing models, workstation seat caps, and software feature sets
-              </p>
-            </div>
-          </div>
-        </div>
+      <PageHeader
+        title="Commercial Plans & Tiers"
+        subtitle="Manage commercial subscription packaging, pricing models, workstation seat caps, and software feature sets"
+        icon={<Layers className="text-[#ff8a5c]" size={24} />}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            >
+              <Download size={14} />
+              Export CSV
+            </button>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-          >
-            <Download size={14} />
-            Export CSV
-          </button>
+            <button
+              type="button"
+              onClick={handleRefreshAll}
+              disabled={isFetchingPlans}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+            >
+              <RefreshCw size={14} className={isFetchingPlans ? 'animate-spin text-[#ff8a5c]' : ''} />
+              Refresh
+            </button>
 
-          <button
-            type="button"
-            onClick={handleRefreshAll}
-            disabled={isFetchingPlans}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-          >
-            <RefreshCw size={14} className={isFetchingPlans ? 'animate-spin text-[#ff8a5c]' : ''} />
-            Refresh
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            Create Commercial Tier
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              Create Commercial Tier
+            </button>
+          </>
+        }
+      />
 
       {/* Error Alert Banner */}
       {(isPlansError || isStatsError) && (
@@ -369,113 +360,96 @@ export const PlansPage: React.FC = () => {
         />
       </div>
 
-      {/* Tabs & View Controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-gray-200/80 pb-3">
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
-          {[
-            { id: 'ACTIVE', label: 'Active Tiers', count: planStats?.activePlans },
-            { id: 'ARCHIVED', label: 'Archived', count: planStats?.archivedPlans },
-            { id: 'ALL', label: 'All Plans', count: planStats?.totalPlans },
-            { id: 'TRASH', label: 'Recycle Bin' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                setActiveTab(tab.id as PlanTab);
-                setPage(1);
-              }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
-                activeTab === tab.id
-                  ? 'bg-[#fff0eb] text-[#ff8a5c] shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-              }`}
-            >
-              <span>{tab.label}</span>
-              {typeof tab.count === 'number' && (
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    activeTab === tab.id ? 'bg-[#ff8a5c] text-white' : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* View Mode & Sizing */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <div className="flex items-center bg-gray-100 p-0.5 rounded-xl border border-gray-200/60">
-            <button
-              type="button"
-              onClick={() => setViewMode('CARDS')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'CARDS'
-                  ? 'bg-white text-[#ff8a5c] shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-800'
-              }`}
-              title="Cards View"
-            >
-              <LayoutGrid size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('TABLE')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'TABLE'
-                  ? 'bg-white text-[#ff8a5c] shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-800'
-              }`}
-              title="Table View"
-            >
-              <List size={15} />
-            </button>
-          </div>
-        </div>
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar border-b border-gray-200/80 pb-3">
+        {[
+          { id: 'ACTIVE', label: 'Active Tiers', count: planStats?.activePlans },
+          { id: 'ARCHIVED', label: 'Archived', count: planStats?.archivedPlans },
+          { id: 'ALL', label: 'All Plans', count: planStats?.totalPlans },
+          { id: 'TRASH', label: 'Recycle Bin' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => {
+              setActiveTab(tab.id as PlanTab);
+              setPage(1);
+            }}
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+              activeTab === tab.id
+                ? 'bg-[#fff0eb] text-[#ff8a5c] shadow-2xs'
+                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+            }`}
+          >
+            <span>{tab.label}</span>
+            {typeof tab.count === 'number' && (
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  activeTab === tab.id ? 'bg-[#ff8a5c] text-white' : 'bg-gray-200 text-gray-600'
+                }`}
+              >
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search plans by name, description..."
-            className="w-full pl-9 pr-4 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 shadow-2xs"
-          />
-        </div>
-
-        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <ArrowUpDown size={14} className="text-gray-400" />
-            <span>Sort:</span>
-            <select
+      {/* Filter & Search Toolbar */}
+      <FilterToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search plans by name, description... (Press / to focus)"
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        activeChips={[
+          ...(sortBy !== 'createdAt' || sortOrder !== 'desc'
+            ? [
+                {
+                  id: 'sort',
+                  label: 'Sort',
+                  value: `${sortBy} (${sortOrder.toUpperCase()})`,
+                  onRemove: () => {
+                    setSortBy('createdAt');
+                    setSortOrder('desc');
+                  },
+                },
+              ]
+            : []),
+        ]}
+        hasActiveFilters={Boolean(searchTerm || sortBy !== 'createdAt' || sortOrder !== 'desc')}
+        onClearFilters={() => {
+          setSearchTerm('');
+          setSortBy('createdAt');
+          setSortOrder('desc');
+        }}
+        totalResults={plans.length}
+        totalLabel="Pricing Plans"
+        filterElements={
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <FilterSelect
+              icon={<ArrowUpDown size={13} />}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-xs bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#ff8a5c]"
+              title="Sort by Column"
             >
               <option value="createdAt">Created Date</option>
               <option value="name">Plan Name</option>
               <option value="price">Price</option>
               <option value="maxActivations">Workstation Seats</option>
               <option value="durationDays">Duration (Days)</option>
-            </select>
+            </FilterSelect>
             <button
               type="button"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+              className="h-[38px] px-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 font-bold text-xs shrink-0 shadow-2xs transition-colors"
               title={`Sorting ${sortOrder.toUpperCase()}`}
             >
               {sortOrder.toUpperCase()}
             </button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Plans Content */}
       {isLoadingPlans ? (
@@ -541,8 +515,29 @@ export const PlansPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        /* TABLE VIEW */
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+        /* TABLE VIEW WITH MOBILE DUAL-MODE */
+        <div>
+          <div className="md:hidden grid grid-cols-1 gap-4 mb-4">
+            {plans.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                onViewDetails={(p) => setInspectingPlan(p)}
+                onEdit={(p) => setEditingPlan(p)}
+                onToggleStatus={handleToggleStatus}
+                onDelete={(p) => {
+                  if (activeTab === 'TRASH') {
+                    setPlanToPurge(p);
+                  } else {
+                    setPlanToDelete(p);
+                  }
+                }}
+                onRestore={activeTab === 'TRASH' ? (p) => setPlanToRestore(p) : undefined}
+                isDeletedView={activeTab === 'TRASH'}
+              />
+            ))}
+          </div>
+          <div className="hidden md:block bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -616,19 +611,10 @@ export const PlansPage: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        {plan.deletedAt ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                            In Trash
-                          </span>
-                        ) : plan.status === 'ACTIVE' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                            Archived
-                          </span>
-                        )}
+                        <StatusBadge
+                          status={plan.deletedAt ? 'TRASH' : plan.status}
+                          size="sm"
+                        />
                       </td>
 
                       <td className="py-3.5 px-4 text-right">
@@ -655,41 +641,22 @@ export const PlansPage: React.FC = () => {
             </table>
           </div>
         </div>
+        </div>
       )}
 
       {/* Pagination Footer */}
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200/80 pt-4 text-xs text-gray-500">
-          <div>
-            Showing <span className="font-semibold text-gray-800">{(meta.page - 1) * meta.limit + 1}</span> to{' '}
-            <span className="font-semibold text-gray-800">
-              {Math.min(meta.page * meta.limit, meta.total)}
-            </span>{' '}
-            of <span className="font-semibold text-gray-800">{meta.total}</span> plans
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setPage(page - 1)}
-              disabled={page <= 1}
-              className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="px-2 font-semibold text-gray-800">
-              Page {meta.page} of {meta.totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage(page + 1)}
-              disabled={page >= meta.totalPages}
-              className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={meta?.totalPages || 1}
+        totalItems={meta?.total || 0}
+        pageSize={limit}
+        onPageChange={setPage}
+        onPageSizeChange={(l) => {
+          setLimit(l);
+          setPage(1);
+        }}
+        itemName="plans"
+      />
 
       {/* Modals */}
       <CreatePlanModal

@@ -18,13 +18,21 @@ import {
   ArrowRight,
   Download,
   AlertCircle,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import PageHeader from '@/components/ui/PageHeader';
+import { FilterSelect } from '@/components/ui/FilterToolbar';
+import { useInstitutions } from '@/features/institutions/api/institutionApi';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+
+  const [selectedInstitutionId, setSelectedInstitutionId] = React.useState<string>('');
+  const { data: institutionsData } = useInstitutions({ limit: 100, status: 'ACTIVE' });
+  const institutions = institutionsData?.data || [];
 
   const {
     data: metricsPayload,
@@ -33,51 +41,70 @@ const Dashboard: React.FC = () => {
     isError: isErrorMetrics,
     error: metricsError,
     refetch: refetchMetrics,
-  } = useDashboardMetrics(isSuperAdmin ? null : currentUser?.institutionId);
+  } = useDashboardMetrics(
+    isSuperAdmin ? (selectedInstitutionId || null) : currentUser?.institutionId
+  );
 
   const metrics = metricsPayload?.metrics;
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-10">
-      {/* Dashboard Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-[26px] font-bold text-gray-800 tracking-tight">System Dashboard</h1>
-            {!isSuperAdmin && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-[#ff8a5c] border border-orange-200 flex items-center gap-1.5">
-                <Building size={13} />
-                Institute Portal
-              </span>
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-6">
+      {/* Responsive Page Header */}
+      <PageHeader
+        title="System Dashboard"
+        subtitle={
+          isSuperAdmin
+            ? 'Platform-wide telemetry, licensing health, workstation synchronization, and security activity.'
+            : 'Operational telemetry and workstation management for your educational institution.'
+        }
+        icon={<LayoutDashboard size={20} />}
+        badge={
+          !isSuperAdmin ? (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-[#ff8a5c] border border-orange-200 flex items-center gap-1.5">
+              <Building size={13} />
+              Institute Portal
+            </span>
+          ) : undefined
+        }
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            {isSuperAdmin && (
+              <FilterSelect
+                icon={<Building size={13} />}
+                value={selectedInstitutionId}
+                onChange={(e) => setSelectedInstitutionId(e.target.value)}
+                className="max-w-[220px] truncate"
+                title="Scope Dashboard Metrics"
+              >
+                <option value="">Global Platform Overview</option>
+                {institutions.map((inst) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.name}
+                  </option>
+                ))}
+              </FilterSelect>
             )}
-          </div>
-          <p className="text-[14px] text-gray-500 mt-1">
-            {isSuperAdmin
-              ? 'Platform-wide telemetry, licensing health, workstation synchronization, and security activity.'
-              : `Operational telemetry and workstation management for your educational institution.`}
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => refetchMetrics()}
-            title="Refresh metrics"
-            className="p-2.5 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-xl border border-gray-200 shadow-2xs transition-colors flex items-center gap-2 text-xs font-medium"
-          >
-            <RefreshCw
-              size={16}
-              className={isFetchingMetrics ? 'animate-spin text-[#ff8a5c]' : ''}
-            />
-            <span>Refresh</span>
-          </button>
-        </div>
-      </div>
+            <button
+              onClick={() => refetchMetrics()}
+              title="Refresh metrics"
+              className="px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl border border-gray-200 shadow-2xs transition-colors flex items-center gap-2 text-xs font-semibold h-[38px]"
+            >
+              <RefreshCw
+                size={15}
+                className={isFetchingMetrics ? 'animate-spin text-[#ff8a5c]' : ''}
+              />
+              <span className="hidden sm:inline">Refresh Telemetry</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* Network Error Alert Banner */}
       {isErrorMetrics && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-between gap-4 text-rose-800 animate-in fade-in duration-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-rose-100 text-rose-600">
+            <div className="p-2 rounded-xl bg-rose-100 text-rose-600 shrink-0">
               <AlertCircle size={20} />
             </div>
             <div>
@@ -98,14 +125,14 @@ const Dashboard: React.FC = () => {
 
       {/* Scoping notice for Institute Admins */}
       {!isSuperAdmin && (
-        <div className="p-4 rounded-2xl bg-orange-50/60 border border-orange-200/70 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-100 text-[#ff8a5c]">
-              <Shield size={20} />
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-orange-50/60 border border-orange-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-orange-100 text-[#ff8a5c] shrink-0">
+              <Shield size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Institution Scope Active</p>
-              <p className="text-xs text-gray-600 mt-0.5">
+              <p className="font-semibold text-gray-900">Institution Scope Active</p>
+              <p className="text-gray-600 mt-0.5">
                 Telemetry scoped to ID:{' '}
                 <span className="font-mono text-gray-900 font-medium">
                   {currentUser?.institutionId || 'Unassigned'}
@@ -116,7 +143,7 @@ const Dashboard: React.FC = () => {
           </div>
           <Link
             to="/users"
-            className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-[#ff8a5c] hover:text-[#f77947] hover:underline"
+            className="flex items-center gap-1.5 font-medium text-[#ff8a5c] hover:text-[#f77947] hover:underline self-end sm:self-auto"
           >
             Manage Team <ArrowRight size={14} />
           </Link>
@@ -124,7 +151,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Top KPI Stat Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
         {isSuperAdmin ? (
           <>
             <StatCard
@@ -200,7 +227,7 @@ const Dashboard: React.FC = () => {
 
       {/* Middle Visualizations Row */}
       {isSuperAdmin ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <UsageChart />
           </div>
@@ -212,24 +239,24 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-4">
           <div className="lg:col-span-3">
             <UsageChart />
           </div>
           {/* Institutional Fast-Action Panel */}
-          <div className="lg:col-span-1 bg-white rounded-[20px] shadow-sm border border-gray-100 p-6 flex flex-col justify-between h-[400px]">
+          <div className="lg:col-span-1 bg-white rounded-2xl sm:rounded-[20px] shadow-2xs border border-gray-100 p-5 sm:p-6 flex flex-col justify-between min-h-[360px]">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#ff8a5c] flex items-center justify-center border border-orange-100">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#ff8a5c] flex items-center justify-center border border-orange-100 shrink-0">
                   <Laptop size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-gray-800">Lab Operations</h3>
-                  <p className="text-xs text-gray-400">Quick institutional management</p>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-800">Lab Operations</h3>
+                  <p className="text-[11px] sm:text-xs text-gray-400">Quick institutional management</p>
                 </div>
               </div>
 
-              <div className="space-y-3 mt-6">
+              <div className="space-y-2.5 mt-4 sm:mt-6">
                 <Link
                   to="/activations"
                   className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-orange-50/50 border border-gray-100 hover:border-orange-200 transition-all text-xs font-semibold text-gray-700 hover:text-gray-900 group"
@@ -264,7 +291,7 @@ const Dashboard: React.FC = () => {
                 >
                   <span className="flex items-center gap-2.5">
                     <Download size={15} className="text-emerald-500" />
-                    <span>Client Software Downloads</span>
+                    <span>Software Downloads</span>
                   </span>
                   <ArrowRight
                     size={14}
@@ -274,7 +301,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 text-xs text-gray-600">
+            <div className="mt-4 p-3.5 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 text-xs text-gray-600">
               <p className="font-semibold text-gray-800 mb-1">Need Software Deployment?</p>
               <p className="text-[11px] leading-relaxed">
                 Download the desktop client installer and distribute it across student workstations.
@@ -285,7 +312,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Bottom Telemetry Row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-4">
         {isSuperAdmin && (
           <div className="lg:col-span-1">
             <TopInstitutions enabled={isSuperAdmin} />

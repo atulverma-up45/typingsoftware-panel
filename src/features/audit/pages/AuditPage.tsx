@@ -11,13 +11,13 @@ import {
   Globe,
   Tag,
   Eye,
-  ChevronLeft,
-  ChevronRight,
   Filter,
   Copy,
   Check,
   Clock,
   Layers,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { useAuditLogs, useAuditStats } from '../api/auditApi';
 import type { AuditLog, AuditEntityType } from '../api/auditApi';
@@ -26,6 +26,10 @@ import { AuditCleanupModal } from '../components/AuditCleanupModal';
 import { useInstitutions } from '@/features/institutions/api/institutionApi';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import ResponsiveDataView from '@/components/ui/ResponsiveDataView';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 
 export const AuditPage: React.FC = () => {
   const currentUser = useAuthStore((state) => state.user);
@@ -44,6 +48,7 @@ export const AuditPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [refreshInterval, setRefreshInterval] = useState<number | false>(15000); // 15s default
+  const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
   // Modals
   const [inspectingLog, setInspectingLog] = useState<AuditLog | null>(null);
@@ -119,41 +124,36 @@ export const AuditPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
-            <ShieldCheck className="text-[#ff8a5c]" size={28} />
-            System Audit Trail & Forensics
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Immutable compliance record of administrative operations, security mutations, and tenant activities
-          </p>
-        </div>
+      <PageHeader
+        title="System Audit Trail & Forensics"
+        subtitle="Immutable compliance record of administrative operations, security mutations, and tenant activities"
+        icon={<ShieldCheck size={20} />}
+        actions={
+          <>
+            {isSuperAdmin && (
+              <button
+                type="button"
+                onClick={() => setIsCleanupOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs min-h-[38px]"
+              >
+                <Trash2 size={14} />
+                <span>Prune Logs</span>
+              </button>
+            )}
 
-        <div className="flex items-center gap-2.5">
-          {isSuperAdmin && (
             <button
               type="button"
-              onClick={() => setIsCleanupOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs"
+              onClick={() => refetch()}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs transition-colors min-h-[38px]"
             >
-              <Trash2 size={15} />
-              Prune Compliance History
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <span>Refresh Stream</span>
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs transition-colors"
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-            Refresh Stream
-          </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* KPI Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -204,29 +204,140 @@ export const AuditPage: React.FC = () => {
       </div>
 
       {/* Multifaceted Filter Toolbar */}
-      <div className="space-y-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Search */}
-            <div className="relative min-w-[240px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search action, actor, entity ID, IP..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c]"
-              />
+      <FilterToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search action, actor, entity ID, IP... (Press / to focus)"
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        activeChips={[
+          ...(selectedEntityType !== 'ALL'
+            ? [
+                {
+                  id: 'entityType',
+                  label: 'Entity',
+                  value: selectedEntityType,
+                  onRemove: () => {
+                    setSelectedEntityType('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedAction !== 'ALL'
+            ? [
+                {
+                  id: 'action',
+                  label: 'Action',
+                  value: selectedAction,
+                  onRemove: () => {
+                    setSelectedAction('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedInstitutionId !== 'ALL'
+            ? [
+                {
+                  id: 'institution',
+                  label: 'Institution',
+                  value:
+                    institutions.find((i) => i.id === selectedInstitutionId)?.name ||
+                    selectedInstitutionId,
+                  onRemove: () => {
+                    setSelectedInstitutionId('ALL');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(startDate
+            ? [
+                {
+                  id: 'startDate',
+                  label: 'From',
+                  value: startDate,
+                  onRemove: () => {
+                    setStartDate('');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(endDate
+            ? [
+                {
+                  id: 'endDate',
+                  label: 'To',
+                  value: endDate,
+                  onRemove: () => {
+                    setEndDate('');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+        ]}
+        hasActiveFilters={Boolean(
+          searchTerm ||
+            selectedEntityType !== 'ALL' ||
+            selectedAction !== 'ALL' ||
+            selectedInstitutionId !== 'ALL' ||
+            startDate ||
+            endDate
+        )}
+        onClearFilters={() => {
+          setSearchTerm('');
+          setSelectedEntityType('ALL');
+          setSelectedAction('ALL');
+          setSelectedInstitutionId('ALL');
+          setStartDate('');
+          setEndDate('');
+          setPage(1);
+        }}
+        totalResults={meta.total}
+        totalLabel="Audit events"
+        actions={
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-[11px] text-gray-500">
+              <span className="hidden sm:inline font-medium">Poll:</span>
+              <FilterSelect
+                value={refreshInterval === false ? 'off' : refreshInterval.toString()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setRefreshInterval(val === 'off' ? false : parseInt(val, 10));
+                }}
+                className="text-xs"
+                title="Telemetry auto-polling frequency"
+              >
+                <option value="off">Manual</option>
+                <option value="10000">10s Auto</option>
+                <option value="15000">15s Auto</option>
+                <option value="30000">30s Auto</option>
+              </FilterSelect>
             </div>
 
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="h-[38px] px-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors border border-gray-200 shrink-0 shadow-2xs"
+              title="Refresh audit log"
+            >
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+            </button>
+          </div>
+        }
+        filterElements={
+          <>
             {/* Entity Type Filter */}
-            <select
+            <FilterSelect
               value={selectedEntityType}
               onChange={(e) => {
                 setSelectedEntityType(e.target.value);
                 setPage(1);
               }}
-              className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c]"
+              title="Filter by Entity Type"
             >
               <option value="ALL">All Entity Types</option>
               <option value="USER">USER</option>
@@ -240,16 +351,17 @@ export const AuditPage: React.FC = () => {
               <option value="RELEASE">RELEASE</option>
               <option value="SYNC">SYNC</option>
               <option value="AUDIT">AUDIT</option>
-            </select>
+            </FilterSelect>
 
             {/* Action Filter */}
-            <select
+            <FilterSelect
               value={selectedAction}
               onChange={(e) => {
                 setSelectedAction(e.target.value);
                 setPage(1);
               }}
-              className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c] max-w-[170px]"
+              className="max-w-[200px] truncate"
+              title="Filter by Action Type"
             >
               <option value="ALL">All Actions</option>
               <option value="USER_CREATED">USER_CREATED</option>
@@ -263,17 +375,19 @@ export const AuditPage: React.FC = () => {
               <option value="RELEASE_PUBLISHED">RELEASE_PUBLISHED</option>
               <option value="SYNC_HISTORY_CLEANED">SYNC_HISTORY_CLEANED</option>
               <option value="AUDIT_HISTORY_CLEANED">AUDIT_HISTORY_CLEANED</option>
-            </select>
+            </FilterSelect>
 
             {/* Institution Filter (Super Admin) */}
             {isSuperAdmin && (
-              <select
+              <FilterSelect
+                icon={<Building2 size={13} />}
                 value={selectedInstitutionId}
                 onChange={(e) => {
                   setSelectedInstitutionId(e.target.value);
                   setPage(1);
                 }}
-                className="text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#ff8a5c] max-w-[170px]"
+                className="max-w-[200px] truncate"
+                title="Filter by Institution"
               >
                 <option value="ALL">All Institutions</option>
                 {institutions.map((inst) => (
@@ -281,101 +395,124 @@ export const AuditPage: React.FC = () => {
                     {inst.name}
                   </option>
                 ))}
-              </select>
+              </FilterSelect>
             )}
-          </div>
 
-          {/* Polling interval */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 text-[11px] text-gray-500">
-              <span>Auto-poll:</span>
-              <select
-                value={refreshInterval === false ? 'off' : refreshInterval.toString()}
+            {/* Date Pickers */}
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <input
+                type="date"
+                value={startDate}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  setRefreshInterval(val === 'off' ? false : parseInt(val, 10));
+                  setStartDate(e.target.value);
+                  setPage(1);
                 }}
-                className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-gray-50"
-              >
-                <option value="off">Manual</option>
-                <option value="10000">10s</option>
-                <option value="15000">15s</option>
-                <option value="30000">30s</option>
-              </select>
+                title="Start Date"
+                className="h-[38px] text-xs px-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-[#ff8a5c] w-full sm:w-auto shadow-2xs"
+              />
+              <span className="text-gray-400 text-xs">-</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setPage(1);
+                }}
+                title="End Date"
+                className="h-[38px] text-xs px-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-[#ff8a5c] w-full sm:w-auto shadow-2xs"
+              />
+            </div>
+          </>
+        }
+      />
+
+      {/* Main Audit Records Data View */}
+      <ResponsiveDataView
+        items={logs}
+        isLoading={isLoading}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        keyExtractor={(log) => log.id}
+        cardGridClassName="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5"
+        emptyState={
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-gray-200 bg-white">
+            <div className="w-16 h-16 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center mb-3">
+              <ShieldCheck size={28} />
+            </div>
+            <h3 className="text-base font-bold text-gray-800">No Audit Records Found</h3>
+            <p className="text-xs text-gray-400 mt-1 max-w-sm">
+              {searchTerm || selectedEntityType !== 'ALL' || selectedAction !== 'ALL' || startDate || endDate
+                ? 'No audit logs match your applied filter conditions.'
+                : 'Administrative mutations and security events will stream here automatically.'}
+            </p>
+          </div>
+        }
+        renderCard={(log) => (
+          <div
+            key={log.id}
+            onClick={() => setInspectingLog(log)}
+            className="bg-white rounded-2xl border border-gray-200 p-4 shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>{getActionBadge(log.action)}</div>
+              <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                <Clock size={11} />
+                <span>{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-[11px]">Entity</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-bold text-gray-800 text-[11px]">{log.entityType}:</span>
+                  <span className="font-mono text-gray-600 text-[11px] max-w-[120px] truncate">{log.entityId}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(`ent_${log.id}`, log.entityId, e);
+                    }}
+                    className="text-gray-400 hover:text-[#ff8a5c] shrink-0"
+                    title="Copy Entity ID"
+                  >
+                    {copiedId === `ent_${log.id}` ? (
+                      <Check size={11} className="text-emerald-600" />
+                    ) : (
+                      <Copy size={11} />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-[11px]">Actor</span>
+                <span className="font-semibold text-gray-800 truncate max-w-[140px]">
+                  {log.actor?.name || log.actorId || 'SYSTEM'}
+                </span>
+              </div>
+
+              {log.institution && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400 text-[11px]">Tenant</span>
+                  <span className="text-blue-600 font-medium truncate max-w-[140px] flex items-center gap-1">
+                    <Building2 size={11} />
+                    {log.institution.name}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+              <span className="font-mono text-[10px] text-gray-400">{log.ipAddress || 'Internal IP'}</span>
+              <span className="text-[#ff8a5c] font-bold inline-flex items-center gap-1">
+                <Eye size={12} /> Inspect
+              </span>
             </div>
           </div>
-        </div>
-
-        {/* Date Range Sub-Bar */}
-        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100 text-xs">
-          <div className="flex items-center gap-1.5 text-gray-600">
-            <Calendar size={13} className="text-gray-400" />
-            <span className="font-semibold text-gray-700">Filter by Date:</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-[11px]">From</span>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                setPage(1);
-              }}
-              className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-[11px]">To</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setPage(1);
-              }}
-              className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50"
-            />
-          </div>
-
-          {(startDate || endDate) && (
-            <button
-              type="button"
-              onClick={() => {
-                setStartDate('');
-                setEndDate('');
-                setPage(1);
-              }}
-              className="text-xs text-[#ff8a5c] font-semibold hover:underline"
-            >
-              Clear Dates
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Main Audit Table */}
-      {isLoading ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center animate-pulse">
-          <div className="h-6 bg-gray-200 rounded-md w-1/4 mx-auto mb-4" />
-          <div className="h-4 bg-gray-100 rounded-md w-1/2 mx-auto" />
-        </div>
-      ) : logs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-gray-200 bg-white">
-          <div className="w-16 h-16 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center mb-3">
-            <ShieldCheck size={28} />
-          </div>
-          <h3 className="text-base font-bold text-gray-800">No Audit Records Found</h3>
-          <p className="text-xs text-gray-400 mt-1 max-w-sm">
-            {searchTerm || selectedEntityType !== 'ALL' || selectedAction !== 'ALL' || startDate || endDate
-              ? 'No audit logs match your applied filter conditions.'
-              : 'Administrative mutations and security events will stream here automatically.'}
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto custom-scrollbar">
+        )}
+        renderTable={() => (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -475,43 +612,22 @@ export const AuditPage: React.FC = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      />
 
-      {/* Pagination Footer */}
-      {meta.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-xs text-gray-500">
-            Showing <span className="font-semibold text-gray-800">{(page - 1) * limit + 1}</span> to{' '}
-            <span className="font-semibold text-gray-800">
-              {Math.min(page * limit, meta.total)}
-            </span>{' '}
-            of <span className="font-semibold text-gray-800">{meta.total}</span> audit records
-          </p>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-              className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-xs font-semibold px-2 text-gray-700">
-              Page {page} of {meta.totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= meta.totalPages}
-              onClick={() => setPage(page + 1)}
-              className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Standardized Pagination Bar */}
+      <Pagination
+        page={page}
+        totalPages={meta.totalPages}
+        totalItems={meta.total}
+        pageSize={limit}
+        onPageChange={(p) => setPage(p)}
+        onPageSizeChange={(l) => {
+          setLimit(l);
+          setPage(1);
+        }}
+        itemName="audit records"
+      />
 
       {/* Modals */}
       <AuditLogDetailModal

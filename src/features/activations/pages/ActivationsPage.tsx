@@ -10,8 +10,6 @@ import {
   Building2,
   Copy,
   Check,
-  ChevronLeft,
-  ChevronRight,
   ArrowUpDown,
   Cpu,
   Clock,
@@ -53,6 +51,9 @@ import { DeviceStatusModal } from '../components/DeviceStatusModal';
 import { EditDeviceModal } from '../components/EditDeviceModal';
 import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 
 type ViewMode = 'SEATS' | 'DEVICES';
 type SeatTabType = 'ALL' | 'ACTIVE' | 'RECENT_24H' | 'DEACTIVATED' | 'REVOKED';
@@ -80,6 +81,7 @@ export const ActivationsPage: React.FC = () => {
   const [seatLimit] = useState(10);
   const [seatSortBy, setSeatSortBy] = useState<'lastSeenAt' | 'firstActivatedAt' | 'deviceName' | 'status'>('lastSeenAt');
   const [seatSortOrder, setSeatSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [seatViewMode, setSeatViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -157,6 +159,7 @@ export const ActivationsPage: React.FC = () => {
   const [deviceLimit] = useState(10);
   const [deviceSortBy, setDeviceSortBy] = useState<'lastSeenAt' | 'deviceName' | 'createdAt' | 'status'>('lastSeenAt');
   const [deviceSortOrder, setDeviceSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [deviceViewMode, setDeviceViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -329,62 +332,57 @@ export const ActivationsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-300">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-6">
       {/* Top Header & View Mode Switch */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Workstation & Hardware Management
-            </h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold bg-[#fff0eb] text-[#ff8a5c] rounded-full border border-[#ff8a5c]/20">
-              {viewMode === 'SEATS' ? 'Seat Activations' : 'Physical Hardware Fleet'}
-            </span>
+      <PageHeader
+        title="Workstation & Hardware Management"
+        subtitle="Real-time telemetry, license slot governance, and physical desktop hardware fleet inventory"
+        icon={<Monitor size={20} />}
+        badge={
+          <span className="px-2.5 py-0.5 text-xs font-semibold bg-[#fff0eb] text-[#ff8a5c] rounded-full border border-[#ff8a5c]/20">
+            {viewMode === 'SEATS' ? 'Seat Activations' : 'Physical Hardware Fleet'}
+          </span>
+        }
+        actions={
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200">
+            <button
+              type="button"
+              onClick={() => setViewMode('SEATS')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-lg transition-all ${
+                viewMode === 'SEATS'
+                  ? 'bg-white text-gray-900 shadow-2xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <Layers size={14} className={viewMode === 'SEATS' ? 'text-[#ff8a5c]' : ''} />
+              <span>License Seats</span>
+              {activationStats && (
+                <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-gray-100 text-gray-700 rounded-full">
+                  {activationStats.totalActivations}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('DEVICES')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-lg transition-all ${
+                viewMode === 'DEVICES'
+                  ? 'bg-white text-gray-900 shadow-2xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <Cpu size={14} className={viewMode === 'DEVICES' ? 'text-[#ff8a5c]' : ''} />
+              <span>Hardware Fleet</span>
+              {deviceStats && (
+                <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-gray-100 text-gray-700 rounded-full">
+                  {deviceStats.totalDevices}
+                </span>
+              )}
+            </button>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
-            Real-time telemetry, license slot governance, and physical desktop hardware fleet inventory
-          </p>
-        </div>
-
-        {/* View Mode Segmented Control */}
-        <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200">
-          <button
-            type="button"
-            onClick={() => setViewMode('SEATS')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-              viewMode === 'SEATS'
-                ? 'bg-white text-gray-900 shadow-xs'
-                : 'text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Layers size={14} className={viewMode === 'SEATS' ? 'text-[#ff8a5c]' : ''} />
-            <span>License Seat Slots</span>
-            {activationStats && (
-              <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-gray-100 text-gray-700 rounded-full">
-                {activationStats.totalActivations}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode('DEVICES')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-              viewMode === 'DEVICES'
-                ? 'bg-white text-gray-900 shadow-xs'
-                : 'text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <Cpu size={14} className={viewMode === 'DEVICES' ? 'text-[#ff8a5c]' : ''} />
-            <span>Hardware Fleet Inventory</span>
-            {deviceStats && (
-              <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-gray-100 text-gray-700 rounded-full">
-                {deviceStats.totalDevices}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* ======================================================================= */}
       {/* VIEW 1: LICENSE SEAT ACTIVATIONS                                        */}
@@ -482,174 +480,312 @@ export const ActivationsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Seat Activations Table Container */}
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-xs overflow-hidden">
-            {/* Filters Bar */}
-            <div className="p-4 sm:p-5 border-b border-gray-100 space-y-4">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                {/* Tabs */}
-                <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-xl border border-gray-100 overflow-x-auto custom-scrollbar">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSeatTab('ALL');
-                      setSeatPage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      seatTab === 'ALL'
-                        ? 'bg-white text-gray-900 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    All Stations
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSeatTab('ACTIVE');
-                      setSeatPage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      seatTab === 'ACTIVE'
-                        ? 'bg-white text-emerald-700 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    Active
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSeatTab('RECENT_24H');
-                      setSeatPage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1 ${
-                      seatTab === 'RECENT_24H'
-                        ? 'bg-white text-blue-700 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    <Radio size={12} />
-                    <span>Online / 24h</span>
-                    {activationStats && activationStats.activeInLast24Hours > 0 && (
-                      <span className="px-1.5 py-0.2 text-[10px] font-bold bg-blue-100 text-blue-800 rounded-full">
-                        {activationStats.activeInLast24Hours}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSeatTab('DEACTIVATED');
-                      setSeatPage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      seatTab === 'DEACTIVATED'
-                        ? 'bg-white text-amber-800 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    Deactivated
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSeatTab('REVOKED');
-                      setSeatPage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      seatTab === 'REVOKED'
-                        ? 'bg-white text-rose-700 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    Revoked
-                  </button>
-                </div>
+          {/* Station Tabs */}
+          <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-xl border border-gray-100 w-fit overflow-x-auto custom-scrollbar">
+            <button
+              type="button"
+              onClick={() => {
+                setSeatTab('ALL');
+                setSeatPage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                seatTab === 'ALL'
+                  ? 'bg-white text-gray-900 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              All Stations
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSeatTab('ACTIVE');
+                setSeatPage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                seatTab === 'ACTIVE'
+                  ? 'bg-white text-emerald-700 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSeatTab('RECENT_24H');
+                setSeatPage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1 shrink-0 ${
+                seatTab === 'RECENT_24H'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <Radio size={12} />
+              <span>Online / 24h</span>
+              {activationStats && activationStats.activeInLast24Hours > 0 && (
+                <span className="px-1.5 py-0.2 text-[10px] font-bold bg-blue-100 text-blue-800 rounded-full">
+                  {activationStats.activeInLast24Hours}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSeatTab('DEACTIVATED');
+                setSeatPage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                seatTab === 'DEACTIVATED'
+                  ? 'bg-white text-amber-800 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Deactivated
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSeatTab('REVOKED');
+                setSeatPage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                seatTab === 'REVOKED'
+                  ? 'bg-white text-rose-700 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Revoked
+            </button>
+          </div>
 
-                {/* Search & Selectors */}
-                <div className="flex flex-wrap items-center gap-3">
-                  {isSuperAdmin && (
-                    <select
-                      value={selectedInstitutionId}
-                      onChange={(e) => {
-                        setSelectedInstitutionId(e.target.value);
+          {/* Seat Activations Filter Toolbar */}
+          <FilterToolbar
+            searchValue={seatSearch}
+            onSearchChange={setSeatSearch}
+            searchPlaceholder="Search PC name, UUID, fingerprint... (Press / to focus)"
+            activeChips={[
+              ...(selectedInstitutionId
+                ? [
+                    {
+                      id: 'institution',
+                      label: 'Institution',
+                      value:
+                        institutions.find((i) => i.id === selectedInstitutionId)?.name ||
+                        selectedInstitutionId,
+                      onRemove: () => {
+                        setSelectedInstitutionId('');
                         setSeatPage(1);
-                        setDevicePage(1);
-                      }}
-                      className="text-xs border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c] max-w-[200px]"
-                    >
-                      <option value="">All Institutions</option>
-                      {institutions.map((inst) => (
-                        <option key={inst.id} value={inst.id}>
-                          {inst.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                      },
+                    },
+                  ]
+                : []),
+              ...(seatSortBy !== 'lastSeenAt' || seatSortOrder !== 'desc'
+                ? [
+                    {
+                      id: 'seatSort',
+                      label: 'Sort',
+                      value: `${seatSortBy} (${seatSortOrder.toUpperCase()})`,
+                      onRemove: () => {
+                        setSeatSortBy('lastSeenAt');
+                        setSeatSortOrder('desc');
+                      },
+                    },
+                  ]
+                : []),
+            ]}
+            hasActiveFilters={Boolean(
+              selectedInstitutionId || seatSearch || seatSortBy !== 'lastSeenAt' || seatSortOrder !== 'desc'
+            )}
+            onClearFilters={() => {
+              setSelectedInstitutionId('');
+              setSeatSearch('');
+              setSeatSortBy('lastSeenAt');
+              setSeatSortOrder('desc');
+              setSeatPage(1);
+            }}
+            totalResults={seatMeta.total}
+            totalLabel="Workstation seats"
+            viewMode={seatViewMode}
+            onViewModeChange={setSeatViewMode}
+            actions={
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportSeatsCsv}
+                  className="flex items-center gap-1.5 h-[38px] px-3 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-2xs shrink-0"
+                  title="Export currently loaded workstations to CSV"
+                >
+                  <Download size={13} className="text-gray-500" />
+                  <span className="hidden sm:inline">Export CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRefreshSeats}
+                  disabled={isFetchingActivations}
+                  className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors shrink-0 shadow-2xs"
+                  title="Refresh Table & Metrics"
+                >
+                  <RefreshCw
+                    size={14}
+                    className={isFetchingActivations ? 'animate-spin text-[#ff8a5c]' : ''}
+                  />
+                </button>
+              </div>
+            }
+            filterElements={
+              <>
+                {isSuperAdmin && (
+                  <FilterSelect
+                    icon={<Building2 size={13} />}
+                    value={selectedInstitutionId}
+                    onChange={(e) => {
+                      setSelectedInstitutionId(e.target.value);
+                      setSeatPage(1);
+                      setDevicePage(1);
+                    }}
+                    className="max-w-[200px] truncate"
+                    title="Filter by Institution"
+                  >
+                    <option value="">All Institutions</option>
+                    {institutions.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name}
+                      </option>
+                    ))}
+                  </FilterSelect>
+                )}
 
-                  <div className="relative min-w-[220px] sm:min-w-[260px]">
-                    <Search
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    />
-                    <input
-                      type="text"
-                      value={seatSearch}
-                      onChange={(e) => setSeatSearch(e.target.value)}
-                      placeholder="Search PC name, UUID, fingerprint..."
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
-                    />
-                  </div>
-
-                  <select
+                <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                  <FilterSelect
+                    icon={<ArrowUpDown size={13} />}
                     value={seatSortBy}
                     onChange={(e) => setSeatSortBy(e.target.value as any)}
-                    className="text-xs border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    title="Sort by Attribute"
                   >
                     <option value="lastSeenAt">Last Heartbeat</option>
                     <option value="firstActivatedAt">First Activated</option>
                     <option value="deviceName">Station Name</option>
                     <option value="status">Status</option>
-                  </select>
-
+                  </FilterSelect>
                   <button
                     type="button"
                     onClick={() => setSeatSortOrder(seatSortOrder === 'asc' ? 'desc' : 'asc')}
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
+                    className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors shrink-0 font-bold text-xs shadow-2xs"
                     title={`Sort ${seatSortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                   >
-                    <ArrowUpDown size={15} />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleExportSeatsCsv}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-xs"
-                    title="Export currently loaded workstations to CSV"
-                  >
-                    <Download size={14} className="text-gray-500" />
-                    <span>Export CSV</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleRefreshSeats}
-                    disabled={isFetchingActivations}
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
-                    title="Refresh Table & Metrics"
-                  >
-                    <RefreshCw
-                      size={15}
-                      className={isFetchingActivations ? 'animate-spin text-[#ff8a5c]' : ''}
-                    />
+                    {seatSortOrder.toUpperCase()}
                   </button>
                 </div>
-              </div>
+              </>
+            }
+          />
+
+          {/* Seat Activations Table Container */}
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-xs overflow-hidden">
+
+            {/* Mobile Card List or Cards Grid Mode */}
+            <div className={seatViewMode === 'CARDS' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 p-3.5 sm:p-4' : 'md:hidden divide-y divide-gray-100'}>
+              {isLoadingActivations ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <div key={idx} className="p-4 space-y-3 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    <div className="h-3 bg-gray-100 rounded w-3/4" />
+                  </div>
+                ))
+              ) : activationsList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-gray-500">
+                  No workstation terminals found.
+                </div>
+              ) : (
+                activationsList.map((act) => {
+                  const lastSeenMs = Date.now() - new Date(act.lastSeenAt).getTime();
+                  const isOnlineNow = lastSeenMs < 1000 * 60 * 60;
+                  const isWithin24h = lastSeenMs < 1000 * 60 * 60 * 24;
+
+                  return (
+                    <div
+                      key={act.id}
+                      onClick={() => setDetailActivation(act)}
+                      className="p-4 space-y-3 hover:bg-gray-50/70 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-xl shrink-0">
+                            <Monitor size={18} />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                              <span>{act.deviceName}</span>
+                              <span className="px-1.5 py-0.2 text-[10px] font-mono bg-gray-100 text-gray-600 rounded">
+                                v{act.appVersion}
+                              </span>
+                            </div>
+                            <span className="font-mono text-gray-400 text-[11px] block truncate max-w-[180px]">
+                              {act.deviceId}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <ActivationActionsDropdown
+                            activation={act}
+                            isSuperAdmin={isSuperAdmin}
+                            onView={(target) => setDetailActivation(target)}
+                            onDeactivate={(target) => setDeactivatingActivation(target)}
+                            onReactivate={(target) => setReactivatingActivation(target)}
+                            onRevoke={(target) => setRevokingActivation(target)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        <div>
+                          <span className="text-[10px] text-gray-400 block">License Key</span>
+                          <span className="font-mono font-bold text-gray-800 text-[11px] truncate block">
+                            {act.license?.licenseKey || act.licenseId}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-400 block">Hardware ID</span>
+                          <span className="font-mono text-gray-600 text-[11px] truncate block">
+                            {act.hardwareFingerprint}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              isOnlineNow && act.status === 'ACTIVE'
+                                ? 'bg-emerald-500 animate-ping'
+                                : isWithin24h && act.status === 'ACTIVE'
+                                ? 'bg-blue-500'
+                                : 'bg-gray-300'
+                            }`}
+                          />
+                          <span className="font-medium text-gray-700">
+                            {isOnlineNow && act.status === 'ACTIVE'
+                              ? 'Online Now'
+                              : isWithin24h && act.status === 'ACTIVE'
+                              ? 'Active Today'
+                              : 'Offline'}
+                          </span>
+                        </div>
+                        <span className="text-gray-400">
+                          {new Date(act.lastSeenAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -829,40 +965,15 @@ export const ActivationsPage: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination Footer */}
-            {seatMeta.totalPages > 1 && (
-              <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-                <div>
-                  Showing <span className="font-semibold text-gray-800">{(seatPage - 1) * seatLimit + 1}</span> to{' '}
-                  <span className="font-semibold text-gray-800">
-                    {Math.min(seatPage * seatLimit, seatMeta.total)}
-                  </span>{' '}
-                  of <span className="font-semibold text-gray-800">{seatMeta.total}</span> workstations
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSeatPage((p) => Math.max(1, p - 1))}
-                    disabled={seatPage <= 1}
-                    className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="px-3 py-1 font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg">
-                    Page {seatPage} of {seatMeta.totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSeatPage((p) => Math.min(seatMeta.totalPages, p + 1))}
-                    disabled={seatPage >= seatMeta.totalPages}
-                    className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Standardized Pagination Bar */}
+            <Pagination
+              page={seatPage}
+              totalPages={seatMeta.totalPages}
+              totalItems={seatMeta.total}
+              pageSize={seatLimit}
+              onPageChange={(p) => setSeatPage(p)}
+              itemName="seat activations"
+            />
           </div>
         </div>
       )}
@@ -954,168 +1065,319 @@ export const ActivationsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Device Fleet Table Container */}
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-xs overflow-hidden">
-            {/* Filters Bar */}
-            <div className="p-4 sm:p-5 border-b border-gray-100 space-y-4">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                {/* Tabs */}
-                <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-xl border border-gray-100 overflow-x-auto custom-scrollbar">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeviceTab('ALL');
-                      setDevicePage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      deviceTab === 'ALL'
-                        ? 'bg-white text-gray-900 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    All Fleet ({deviceStats?.totalDevices ?? '—'})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeviceTab('ACTIVE');
-                      setDevicePage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      deviceTab === 'ACTIVE'
-                        ? 'bg-white text-emerald-700 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    Active
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeviceTab('SUSPECT');
-                      setDevicePage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      deviceTab === 'SUSPECT'
-                        ? 'bg-white text-amber-800 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    Suspect ({deviceStats?.suspectDevices ?? 0})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeviceTab('REVOKED');
-                      setDevicePage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                      deviceTab === 'REVOKED'
-                        ? 'bg-white text-rose-700 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    Revoked ({deviceStats?.revokedDevices ?? 0})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeviceTab('TRASH');
-                      setDevicePage(1);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                      deviceTab === 'TRASH'
-                        ? 'bg-white text-gray-800 shadow-xs'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                  >
-                    <Trash2 size={12} />
-                    <span>Recycle Bin</span>
-                  </button>
-                </div>
+          {/* Fleet Tabs */}
+          <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-xl border border-gray-100 w-fit overflow-x-auto custom-scrollbar">
+            <button
+              type="button"
+              onClick={() => {
+                setDeviceTab('ALL');
+                setDevicePage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                deviceTab === 'ALL'
+                  ? 'bg-white text-gray-900 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              All Fleet ({deviceStats?.totalDevices ?? '—'})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDeviceTab('ACTIVE');
+                setDevicePage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                deviceTab === 'ACTIVE'
+                  ? 'bg-white text-emerald-700 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDeviceTab('SUSPECT');
+                setDevicePage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                deviceTab === 'SUSPECT'
+                  ? 'bg-white text-amber-800 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Suspect ({deviceStats?.suspectDevices ?? 0})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDeviceTab('REVOKED');
+                setDevicePage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all shrink-0 ${
+                deviceTab === 'REVOKED'
+                  ? 'bg-white text-rose-700 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Revoked ({deviceStats?.revokedDevices ?? 0})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDeviceTab('TRASH');
+                setDevicePage(1);
+              }}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                deviceTab === 'TRASH'
+                  ? 'bg-white text-gray-800 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <Trash2 size={12} />
+              <span>Recycle Bin</span>
+            </button>
+          </div>
 
-                {/* Search & Selectors */}
-                <div className="flex flex-wrap items-center gap-3">
-                  {isSuperAdmin && (
-                    <select
-                      value={selectedInstitutionId}
-                      onChange={(e) => {
-                        setSelectedInstitutionId(e.target.value);
+          {/* Hardware Fleet Filter Toolbar */}
+          <FilterToolbar
+            searchValue={deviceSearch}
+            onSearchChange={setDeviceSearch}
+            searchPlaceholder="Search device name, UUID, OS, fingerprint... (Press / to focus)"
+            activeChips={[
+              ...(selectedInstitutionId
+                ? [
+                    {
+                      id: 'deviceInstitution',
+                      label: 'Institution',
+                      value:
+                        institutions.find((i) => i.id === selectedInstitutionId)?.name ||
+                        selectedInstitutionId,
+                      onRemove: () => {
+                        setSelectedInstitutionId('');
                         setDevicePage(1);
-                      }}
-                      className="text-xs border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c] max-w-[200px]"
-                    >
-                      <option value="">All Institutions</option>
-                      {institutions.map((inst) => (
-                        <option key={inst.id} value={inst.id}>
-                          {inst.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                      },
+                    },
+                  ]
+                : []),
+              ...(deviceSortBy !== 'lastSeenAt' || deviceSortOrder !== 'desc'
+                ? [
+                    {
+                      id: 'deviceSort',
+                      label: 'Sort',
+                      value: `${deviceSortBy} (${deviceSortOrder.toUpperCase()})`,
+                      onRemove: () => {
+                        setDeviceSortBy('lastSeenAt');
+                        setDeviceSortOrder('desc');
+                      },
+                    },
+                  ]
+                : []),
+            ]}
+            hasActiveFilters={Boolean(
+              selectedInstitutionId || deviceSearch || deviceSortBy !== 'lastSeenAt' || deviceSortOrder !== 'desc'
+            )}
+            onClearFilters={() => {
+              setSelectedInstitutionId('');
+              setDeviceSearch('');
+              setDeviceSortBy('lastSeenAt');
+              setDeviceSortOrder('desc');
+              setDevicePage(1);
+            }}
+            totalResults={deviceMeta.total}
+            totalLabel="Fleet hardware terminals"
+            viewMode={deviceViewMode}
+            onViewModeChange={setDeviceViewMode}
+            actions={
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportDevicesCsv}
+                  className="flex items-center gap-1.5 h-[38px] px-3 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-2xs shrink-0"
+                  title="Export currently loaded hardware fleet to CSV"
+                >
+                  <Download size={13} className="text-gray-500" />
+                  <span className="hidden sm:inline">Export CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRefreshDevices}
+                  disabled={isFetchingDevices}
+                  className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors shrink-0 shadow-2xs"
+                  title="Refresh Fleet Table & Metrics"
+                >
+                  <RefreshCw
+                    size={14}
+                    className={isFetchingDevices ? 'animate-spin text-[#ff8a5c]' : ''}
+                  />
+                </button>
+              </div>
+            }
+            filterElements={
+              <>
+                {isSuperAdmin && (
+                  <FilterSelect
+                    icon={<Building2 size={13} />}
+                    value={selectedInstitutionId}
+                    onChange={(e) => {
+                      setSelectedInstitutionId(e.target.value);
+                      setDevicePage(1);
+                    }}
+                    className="max-w-[200px] truncate"
+                    title="Filter by Institution"
+                  >
+                    <option value="">All Institutions</option>
+                    {institutions.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name}
+                      </option>
+                    ))}
+                  </FilterSelect>
+                )}
 
-                  <div className="relative min-w-[220px] sm:min-w-[260px]">
-                    <Search
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    />
-                    <input
-                      type="text"
-                      value={deviceSearch}
-                      onChange={(e) => setDeviceSearch(e.target.value)}
-                      placeholder="Search device name, UUID, OS, fingerprint..."
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
-                    />
-                  </div>
-
-                  <select
+                <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                  <FilterSelect
+                    icon={<ArrowUpDown size={13} />}
                     value={deviceSortBy}
                     onChange={(e) => setDeviceSortBy(e.target.value as any)}
-                    className="text-xs border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    title="Sort by Attribute"
                   >
                     <option value="lastSeenAt">Last Ping</option>
                     <option value="deviceName">Station Name</option>
                     <option value="createdAt">First Registered</option>
                     <option value="status">Status</option>
-                  </select>
-
+                  </FilterSelect>
                   <button
                     type="button"
                     onClick={() => setDeviceSortOrder(deviceSortOrder === 'asc' ? 'desc' : 'asc')}
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
+                    className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors shrink-0 font-bold text-xs shadow-2xs"
                     title={`Sort ${deviceSortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                   >
-                    <ArrowUpDown size={15} />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleExportDevicesCsv}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-xs"
-                    title="Export currently loaded hardware fleet to CSV"
-                  >
-                    <Download size={14} className="text-gray-500" />
-                    <span>Export CSV</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleRefreshDevices}
-                    disabled={isFetchingDevices}
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
-                    title="Refresh Fleet Table & Metrics"
-                  >
-                    <RefreshCw
-                      size={15}
-                      className={isFetchingDevices ? 'animate-spin text-[#ff8a5c]' : ''}
-                    />
+                    {deviceSortOrder.toUpperCase()}
                   </button>
                 </div>
-              </div>
+              </>
+            }
+          />
+
+          {/* Device Fleet Table Container */}
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-xs overflow-hidden">
+
+            {/* Mobile Card List or Cards Grid Mode */}
+            <div className={deviceViewMode === 'CARDS' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 p-3.5 sm:p-4' : 'md:hidden divide-y divide-gray-100'}>
+              {isLoadingDevices ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <div key={idx} className="p-4 space-y-3 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    <div className="h-3 bg-gray-100 rounded w-3/4" />
+                  </div>
+                ))
+              ) : devicesList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-gray-500">
+                  No hardware devices found.
+                </div>
+              ) : (
+                devicesList.map((dev) => {
+                  const lastSeenMs = Date.now() - new Date(dev.lastSeenAt).getTime();
+                  const isOnlineNow = lastSeenMs < 1000 * 60 * 60;
+                  const isWithin24h = lastSeenMs < 1000 * 60 * 60 * 24;
+                  const isSoftDeleted = !!dev.deletedAt;
+
+                  return (
+                    <div
+                      key={dev.id}
+                      onClick={() => setDetailDevice(dev)}
+                      className="p-4 space-y-3 hover:bg-gray-50/70 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className={`p-2 rounded-xl shrink-0 ${
+                              isSoftDeleted
+                                ? 'bg-gray-100 text-gray-400'
+                                : 'bg-indigo-50 text-indigo-600'
+                            }`}
+                          >
+                            <Cpu size={18} />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                              <span>{dev.deviceName}</span>
+                              {isSoftDeleted && (
+                                <span className="px-1.5 py-0.2 text-[10px] font-bold bg-rose-100 text-rose-700 rounded">
+                                  TRASHED
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-mono text-gray-400 text-[11px] block truncate max-w-[180px]">
+                              {dev.id}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <DeviceActionsDropdown
+                            device={dev}
+                            isDeleted={isSoftDeleted}
+                            onViewDetails={(target) => setDetailDevice(target)}
+                            onEdit={(target) => setEditDevice(target)}
+                            onStatusChange={(target) => setStatusDevice(target)}
+                            onRevoke={(target) => setRevokeDeviceTarget(target)}
+                            onDelete={(target) => {
+                              if (isSoftDeleted) {
+                                setPurgeDeviceTarget(target);
+                              } else {
+                                setTrashDeviceTarget(target);
+                              }
+                            }}
+                            onRestore={(target) => setRestoreDeviceTarget(target)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        <div>
+                          <span className="text-[10px] text-gray-400 block">OS / App</span>
+                          <span className="font-medium text-gray-800 text-[11px] truncate block">
+                            {dev.osVersion || 'Unknown'} (v{dev.appVersion})
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-400 block">Institution</span>
+                          <span className="font-medium text-blue-600 text-[11px] truncate block">
+                            {dev.institution?.name || 'Global'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              isOnlineNow && dev.status === 'ACTIVE'
+                                ? 'bg-emerald-500 animate-ping'
+                                : isWithin24h && dev.status === 'ACTIVE'
+                                ? 'bg-blue-500'
+                                : 'bg-gray-300'
+                            }`}
+                          />
+                          <span className="font-medium text-gray-700">
+                            {dev.status === 'ACTIVE' ? 'Active' : dev.status}
+                          </span>
+                        </div>
+                        <span className="text-gray-400">
+                          {new Date(dev.lastSeenAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -1336,40 +1598,15 @@ export const ActivationsPage: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination Footer */}
-            {deviceMeta.totalPages > 1 && (
-              <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-                <div>
-                  Showing <span className="font-semibold text-gray-800">{(devicePage - 1) * deviceLimit + 1}</span> to{' '}
-                  <span className="font-semibold text-gray-800">
-                    {Math.min(devicePage * deviceLimit, deviceMeta.total)}
-                  </span>{' '}
-                  of <span className="font-semibold text-gray-800">{deviceMeta.total}</span> terminals
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDevicePage((p) => Math.max(1, p - 1))}
-                    disabled={devicePage <= 1}
-                    className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="px-3 py-1 font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg">
-                    Page {devicePage} of {deviceMeta.totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setDevicePage((p) => Math.min(deviceMeta.totalPages, p + 1))}
-                    disabled={devicePage >= deviceMeta.totalPages}
-                    className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Standardized Pagination Bar */}
+            <Pagination
+              page={devicePage}
+              totalPages={deviceMeta.totalPages}
+              totalItems={deviceMeta.total}
+              pageSize={deviceLimit}
+              onPageChange={(p) => setDevicePage(p)}
+              itemName="terminals"
+            />
           </div>
         </div>
       )}

@@ -12,8 +12,6 @@ import {
   RotateCcw,
   CheckCircle2,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
   ArrowUpDown,
   Filter,
   Sliders,
@@ -22,6 +20,10 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import StatCard from '@/features/dashboard/components/StatCard';
+import PageHeader from '@/components/ui/PageHeader';
+import Pagination from '@/components/ui/Pagination';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
+import StatusBadge from '@/components/ui/StatusBadge';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   useContentList,
@@ -65,6 +67,7 @@ export const ContentPage: React.FC = () => {
   const [limit, setLimit] = useState(10);
   const [sortBy, setSortBy] = useState<'createdAt' | 'title' | 'difficulty' | 'version' | 'durationMinutes'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -242,55 +245,44 @@ export const ContentPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
-              <FileText size={22} strokeWidth={2.2} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-                Educational Content & Passages
-              </h1>
-              <p className="text-xs text-gray-500">
-                Manage practice exercises, bilingual typing lessons, official exam test sets, and scoring rules
-              </p>
-            </div>
-          </div>
-        </div>
+      <PageHeader
+        title="Educational Content & Passages"
+        subtitle="Manage practice exercises, bilingual typing lessons, official exam test sets, and scoring rules"
+        icon={<FileText className="text-[#ff8a5c]" size={24} />}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              title="Export educational content to CSV"
+            >
+              <Download size={14} className="text-gray-500" />
+              Export CSV
+            </button>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-            title="Export educational content to CSV"
-          >
-            <Download size={14} className="text-gray-500" />
-            Export CSV
-          </button>
+            <button
+              type="button"
+              onClick={handleRefreshAll}
+              disabled={isFetchingContent}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              title="Refresh Content & Statistics"
+            >
+              <RefreshCw size={14} className={isFetchingContent ? 'animate-spin text-[#ff8a5c]' : ''} />
+              Refresh
+            </button>
 
-          <button
-            type="button"
-            onClick={handleRefreshAll}
-            disabled={isFetchingContent}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-            title="Refresh Content & Statistics"
-          >
-            <RefreshCw size={14} className={isFetchingContent ? 'animate-spin text-[#ff8a5c]' : ''} />
-            Refresh
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            Create Content Item
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              Create Content Item
+            </button>
+          </>
+        }
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -407,29 +399,96 @@ export const ContentPage: React.FC = () => {
       </div>
 
       {/* Search & Multifaceted Filter Bar */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search exercises by title or text snippet..."
-            className="w-full pl-9 pr-4 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 shadow-2xs"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 justify-end">
-          {/* Module Filter */}
-          <div className="flex items-center gap-1">
-            <Layers size={14} className="text-gray-400" />
-            <select
+      <FilterToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search exercises by title or text snippet... (Press / to focus)"
+        activeChips={[
+          ...(selectedModuleId
+            ? [
+                {
+                  id: 'module',
+                  label: 'Module',
+                  value: modules.find((m) => m.id === selectedModuleId)?.name || selectedModuleId,
+                  onRemove: () => {
+                    setSelectedModuleId('');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedContentType
+            ? [
+                {
+                  id: 'type',
+                  label: 'Type',
+                  value: selectedContentType,
+                  onRemove: () => {
+                    setSelectedContentType('');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedLanguage
+            ? [
+                {
+                  id: 'language',
+                  label: 'Language',
+                  value: selectedLanguage === 'en' ? 'English' : selectedLanguage === 'hi' ? 'Hindi' : selectedLanguage,
+                  onRemove: () => {
+                    setSelectedLanguage('');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+          ...(selectedDifficulty
+            ? [
+                {
+                  id: 'difficulty',
+                  label: 'Difficulty',
+                  value: selectedDifficulty,
+                  onRemove: () => {
+                    setSelectedDifficulty('');
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
+        ]}
+        hasActiveFilters={Boolean(
+          selectedModuleId ||
+            selectedContentType ||
+            selectedLanguage ||
+            selectedDifficulty ||
+            searchTerm ||
+            sortBy !== 'createdAt' ||
+            sortOrder !== 'desc'
+        )}
+        onClearFilters={() => {
+          setSelectedModuleId('');
+          setSelectedContentType('');
+          setSelectedLanguage('');
+          setSelectedDifficulty('');
+          setSearchTerm('');
+          setSortBy('createdAt');
+          setSortOrder('desc');
+          setPage(1);
+        }}
+        totalResults={meta?.total}
+        totalLabel="Exercises"
+        filterElements={
+          <>
+            {/* Module Filter */}
+            <FilterSelect
+              icon={<Layers size={13} />}
               value={selectedModuleId}
               onChange={(e) => {
                 setSelectedModuleId(e.target.value);
                 setPage(1);
               }}
-              className="text-xs bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#ff8a5c]"
+              title="Filter by Module"
             >
               <option value="">All Modules</option>
               {modules.map((m) => (
@@ -437,79 +496,80 @@ export const ContentPage: React.FC = () => {
                   {m.name}
                 </option>
               ))}
-            </select>
-          </div>
+            </FilterSelect>
 
-          {/* Type Filter */}
-          <select
-            value={selectedContentType}
-            onChange={(e) => {
-              setSelectedContentType(e.target.value as ContentType);
-              setPage(1);
-            }}
-            className="text-xs bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#ff8a5c]"
-          >
-            <option value="">All Content Types</option>
-            <option value="PASSAGE">Practice Passage</option>
-            <option value="EXAM_PAPER">Exam Paper</option>
-            <option value="LESSON">Lesson</option>
-            <option value="PRACTICE_SET">Practice Set</option>
-            <option value="VOCATIONAL_COURSE">Vocational Course</option>
-          </select>
-
-          {/* Language Filter */}
-          <select
-            value={selectedLanguage}
-            onChange={(e) => {
-              setSelectedLanguage(e.target.value);
-              setPage(1);
-            }}
-            className="text-xs bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#ff8a5c]"
-          >
-            <option value="">All Languages</option>
-            <option value="en">English (en)</option>
-            <option value="hi">Hindi (hi)</option>
-          </select>
-
-          {/* Difficulty Filter */}
-          <select
-            value={selectedDifficulty}
-            onChange={(e) => {
-              setSelectedDifficulty(e.target.value as ContentDifficulty);
-              setPage(1);
-            }}
-            className="text-xs bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#ff8a5c]"
-          >
-            <option value="">All Difficulties</option>
-            <option value="EASY">EASY</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HARD">HARD</option>
-            <option value="EXAM">EXAM</option>
-          </select>
-
-          {/* Sort Selector */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <ArrowUpDown size={14} className="text-gray-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-xs bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#ff8a5c]"
+            {/* Type Filter */}
+            <FilterSelect
+              value={selectedContentType}
+              onChange={(e) => {
+                setSelectedContentType(e.target.value as ContentType);
+                setPage(1);
+              }}
+              title="Filter by Content Type"
             >
-              <option value="createdAt">Created Date</option>
-              <option value="title">Title</option>
-              <option value="difficulty">Difficulty</option>
-              <option value="durationMinutes">Duration</option>
-            </select>
-            <button
-              type="button"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-semibold text-xs"
+              <option value="">All Content Types</option>
+              <option value="PASSAGE">Practice Passage</option>
+              <option value="EXAM_PAPER">Exam Paper</option>
+              <option value="LESSON">Lesson</option>
+              <option value="PRACTICE_SET">Practice Set</option>
+              <option value="VOCATIONAL_COURSE">Vocational Course</option>
+            </FilterSelect>
+
+            {/* Language Filter */}
+            <FilterSelect
+              value={selectedLanguage}
+              onChange={(e) => {
+                setSelectedLanguage(e.target.value);
+                setPage(1);
+              }}
+              title="Filter by Language"
             >
-              {sortOrder.toUpperCase()}
-            </button>
-          </div>
-        </div>
-      </div>
+              <option value="">All Languages</option>
+              <option value="en">English (en)</option>
+              <option value="hi">Hindi (hi)</option>
+            </FilterSelect>
+
+            {/* Difficulty Filter */}
+            <FilterSelect
+              value={selectedDifficulty}
+              onChange={(e) => {
+                setSelectedDifficulty(e.target.value as ContentDifficulty);
+                setPage(1);
+              }}
+              title="Filter by Difficulty"
+            >
+              <option value="">All Difficulties</option>
+              <option value="EASY">EASY</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="HARD">HARD</option>
+              <option value="EXAM">EXAM</option>
+            </FilterSelect>
+
+            {/* Sort Selector */}
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <FilterSelect
+                icon={<ArrowUpDown size={13} />}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                title="Sort by Attribute"
+              >
+                <option value="createdAt">Created Date</option>
+                <option value="title">Title</option>
+                <option value="difficulty">Difficulty</option>
+                <option value="durationMinutes">Duration</option>
+              </FilterSelect>
+              <button
+                type="button"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="h-[38px] px-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 font-bold text-xs shrink-0 shadow-2xs transition-colors"
+                title={`Sort ${sortOrder.toUpperCase()}`}
+              >
+                {sortOrder.toUpperCase()}
+              </button>
+            </div>
+          </>
+        }
+      />
 
       {/* Content Table */}
       {isLoadingContent ? (
@@ -544,7 +604,102 @@ export const ContentPage: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto custom-scrollbar">
+          {/* Mobile Card List or Cards Grid Mode */}
+          <div className={viewMode === 'CARDS' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 p-3.5 sm:p-4' : 'md:hidden divide-y divide-gray-100'}>
+            {contentItems.map((item) => {
+              const payload = item.payload || {};
+              const words =
+                payload.wordsCount ||
+                (payload.text ? payload.text.trim().split(/\s+/).filter(Boolean).length : 0);
+              const isHindi = item.language?.startsWith('hi');
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setInspectingItem(item)}
+                  className="p-4 space-y-3 hover:bg-gray-50/70 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center shrink-0">
+                        <FileText size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-gray-900 text-sm">{item.title}</span>
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                              isHindi
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-gray-100 text-gray-700 border border-gray-200'
+                            }`}
+                          >
+                            {item.language.toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-gray-400">
+                          {item.module?.name || modules.find((m) => m.id === item.moduleId)?.name || 'Module'} • v{item.version}.0
+                        </span>
+                      </div>
+                    </div>
+
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <ContentActionsDropdown
+                        item={item}
+                        onViewDetails={(i) => setInspectingItem(i)}
+                        onEdit={(i) => setEditingItem(i)}
+                        onChangeStatus={(i) => setStatusItem(i)}
+                        onDelete={(i) => {
+                          if (activeTab === 'TRASH') {
+                            setItemToPurge(i);
+                          } else {
+                            setItemToDelete(i);
+                          }
+                        }}
+                        onRestore={activeTab === 'TRASH' ? (i) => setItemToRestore(i) : undefined}
+                        isDeletedView={activeTab === 'TRASH'}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        item.difficulty === 'EASY'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : item.difficulty === 'MEDIUM'
+                          ? 'bg-blue-100 text-blue-800'
+                          : item.difficulty === 'HARD'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-purple-100 text-purple-800'
+                      }`}
+                    >
+                      {item.difficulty}
+                    </span>
+
+                    <span className="text-gray-500 font-medium flex items-center gap-1 text-[11px]">
+                      <Clock size={12} className="text-gray-400" />
+                      {item.durationMinutes} min
+                    </span>
+
+                    <span className="text-gray-600 font-medium text-[11px] bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                      {words} words
+                    </span>
+
+                    <div className="ml-auto">
+                      <StatusBadge
+                        status={item.deletedAt ? 'TRASH' : item.status}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table */}
+          <div className={viewMode === 'CARDS' ? 'hidden' : 'hidden md:block overflow-x-auto custom-scrollbar'}>
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -651,23 +806,10 @@ export const ContentPage: React.FC = () => {
 
                       {/* Status */}
                       <td className="py-3.5 px-4">
-                        {item.deletedAt ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                            In Trash
-                          </span>
-                        ) : item.status === 'PUBLISHED' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Published
-                          </span>
-                        ) : item.status === 'DRAFT' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                            Draft
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                            Archived
-                          </span>
-                        )}
+                        <StatusBadge
+                          status={item.deletedAt ? 'TRASH' : item.status}
+                          size="sm"
+                        />
                       </td>
 
                       {/* Actions */}
@@ -698,38 +840,18 @@ export const ContentPage: React.FC = () => {
       )}
 
       {/* Pagination Footer */}
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200/80 pt-4 text-xs text-gray-500">
-          <div>
-            Showing <span className="font-semibold text-gray-800">{(meta.page - 1) * meta.limit + 1}</span> to{' '}
-            <span className="font-semibold text-gray-800">
-              {Math.min(meta.page * meta.limit, meta.total)}
-            </span>{' '}
-            of <span className="font-semibold text-gray-800">{meta.total}</span> items
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setPage(page - 1)}
-              disabled={page <= 1}
-              className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="px-2 font-semibold text-gray-800">
-              Page {meta.page} of {meta.totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage(page + 1)}
-              disabled={page >= meta.totalPages}
-              className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={meta?.totalPages || 1}
+        totalItems={meta?.total || 0}
+        pageSize={limit}
+        onPageChange={setPage}
+        onPageSizeChange={(l) => {
+          setLimit(l);
+          setPage(1);
+        }}
+        itemName="content items"
+      />
 
       {/* Modals */}
       <CreateContentModal
