@@ -344,6 +344,7 @@ export const ActivationsPage: React.FC = () => {
           </span>
         }
         actions={
+          <>
           <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200">
             <button
               type="button"
@@ -380,8 +381,36 @@ export const ActivationsPage: React.FC = () => {
                 </span>
               )}
             </button>
+
+            
           </div>
+          
+            <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportSeatsCsv}
+                  className="flex items-center gap-1.5 h-[38px] px-3 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-2xs shrink-0"
+                  title="Export currently loaded workstations to CSV"
+                >
+                  <Download size={13} className="text-gray-500" />
+                  <span className="hidden sm:inline">Export CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRefreshSeats}
+                  disabled={isFetchingActivations}
+                  className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors shrink-0 shadow-2xs"
+                  title="Refresh Table & Metrics"
+                >
+                  <RefreshCw
+                    size={14}
+                    className={isFetchingActivations ? 'animate-spin text-[#ff8a5c]' : ''}
+                  />
+                </button>
+              </div>
+              </>
         }
+
       />
 
       {/* ======================================================================= */}
@@ -609,31 +638,6 @@ export const ActivationsPage: React.FC = () => {
             totalLabel="Workstation seats"
             viewMode={seatViewMode}
             onViewModeChange={setSeatViewMode}
-            actions={
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleExportSeatsCsv}
-                  className="flex items-center gap-1.5 h-[38px] px-3 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-2xs shrink-0"
-                  title="Export currently loaded workstations to CSV"
-                >
-                  <Download size={13} className="text-gray-500" />
-                  <span className="hidden sm:inline">Export CSV</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRefreshSeats}
-                  disabled={isFetchingActivations}
-                  className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors shrink-0 shadow-2xs"
-                  title="Refresh Table & Metrics"
-                >
-                  <RefreshCw
-                    size={14}
-                    className={isFetchingActivations ? 'animate-spin text-[#ff8a5c]' : ''}
-                  />
-                </button>
-              </div>
-            }
             filterElements={
               <>
                 {isSuperAdmin && (

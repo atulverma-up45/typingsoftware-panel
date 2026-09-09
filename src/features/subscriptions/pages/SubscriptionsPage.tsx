@@ -22,6 +22,7 @@ import {
   Sparkles,
   Download,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
 import StatCard from '@/features/dashboard/components/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
@@ -29,6 +30,7 @@ import Pagination from '@/components/ui/Pagination';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 import {
   useSubscriptions,
   useSubscriptionStats,
@@ -58,8 +60,7 @@ type SubscriptionTab =
   | 'TRASH';
 
 export const SubscriptionsPage: React.FC = () => {
-  const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const { isSuperAdmin, isSupport } = usePermissions();
 
   // Filters & State
   const [activeTab, setActiveTab] = useState<SubscriptionTab>('ALL');
@@ -262,14 +263,24 @@ export const SubscriptionsPage: React.FC = () => {
               Refresh
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              Provision Subscription
-            </button>
+            {isSupport ? (
+              <div
+                title="Support role is view-only. Subscription provisioning is restricted to administrators."
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed select-none pointer-events-none opacity-60"
+              >
+                <Lock size={15} />
+                <span>Provision (Locked)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                Provision Subscription
+              </button>
+            )}
           </>
         }
       />

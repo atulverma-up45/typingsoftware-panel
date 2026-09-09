@@ -17,7 +17,9 @@ import {
   Building2,
   Download,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
+import { usePermissions } from '@/lib/permissions';
 import StatCard from '@/features/dashboard/components/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
@@ -45,6 +47,7 @@ type ModuleTab = 'ACTIVE' | 'INACTIVE' | 'ALL' | 'TRASH';
 type ViewMode = 'CARDS' | 'TABLE';
 
 export const ModulesPage: React.FC = () => {
+  const { isSuperAdmin, isSupport } = usePermissions();
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>('ACTIVE');
   const [viewMode, setViewMode] = useState<ViewMode>('CARDS');
@@ -238,14 +241,24 @@ export const ModulesPage: React.FC = () => {
               Refresh
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              Register Module
-            </button>
+            {!isSuperAdmin ? (
+              <div
+                title="Typing modules are core system engines centrally managed by Super Admin. Read-only for school administrators."
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed select-none pointer-events-none opacity-60"
+              >
+                <Lock size={15} />
+                <span>Register Module (Locked)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                Register Module
+              </button>
+            )}
           </>
         }
       />

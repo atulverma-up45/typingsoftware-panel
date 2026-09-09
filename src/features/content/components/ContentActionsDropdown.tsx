@@ -7,9 +7,11 @@ import {
   Trash2,
   RotateCcw,
   Copy,
+  Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ContentItem } from '../api/contentApi';
+import { usePermissions } from '@/lib/permissions';
 
 interface ContentActionsDropdownProps {
   item: ContentItem;
@@ -32,6 +34,7 @@ export const ContentActionsDropdown: React.FC<ContentActionsDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isSuperAdmin } = usePermissions();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -92,71 +95,111 @@ export const ContentActionsDropdown: React.FC<ContentActionsDropdownProps> = ({
 
           {!isDeletedView ? (
             <>
-              <button
-                type="button"
-                onClick={() => {
-                  onEdit(item);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-              >
-                <Edit3 size={14} className="text-blue-500" />
-                Edit Passage & Settings
-              </button>
+              {!isSuperAdmin ? (
+                <>
+                  <div
+                    title="Curriculum passages are centrally managed by Super Admin. Read-only."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Edit Passage (Locked)</span>
+                  </div>
+                  <div
+                    title="Curriculum passages are centrally managed by Super Admin. Read-only."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Publish State (Locked)</span>
+                  </div>
+                  <div
+                    title="Curriculum passages are centrally managed by Super Admin. Read-only."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Move to Trash (Locked)</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onEdit(item);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
+                  >
+                    <Edit3 size={14} className="text-blue-500" />
+                    Edit Passage & Settings
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  onChangeStatus(item);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff8a5c] hover:bg-[#fff0eb]/50 text-left font-semibold"
-              >
-                <FileCheck2 size={14} />
-                Change Publication State
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChangeStatus(item);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff8a5c] hover:bg-[#fff0eb]/50 text-left font-semibold"
+                  >
+                    <FileCheck2 size={14} />
+                    Change Publication State
+                  </button>
 
-              <div className="h-px bg-gray-100 my-1" />
+                  <div className="h-px bg-gray-100 my-1" />
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(item);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
-              >
-                <Trash2 size={14} />
-                Move to Trash
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(item);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
+                  >
+                    <Trash2 size={14} />
+                    Move to Trash
+                  </button>
+                </>
+              )}
             </>
           ) : (
             <>
-              {onRestore && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onRestore(item);
-                    setIsOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left font-semibold"
+              {!isSuperAdmin ? (
+                <div
+                  title="Curriculum passages are centrally managed by Super Admin. Read-only."
+                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
                 >
-                  <RotateCcw size={14} />
-                  Restore Content
-                </button>
-              )}
+                  <Lock size={13} className="text-gray-400" />
+                  <span>Restore (Locked)</span>
+                </div>
+              ) : (
+                <>
+                  {onRestore && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onRestore(item);
+                        setIsOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left font-semibold"
+                    >
+                      <RotateCcw size={14} />
+                      Restore Content
+                    </button>
+                  )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(item);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-bold"
-              >
-                <Trash2 size={14} />
-                Permanently Purge
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(item);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-bold"
+                  >
+                    <Trash2 size={14} />
+                    Permanently Purge
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>

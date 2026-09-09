@@ -25,6 +25,7 @@ import {
   Download,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 import {
   useInstitutions,
   useGlobalInstitutionStats,
@@ -56,8 +57,7 @@ import { LayoutGrid, List } from 'lucide-react';
 type TabType = 'ALL' | 'ACTIVE' | 'SUSPENDED' | 'TRASH';
 
 export const InstitutionsPage: React.FC = () => {
-  const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const { isSuperAdmin, isSupport } = usePermissions();
 
   // Filters & Pagination State
   const [activeTab, setActiveTab] = useState<TabType>('ALL');
@@ -215,7 +215,7 @@ export const InstitutionsPage: React.FC = () => {
               className="px-3 py-2 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl border border-gray-200 shadow-2xs transition-colors font-medium text-xs flex items-center gap-1.5 min-h-[38px]"
             >
               <Download size={14} className="text-gray-500" />
-              <span className="hidden xs:inline">Export CSV</span>
+              <span className="hidden sm:inline">Export CSV</span>
             </button>
             <button
               onClick={handleRefreshAll}
@@ -399,20 +399,7 @@ export const InstitutionsPage: React.FC = () => {
         }}
         totalResults={meta?.total}
         totalLabel="Institutions"
-        actions={
-          <button
-            type="button"
-            onClick={() => refetchInstitutions()}
-            disabled={isFetchingInstitutions}
-            className="h-[38px] px-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors shrink-0 shadow-2xs"
-            title="Refresh Table"
-          >
-            <RefreshCw
-              size={14}
-              className={isFetchingInstitutions ? 'animate-spin text-[#ff8a5c]' : ''}
-            />
-          </button>
-        }
+        
         filterElements={
           <div className="flex items-center gap-1.5 w-full sm:w-auto">
             <FilterSelect

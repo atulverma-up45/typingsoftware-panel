@@ -8,9 +8,11 @@ import {
   Eye,
   CheckCircle2,
   Copy,
+  Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Plan } from '../api/planApi';
+import { usePermissions } from '@/lib/permissions';
 
 interface PlanActionsDropdownProps {
   plan: Plan;
@@ -33,6 +35,7 @@ export const PlanActionsDropdown: React.FC<PlanActionsDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isSuperAdmin } = usePermissions();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,80 +92,120 @@ export const PlanActionsDropdown: React.FC<PlanActionsDropdownProps> = ({
 
           {!isDeletedView ? (
             <>
-              <button
-                type="button"
-                onClick={() => {
-                  onEdit(plan);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-              >
-                <Edit3 size={14} className="text-blue-500" />
-                Edit Configuration
-              </button>
+              {isSuperAdmin ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onEdit(plan);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
+                  >
+                    <Edit3 size={14} className="text-blue-500" />
+                    Edit Configuration
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  onToggleStatus(plan);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-              >
-                {isArchived ? (
-                  <>
-                    <CheckCircle2 size={14} className="text-emerald-500" />
-                    Activate Tier
-                  </>
-                ) : (
-                  <>
-                    <Archive size={14} className="text-amber-500" />
-                    Archive Tier
-                  </>
-                )}
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onToggleStatus(plan);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
+                  >
+                    {isArchived ? (
+                      <>
+                        <CheckCircle2 size={14} className="text-emerald-500" />
+                        Activate Tier
+                      </>
+                    ) : (
+                      <>
+                        <Archive size={14} className="text-amber-500" />
+                        Archive Tier
+                      </>
+                    )}
+                  </button>
 
-              <div className="h-px bg-gray-100 my-1" />
+                  <div className="h-px bg-gray-100 my-1" />
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(plan);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
-              >
-                <Trash2 size={14} />
-                Move to Trash
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(plan);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
+                  >
+                    <Trash2 size={14} />
+                    Move to Trash
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div
+                    title="Super Admin privileges required to edit commercial tiers."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    Edit (Locked)
+                  </div>
+                  <div
+                    title="Super Admin privileges required to archive commercial tiers."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    Status (Locked)
+                  </div>
+                  <div
+                    title="Super Admin privileges required to delete commercial tiers."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    Trash (Locked)
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <>
-              {onRestore && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onRestore(plan);
-                    setIsOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left"
-                >
-                  <RotateCcw size={14} />
-                  Restore Plan
-                </button>
-              )}
+              {isSuperAdmin ? (
+                <>
+                  {onRestore && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onRestore(plan);
+                        setIsOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left"
+                    >
+                      <RotateCcw size={14} />
+                      Restore Plan
+                    </button>
+                  )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(plan);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-medium"
-              >
-                <Trash2 size={14} />
-                Permanently Purge
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(plan);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-medium"
+                  >
+                    <Trash2 size={14} />
+                    Permanently Purge
+                  </button>
+                </>
+              ) : (
+                <div
+                  title="Super Admin privileges required to purge commercial tiers."
+                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
+                >
+                  <Lock size={13} className="text-gray-400" />
+                  Purge (Locked)
+                </div>
+              )}
             </>
           )}
         </div>

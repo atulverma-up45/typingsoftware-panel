@@ -7,13 +7,18 @@ import {
   Users,
   Shield,
   BrainCircuit,
+  Layers,
+  FileText,
+  GraduationCap,
   Menu,
 } from 'lucide-react';
+import { usePermissions } from '@/lib/permissions';
 
 const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
+  const { isSuperAdmin, isAdmin, isSupport } = usePermissions();
 
   // Responsive mobile detector
   useEffect(() => {
@@ -51,13 +56,35 @@ const DashboardLayout: React.FC = () => {
     };
   }, [isMobile, isSidebarOpen]);
 
-  // Mobile Bottom Quick Navigation Destinations
-  const mobileNavItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={19} /> },
-    { name: 'Users', path: '/users', icon: <Users size={19} /> },
-    { name: 'Licenses', path: '/licenses', icon: <Shield size={19} /> },
-    { name: 'Devices', path: '/activations', icon: <BrainCircuit size={19} /> },
-  ];
+  // Role-Adapted Mobile Bottom Quick Navigation Destinations
+  // For Librarian/ADMIN: strictly focused on high-frequency daily classroom & computer lab tasks:
+  // 1. Dashboard (real-time activity)
+  // 2. Students (/users: lookups, enrollment, password resets)
+  // 3. Workstations (/activations: seat unlocking, deallocations, live PCs)
+  // 4. Passages (/content: daily test prompts & practice text)
+  // 5. More (Slide-out drawer for everything else)
+  const mobileNavItems = isAdmin
+    ? [
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} strokeWidth={2} /> },
+        { name: 'Students', path: '/users', icon: <Users size={20} strokeWidth={2} /> },
+        { name: 'Workstations', path: '/activations', icon: <BrainCircuit size={20} strokeWidth={2} /> },
+        { name: 'Passages', path: '/content', icon: <FileText size={20} strokeWidth={2} /> },
+      ]
+    : isSupport
+    ? [
+        // Support role: read-only tenant & license inspection
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} strokeWidth={2} /> },
+        { name: 'Tenants', path: '/institutions', icon: <GraduationCap size={20} strokeWidth={2} /> },
+        { name: 'Licenses', path: '/licenses', icon: <Shield size={20} strokeWidth={2} /> },
+        { name: 'Devices', path: '/activations', icon: <BrainCircuit size={20} strokeWidth={2} /> },
+      ]
+    : [
+        // Super Admin: executive oversight
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} strokeWidth={2} /> },
+        { name: 'Users', path: '/users', icon: <Users size={20} strokeWidth={2} /> },
+        { name: 'Tenants', path: '/institutions', icon: <GraduationCap size={20} strokeWidth={2} /> },
+        { name: 'Workstations', path: '/activations', icon: <BrainCircuit size={20} strokeWidth={2} /> },
+      ];
 
   return (
     <div className="flex h-screen w-full bg-[#fcfcfc] overflow-hidden font-sans text-gray-800">
@@ -99,8 +126,8 @@ const DashboardLayout: React.FC = () => {
         {/* Mobile Quick Action Dock (Visible only on mobile/tablet viewports < 1024px) */}
         <nav
           aria-label="Mobile quick navigation"
-          className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-gray-100 px-3 py-1.5 z-30 flex items-center justify-around shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.06)]"
-          style={{ paddingBottom: 'max(0.4rem, env(safe-area-inset-bottom))' }}
+          className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 px-2 py-1.5 z-30 flex items-center justify-around shadow-[0_-6px_25px_-4px_rgba(0,0,0,0.07)]"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
           {mobileNavItems.map((item) => {
             const isActive =
@@ -111,20 +138,22 @@ const DashboardLayout: React.FC = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] min-h-[46px] rounded-xl transition-all ${
                   isActive
-                    ? 'text-[#ff8a5c] font-bold'
-                    : 'text-gray-400 hover:text-gray-700'
+                    ? 'bg-[#fff0eb] text-[#ff8a5c] font-bold shadow-2xs'
+                    : 'text-gray-500 hover:text-gray-900 active:scale-95'
                 }`}
               >
                 <div
-                  className={`p-1 rounded-lg transition-transform ${
-                    isActive ? 'scale-110' : ''
+                  className={`transition-transform duration-200 ${
+                    isActive ? 'scale-110 text-[#ff8a5c]' : 'text-gray-400'
                   }`}
                 >
                   {item.icon}
                 </div>
-                <span className="text-[10px] tracking-tight mt-0.5">{item.name}</span>
+                <span className={`text-[10px] tracking-tight mt-0.5 ${isActive ? 'font-bold' : 'font-medium'}`}>
+                  {item.name}
+                </span>
               </Link>
             );
           })}
@@ -132,13 +161,13 @@ const DashboardLayout: React.FC = () => {
           {/* More / Menu Drawer Trigger */}
           <button
             onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open full menu"
-            className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-gray-400 hover:text-gray-700 transition-colors"
+            aria-label="Open full menu drawer"
+            className="flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] min-h-[46px] rounded-xl text-gray-500 hover:text-gray-900 active:scale-95 transition-all"
           >
-            <div className="p-1">
-              <Menu size={19} />
+            <div className="text-gray-400 p-0.5">
+              <Menu size={20} strokeWidth={2} />
             </div>
-            <span className="text-[10px] tracking-tight mt-0.5">More</span>
+            <span className="text-[10px] tracking-tight mt-0.5 font-medium">More</span>
           </button>
         </nav>
       </div>

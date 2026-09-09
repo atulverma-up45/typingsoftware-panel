@@ -7,9 +7,11 @@ import {
   PauseCircle,
   PlayCircle,
   AlertOctagon,
+  Lock,
 } from 'lucide-react';
 import type { Activation } from '../api/activationApi';
 import { toast } from 'sonner';
+import { usePermissions } from '@/lib/permissions';
 
 interface ActivationActionsDropdownProps {
   activation: Activation;
@@ -30,6 +32,7 @@ export const ActivationActionsDropdown: React.FC<ActivationActionsDropdownProps>
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isSupport } = usePermissions();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -108,46 +111,58 @@ export const ActivationActionsDropdown: React.FC<ActivationActionsDropdownProps>
           </div>
 
           <div className="p-1">
-            {activation.status === 'ACTIVE' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onDeactivate(activation);
-                }}
-                className="w-full text-left px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 rounded-lg flex items-center gap-2.5 transition-colors"
+            {isSupport ? (
+              <div
+                title="Support role is view-only. Workstation seats management is restricted to administrators."
+                className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
               >
-                <PauseCircle size={14} className="text-amber-500" />
-                <span>Deactivate Seat Slot</span>
-              </button>
-            )}
+                <Lock size={13} className="text-gray-400" />
+                <span>Seat Management (Locked)</span>
+              </div>
+            ) : (
+              <>
+                {activation.status === 'ACTIVE' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onDeactivate(activation);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                  >
+                    <PauseCircle size={14} className="text-amber-500" />
+                    <span>Deactivate Seat Slot</span>
+                  </button>
+                )}
 
-            {activation.status === 'DEACTIVATED' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onReactivate(activation);
-                }}
-                className="w-full text-left px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg flex items-center gap-2.5 transition-colors"
-              >
-                <PlayCircle size={14} className="text-emerald-500" />
-                <span>Reactivate Seat</span>
-              </button>
-            )}
+                {activation.status === 'DEACTIVATED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onReactivate(activation);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                  >
+                    <PlayCircle size={14} className="text-emerald-500" />
+                    <span>Reactivate Seat</span>
+                  </button>
+                )}
 
-            {activation.status !== 'REVOKED' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onRevoke(activation);
-                }}
-                className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors"
-              >
-                <AlertOctagon size={14} className="text-red-500" />
-                <span>Revoke & Blacklist</span>
-              </button>
+                {activation.status !== 'REVOKED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onRevoke(activation);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                  >
+                    <AlertOctagon size={14} className="text-red-500" />
+                    <span>Revoke & Blacklist</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -23,8 +23,10 @@ import {
   Radio,
   Sparkles,
   Download,
+  Lock,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 import {
   useLicenses,
   useLicenseStats,
@@ -54,8 +56,7 @@ import { LayoutGrid, List } from 'lucide-react';
 type TabType = 'ALL' | 'ACTIVE' | 'EXPIRING' | 'SUSPENDED' | 'REVOKED' | 'TRASH';
 
 export const LicensesPage: React.FC = () => {
-  const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const { isSuperAdmin, isSupport } = usePermissions();
 
   // Filters & Tab State
   const [activeTab, setActiveTab] = useState<TabType>('ALL');
@@ -246,14 +247,24 @@ export const LicensesPage: React.FC = () => {
                 className={isFetchingLicenses ? 'animate-spin text-[#ff8a5c]' : ''}
               />
             </button>
-            <button
-              type="button"
-              onClick={() => setIsGenerateModalOpen(true)}
-              className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 min-h-[38px]"
-            >
-              <Plus size={16} />
-              <span>Generate License Key</span>
-            </button>
+            {isSupport ? (
+              <div
+                title="Support role is view-only. Key generation is restricted to administrators."
+                className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-gray-400 bg-gray-100 rounded-xl shadow-2xs flex items-center gap-1.5 min-h-[38px] cursor-not-allowed select-none pointer-events-none opacity-60"
+              >
+                <Lock size={15} className="text-gray-400" />
+                <span>Generate Key (Locked)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsGenerateModalOpen(true)}
+                className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 min-h-[38px]"
+              >
+                <Plus size={16} />
+                <span>Generate License Key</span>
+              </button>
+            )}
           </>
         }
       />
@@ -568,7 +579,7 @@ export const LicensesPage: React.FC = () => {
                   : 'Get started by generating your first cryptographic workstation key.'
               }
               action={
-                !searchTerm && activeTab !== 'TRASH' ? (
+                !searchTerm && activeTab !== 'TRASH' && !isSupport ? (
                   <button
                     type="button"
                     onClick={() => setIsGenerateModalOpen(true)}

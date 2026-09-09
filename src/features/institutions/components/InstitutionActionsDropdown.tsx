@@ -8,8 +8,10 @@ import {
   Trash2,
   RotateCcw,
   AlertOctagon,
+  Lock,
 } from 'lucide-react';
 import type { Institution } from '../api/institutionApi';
+import { usePermissions } from '@/lib/permissions';
 
 interface InstitutionActionsDropdownProps {
   institution: Institution;
@@ -36,6 +38,7 @@ export const InstitutionActionsDropdown: React.FC<InstitutionActionsDropdownProp
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isSupport } = usePermissions();
 
   const isDeleted = !!institution.deletedAt;
 
@@ -83,26 +86,49 @@ export const InstitutionActionsDropdown: React.FC<InstitutionActionsDropdownProp
               <Eye size={14} className="text-gray-400" />
               <span>View Full Dossier</span>
             </button>
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                onEdit(institution);
-              }}
-              className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-            >
-              <Edit2 size={14} className="text-gray-400" />
-              <span>Edit Profile</span>
-            </button>
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                onBranding(institution);
-              }}
-              className="w-full text-left px-3 py-2 text-xs font-medium text-violet-700 hover:bg-violet-50 rounded-lg flex items-center gap-2.5 transition-colors"
-            >
-              <Palette size={14} className="text-violet-500" />
-              <span>White-Label Branding</span>
-            </button>
+            {isSupport ? (
+              <>
+                <div
+                  title="Support role is view-only. Modifications restricted to administrators."
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50 rounded-lg flex items-center gap-2.5"
+                >
+                  <Lock size={13} className="text-gray-400" />
+                  <span>Edit Profile (Locked)</span>
+                </div>
+                <div
+                  title="Support role is view-only. Branding modifications restricted to administrators."
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50 rounded-lg flex items-center gap-2.5"
+                >
+                  <Lock size={13} className="text-gray-400" />
+                  <span>Branding (Locked)</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onEdit(institution);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                >
+                  <Edit2 size={14} className="text-gray-400" />
+                  <span>Edit Profile</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onBranding(institution);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-violet-700 hover:bg-violet-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                >
+                  <Palette size={14} className="text-violet-500" />
+                  <span>White-Label Branding</span>
+                </button>
+              </>
+            )}
           </div>
 
           {isSuperAdmin && (

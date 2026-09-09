@@ -25,14 +25,14 @@ import { SyncDiagnosticSimulatorModal } from '../components/SyncDiagnosticSimula
 import { SyncCleanupModal } from '../components/SyncCleanupModal';
 import { useInstitutions } from '@/features/institutions/api/institutionApi';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 import { toast } from 'sonner';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 
 export const SyncPage: React.FC = () => {
-  const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const { isSuperAdmin, isSupport } = usePermissions();
 
   // Filters & State
   const [searchTerm, setSearchTerm] = useState('');
@@ -208,14 +208,24 @@ export const SyncPage: React.FC = () => {
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => setIsSimulatorOpen(true)}
-              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-2xs transition-colors min-h-[38px]"
-            >
-              <Play size={15} />
-              <span>Simulate Sync</span>
-            </button>
+            {isSupport ? (
+              <div
+                title="Support role is view-only. Sync simulation is restricted to administrators."
+                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-gray-400 bg-gray-100 shadow-2xs min-h-[38px] cursor-not-allowed select-none pointer-events-none opacity-60"
+              >
+                <Lock size={15} />
+                <span>Simulate Sync (Locked)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsSimulatorOpen(true)}
+                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-2xs transition-colors min-h-[38px]"
+              >
+                <Play size={15} />
+                <span>Simulate Sync</span>
+              </button>
+            )}
           </>
         }
       />

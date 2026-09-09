@@ -36,12 +36,19 @@ export const Providers = ({ children }: ProvidersProps) => {
       <Toaster
         position="top-right"
         toastOptions={{
-          className: 'bg-primary-light text-white border-primary',
+          className: 'bg-white text-primary border-orange-200/60 shadow-lg',
           style: {
-            background: 'var(--color-primary-light)',
-            color: 'white',
-            border: '1px solid var(--color-primary-base)',
-          }
+            background: '#ffffff',
+            color: 'var(--color-primary-base)',
+            border: '1px solid rgba(247, 127, 82, 0.25)',
+          },
+          classNames: {
+            toast: 'bg-white text-primary border border-orange-200/60 shadow-lg font-sans',
+            title: 'text-primary font-bold text-sm',
+            description: 'text-gray-500 text-xs mt-0.5',
+            actionButton: 'bg-primary text-white text-xs px-3 py-1.5 rounded-lg',
+            cancelButton: 'bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg',
+          },
         }}
       />
     </QueryClientProvider>

@@ -18,6 +18,7 @@ import {
   Type,
   Download,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
 import StatCard from '@/features/dashboard/components/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
@@ -25,6 +26,7 @@ import Pagination from '@/components/ui/Pagination';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 import {
   useContentList,
   useContentStats,
@@ -51,8 +53,7 @@ import { toast } from 'sonner';
 type ContentTab = 'PUBLISHED' | 'DRAFT' | 'ALL' | 'TRASH';
 
 export const ContentPage: React.FC = () => {
-  const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const { isSuperAdmin, isSupport } = usePermissions();
 
   // Filters & State
   const [activeTab, setActiveTab] = useState<ContentTab>('PUBLISHED');
@@ -272,14 +273,24 @@ export const ContentPage: React.FC = () => {
               Refresh
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              Create Content Item
-            </button>
+            {!isSuperAdmin ? (
+              <div
+                title="Curriculum typing passages are centrally managed by Super Admin. Read-only for school administrators and support."
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed select-none pointer-events-none opacity-60"
+              >
+                <Lock size={15} />
+                <span>Create Content (Locked)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                Create Content
+              </button>
+            )}
           </>
         }
       />

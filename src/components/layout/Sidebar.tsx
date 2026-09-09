@@ -18,7 +18,7 @@ import {
   Radio,
   Package,
 } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -37,52 +37,127 @@ interface NavSection {
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, onCloseMobile }) => {
   const location = useLocation();
-  const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const { role, isSuperAdmin, isAdmin, isSupport } = usePermissions();
 
-  const navSections: NavSection[] = [
-    {
-      title: 'OVERVIEW',
-      items: [
-        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={19} strokeWidth={1.75} /> },
-      ],
-    },
-    {
-      title: 'IDENTITY & ACCESS',
-      items: [
-        { name: 'Users', path: '/users', icon: <Users size={19} strokeWidth={1.75} /> },
-        ...(isSuperAdmin
-          ? [{ name: 'Auth & Devices', path: '/auth-tracking', icon: <Radio size={19} strokeWidth={1.75} /> }]
-          : []),
-      ],
-    },
-    {
-      title: 'TENANCY & LICENSING',
-      items: [
-        { name: 'Institutions', path: '/institutions', icon: <GraduationCap size={19} strokeWidth={1.75} /> },
-        { name: 'Licenses', path: '/licenses', icon: <Shield size={19} strokeWidth={1.75} /> },
-        { name: 'Activations', path: '/activations', icon: <BrainCircuit size={19} strokeWidth={1.75} /> },
-      ],
-    },
-    {
-      title: 'LEARNING & CONTENT',
-      items: [
-        { name: 'Modules', path: '/modules', icon: <Layers size={19} strokeWidth={1.75} /> },
-        { name: 'Content', path: '/content', icon: <FileText size={19} strokeWidth={1.75} /> },
-        { name: 'Releases', path: '/releases', icon: <Package size={19} strokeWidth={1.75} /> },
-      ],
-    },
-    {
-      title: 'COMMERCIAL & SYSTEM',
-      items: [
-        { name: 'Subscriptions', path: '/subscriptions', icon: <DollarSign size={19} strokeWidth={1.75} /> },
-        { name: 'Plans', path: '/plans', icon: <BarChart2 size={19} strokeWidth={1.75} /> },
-        { name: 'Sync Logs', path: '/sync', icon: <Clock size={19} strokeWidth={1.75} /> },
-        { name: 'Audit', path: '/audit', icon: <MessageSquare size={19} strokeWidth={1.75} /> },
-        { name: 'Settings', path: '/settings', icon: <Settings size={19} strokeWidth={1.75} /> },
-      ],
-    },
-  ];
+  // Dynamic role-based navigation sections
+  let navSections: NavSection[] = [];
+
+  if (isSuperAdmin) {
+    // 1. SUPER_ADMIN: Full enterprise oversight across all 15 modules
+    navSections = [
+      {
+        title: 'OVERVIEW',
+        items: [
+          { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'IDENTITY & ACCESS',
+        items: [
+          { name: 'Users', path: '/users', icon: <Users size={19} strokeWidth={1.75} /> },
+          { name: 'Auth & Devices', path: '/auth-tracking', icon: <Radio size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'TENANCY & LICENSING',
+        items: [
+          { name: 'Institutions', path: '/institutions', icon: <GraduationCap size={19} strokeWidth={1.75} /> },
+          { name: 'Licenses', path: '/licenses', icon: <Shield size={19} strokeWidth={1.75} /> },
+          { name: 'Activations', path: '/activations', icon: <BrainCircuit size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'LEARNING & CONTENT',
+        items: [
+          { name: 'Modules', path: '/modules', icon: <Layers size={19} strokeWidth={1.75} /> },
+          { name: 'Content', path: '/content', icon: <FileText size={19} strokeWidth={1.75} /> },
+          { name: 'Releases', path: '/releases', icon: <Package size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'COMMERCIAL & SYSTEM',
+        items: [
+          { name: 'Subscriptions', path: '/subscriptions', icon: <DollarSign size={19} strokeWidth={1.75} /> },
+          { name: 'Plans', path: '/plans', icon: <BarChart2 size={19} strokeWidth={1.75} /> },
+          { name: 'Sync Logs', path: '/sync', icon: <Clock size={19} strokeWidth={1.75} /> },
+          { name: 'Audit', path: '/audit', icon: <MessageSquare size={19} strokeWidth={1.75} /> },
+          { name: 'Settings', path: '/settings', icon: <Settings size={19} strokeWidth={1.75} /> },
+        ],
+      },
+    ];
+  } else if (isAdmin) {
+    // 2. ADMIN: Librarian / School Administrator daily operations focused
+    navSections = [
+      {
+        title: 'OVERVIEW',
+        items: [
+          { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'CLASSROOM & STUDENTS',
+        items: [
+          { name: 'Students & Staff', path: '/users', icon: <Users size={19} strokeWidth={1.75} /> },
+          { name: 'Typing Passages', path: '/content', icon: <FileText size={19} strokeWidth={1.75} /> },
+          { name: 'Typing Modules', path: '/modules', icon: <Layers size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'LAB & WORKSTATIONS',
+        items: [
+          { name: 'Workstations', path: '/activations', icon: <BrainCircuit size={19} strokeWidth={1.75} /> },
+          { name: 'Licenses', path: '/licenses', icon: <Shield size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'INSTITUTION & LOGS',
+        items: [
+          { name: 'My Institution', path: '/institutions', icon: <GraduationCap size={19} strokeWidth={1.75} /> },
+          { name: 'Subscriptions', path: '/subscriptions', icon: <DollarSign size={19} strokeWidth={1.75} /> },
+          { name: 'Sync Logs', path: '/sync', icon: <Clock size={19} strokeWidth={1.75} /> },
+          { name: 'Audit Logs', path: '/audit', icon: <MessageSquare size={19} strokeWidth={1.75} /> },
+          { name: 'Settings', path: '/settings', icon: <Settings size={19} strokeWidth={1.75} /> },
+        ],
+      },
+    ];
+  } else {
+    // 3. SUPPORT: Technical assistance read-only
+    // Excludes Users, Auth & Devices, and Plans (which are restricted on API)
+    navSections = [
+      {
+        title: 'OVERVIEW',
+        items: [
+          { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'TENANCY & HARDWARE',
+        items: [
+          { name: 'Institutions', path: '/institutions', icon: <GraduationCap size={19} strokeWidth={1.75} /> },
+          { name: 'Licenses', path: '/licenses', icon: <Shield size={19} strokeWidth={1.75} /> },
+          { name: 'Workstations', path: '/activations', icon: <BrainCircuit size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'CURRICULUM & SOFTWARE',
+        items: [
+          { name: 'Typing Modules', path: '/modules', icon: <Layers size={19} strokeWidth={1.75} /> },
+          { name: 'Typing Passages', path: '/content', icon: <FileText size={19} strokeWidth={1.75} /> },
+          { name: 'Releases', path: '/releases', icon: <Package size={19} strokeWidth={1.75} /> },
+        ],
+      },
+      {
+        title: 'DIAGNOSTICS & AUDIT',
+        items: [
+          { name: 'Subscriptions', path: '/subscriptions', icon: <DollarSign size={19} strokeWidth={1.75} /> },
+          { name: 'Sync Logs', path: '/sync', icon: <Clock size={19} strokeWidth={1.75} /> },
+          { name: 'Audit Logs', path: '/audit', icon: <MessageSquare size={19} strokeWidth={1.75} /> },
+          { name: 'Settings', path: '/settings', icon: <Settings size={19} strokeWidth={1.75} /> },
+        ],
+      },
+    ];
+  }
+
 
   return (
     <aside
@@ -174,16 +249,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, onCloseMobile }) => {
         ))}
       </nav>
 
-      {/* Sidebar Footer Help & Version info */}
-      {isSidebarOpen && (
-        <div className="p-4 border-t border-gray-100/80 bg-gray-50/50 flex items-center justify-between text-[11px] text-gray-400">
-          <span className="font-medium text-gray-500">Typing Expert v2.4</span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            Live
-          </span>
-        </div>
-      )}
     </aside>
   );
 };

@@ -7,8 +7,10 @@ import {
   RefreshCw,
   Send,
   Trash2,
+  Lock,
 } from 'lucide-react';
 import type { Release } from '../api/releaseApi';
+import { usePermissions } from '@/lib/permissions';
 
 interface ReleaseActionsDropdownProps {
   release: Release;
@@ -29,6 +31,7 @@ export const ReleaseActionsDropdown: React.FC<ReleaseActionsDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isSuperAdmin } = usePermissions();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,57 +85,85 @@ export const ReleaseActionsDropdown: React.FC<ReleaseActionsDropdownProps> = ({
             Inspect Specifications
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onEdit(release);
-            }}
-            className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <Edit3 size={14} className="text-[#ff8a5c]" />
-            Edit Release
-          </button>
+          {!isSuperAdmin ? (
+            <>
+              <div
+                title="Only Super Admin can edit software releases."
+                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+              >
+                <Lock size={13} className="text-gray-400" />
+                <span>Edit Release (Locked)</span>
+              </div>
+              <div
+                title="Only Super Admin can modify release lifecycle status."
+                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+              >
+                <Lock size={13} className="text-gray-400" />
+                <span>Status (Locked)</span>
+              </div>
+              <div
+                title="Only Super Admin can delete software builds."
+                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+              >
+                <Lock size={13} className="text-gray-400" />
+                <span>Delete (Locked)</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onEdit(release);
+                }}
+                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <Edit3 size={14} className="text-[#ff8a5c]" />
+                Edit Release
+              </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onStatusChange(release);
-            }}
-            className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <RefreshCw size={14} className="text-blue-500" />
-            Change Status
-          </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onStatusChange(release);
+                }}
+                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <RefreshCw size={14} className="text-blue-500" />
+                Change Status
+              </button>
 
-          {release.status === 'DRAFT' && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onPublish(release.id);
-              }}
-              className="flex items-center w-full gap-2 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-            >
-              <Send size={14} className="text-emerald-600" />
-              Publish to Fleet
-            </button>
+              {release.status === 'DRAFT' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onPublish(release.id);
+                  }}
+                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                >
+                  <Send size={14} className="text-emerald-600" />
+                  Publish to Fleet
+                </button>
+              )}
+
+              <div className="my-1 border-t border-gray-100" />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onDelete(release);
+                }}
+                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={14} />
+                Delete Release
+              </button>
+            </>
           )}
-
-          <div className="my-1 border-t border-gray-100" />
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onDelete(release);
-            }}
-            className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-          >
-            <Trash2 size={14} />
-            Delete Release
-          </button>
         </div>
       )}
     </div>

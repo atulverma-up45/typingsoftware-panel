@@ -9,9 +9,11 @@ import {
   Trash2,
   RotateCcw,
   Check,
+  Lock,
 } from 'lucide-react';
 import type { License } from '../api/licenseApi';
 import { toast } from 'sonner';
+import { usePermissions } from '@/lib/permissions';
 
 interface LicenseActionsDropdownProps {
   license: License;
@@ -38,6 +40,7 @@ export const LicenseActionsDropdown: React.FC<LicenseActionsDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isSupport } = usePermissions();
 
   const isDeleted = !!license.deletedAt;
   const isRevoked = license.status === 'REVOKED';
@@ -102,17 +105,27 @@ export const LicenseActionsDropdown: React.FC<LicenseActionsDropdownProps> = ({
               <Copy size={14} className="text-gray-400" />
               <span>Copy License Key</span>
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onEdit(license);
-              }}
-              className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-            >
-              <Edit2 size={14} className="text-gray-400" />
-              <span>Edit Seat Capacity</span>
-            </button>
+            {isSupport ? (
+              <div
+                title="Support role is view-only"
+                className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
+              >
+                <Lock size={13} className="text-gray-400" />
+                <span>Edit Capacity (Locked)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onEdit(license);
+                }}
+                className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
+              >
+                <Edit2 size={14} className="text-gray-400" />
+                <span>Edit Seat Capacity</span>
+              </button>
+            )}
           </div>
 
           <div className="p-1">
@@ -120,58 +133,99 @@ export const LicenseActionsDropdown: React.FC<LicenseActionsDropdownProps> = ({
               <>
                 {!isRevoked && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false);
-                        onChangeStatus(license);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                    >
-                      <Power size={14} className="text-amber-500" />
-                      <span>
-                        {license.status === 'ACTIVE' ? 'Suspend License' : 'Activate License'}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false);
-                        onRevoke(license);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                    >
-                      <AlertOctagon size={14} className="text-red-500" />
-                      <span>Revoke License Immediately</span>
-                    </button>
+                    {isSupport ? (
+                      <>
+                        <div
+                          title="Support role is view-only"
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
+                        >
+                          <Lock size={13} className="text-gray-400" />
+                          <span>Status Toggle (Locked)</span>
+                        </div>
+                        <div
+                          title="Support role is view-only"
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
+                        >
+                          <Lock size={13} className="text-gray-400" />
+                          <span>Revoke Key (Locked)</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsOpen(false);
+                            onChangeStatus(license);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                        >
+                          <Power size={14} className="text-amber-500" />
+                          <span>
+                            {license.status === 'ACTIVE' ? 'Suspend License' : 'Activate License'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsOpen(false);
+                            onRevoke(license);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                        >
+                          <AlertOctagon size={14} className="text-red-500" />
+                          <span>Revoke License Immediately</span>
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onSoftDelete(license);
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                >
-                  <Trash2 size={14} className="text-rose-500" />
-                  <span>Move to Trash</span>
-                </button>
+                {isSupport ? (
+                  <div
+                    title="Support role is view-only"
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Move to Trash (Locked)</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onSoftDelete(license);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                  >
+                    <Trash2 size={14} className="text-rose-500" />
+                    <span>Move to Trash</span>
+                  </button>
+                )}
               </>
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onRestore(license);
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                >
-                  <RotateCcw size={14} className="text-indigo-500" />
-                  <span>Restore License</span>
-                </button>
-                {isSuperAdmin && (
+                {isSupport ? (
+                  <div
+                    title="Support role is view-only"
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Restore Key (Locked)</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onRestore(license);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg flex items-center gap-2.5 transition-colors"
+                  >
+                    <RotateCcw size={14} className="text-indigo-500" />
+                    <span>Restore License</span>
+                  </button>
+                )}
+                {isSuperAdmin && !isSupport && (
                   <button
                     type="button"
                     onClick={() => {

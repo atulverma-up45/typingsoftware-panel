@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
+import { ProtectedRoute, RoleRoute } from '@/components/guards/ProtectedRoute';
 
 // Pages
 import LoginPage from '@/features/auth/pages/LoginPage';
@@ -29,8 +29,16 @@ export const AppRouter = () => {
         <Route element={<DashboardLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/auth-tracking" element={<AuthTrackingPage />} />
+
+          {/* Identity & Access: Users is restricted to SUPER_ADMIN and ADMIN (Librarians) */}
+          <Route element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']} />}>
+            <Route path="/users" element={<UsersPage />} />
+          </Route>
+
+          {/* Auth & Security Telemetry: Exclusively SUPER_ADMIN */}
+          <Route element={<RoleRoute allowedRoles={['SUPER_ADMIN']} />}>
+            <Route path="/auth-tracking" element={<AuthTrackingPage />} />
+          </Route>
           {/* Institutions Module */}
           <Route path="/institutions" element={<InstitutionsPage />} />
           <Route path="/branding" element={<Navigate to="/institutions" replace />} />
@@ -48,7 +56,9 @@ export const AppRouter = () => {
           <Route path="/uploads" element={<Navigate to="/releases" replace />} />
           {/* Commercial Subscriptions & Plans Modules */}
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
-          <Route path="/plans" element={<PlansPage />} />
+          <Route element={<RoleRoute allowedRoles={['SUPER_ADMIN']} />}>
+            <Route path="/plans" element={<PlansPage />} />
+          </Route>
           {/* System Audit Trail & Forensics */}
           <Route path="/audit" element={<AuditPage />} />
           {/* System Settings & Diagnostics */}

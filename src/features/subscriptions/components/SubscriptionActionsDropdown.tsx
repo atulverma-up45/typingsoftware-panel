@@ -8,9 +8,11 @@ import {
   Eye,
   RotateCcw,
   Copy,
+  Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Subscription } from '../api/subscriptionApi';
+import { usePermissions } from '@/lib/permissions';
 
 interface SubscriptionActionsDropdownProps {
   subscription: Subscription;
@@ -35,6 +37,7 @@ export const SubscriptionActionsDropdown: React.FC<SubscriptionActionsDropdownPr
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isSuperAdmin, isSupport } = usePermissions();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,83 +92,140 @@ export const SubscriptionActionsDropdown: React.FC<SubscriptionActionsDropdownPr
 
           {!isDeletedView ? (
             <>
-              <button
-                type="button"
-                onClick={() => {
-                  onRenew(subscription);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff8a5c] hover:bg-[#fff0eb]/40 text-left font-semibold"
-              >
-                <RotateCw size={14} />
-                Renew Contract
-              </button>
+              {isSupport ? (
+                <>
+                  <div
+                    title="Support role is view-only. Contract renewals restricted to administrators."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Renew (Locked)</span>
+                  </div>
+                  <div
+                    title="Support role is view-only. Contract edits restricted to administrators."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Edit Expiry (Locked)</span>
+                  </div>
+                  <div
+                    title="Support role is view-only. Status transitions restricted to administrators."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Status (Locked)</span>
+                  </div>
+                  <div
+                    title="Support role is view-only. Subscriptions deletion restricted to administrators."
+                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                  >
+                    <Lock size={13} className="text-gray-400" />
+                    <span>Move to Trash (Locked)</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onRenew(subscription);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff8a5c] hover:bg-[#fff0eb]/40 text-left font-semibold"
+                  >
+                    <RotateCw size={14} />
+                    Renew Contract
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  onEdit(subscription);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-              >
-                <Edit3 size={14} className="text-blue-500" />
-                Edit Expiry & Auto-Renew
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onEdit(subscription);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
+                  >
+                    <Edit3 size={14} className="text-blue-500" />
+                    Edit Expiry & Auto-Renew
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  onChangeStatus(subscription);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-              >
-                <ShieldAlert size={14} className="text-amber-500" />
-                Transition Status
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChangeStatus(subscription);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
+                  >
+                    <ShieldAlert size={14} className="text-amber-500" />
+                    Transition Status
+                  </button>
 
-              <div className="h-px bg-gray-100 my-1" />
+                  <div className="h-px bg-gray-100 my-1" />
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(subscription);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
-              >
-                <Trash2 size={14} />
-                Move to Trash
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(subscription);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
+                  >
+                    <Trash2 size={14} />
+                    Move to Trash
+                  </button>
+                </>
+              )}
             </>
           ) : (
             <>
-              {onRestore && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onRestore(subscription);
-                    setIsOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left font-semibold"
+              {isSupport ? (
+                <div
+                  title="Support role is view-only. Subscription restore restricted to administrators."
+                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
                 >
-                  <RotateCcw size={14} />
-                  Restore Subscription
-                </button>
-              )}
+                  <Lock size={13} className="text-gray-400" />
+                  <span>Restore (Locked)</span>
+                </div>
+              ) : (
+                <>
+                  {onRestore && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onRestore(subscription);
+                        setIsOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left font-semibold"
+                    >
+                      <RotateCcw size={14} />
+                      Restore Subscription
+                    </button>
+                  )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(subscription);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-bold"
-              >
-                <Trash2 size={14} />
-                Permanently Purge
-              </button>
+                  {isSuperAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDelete(subscription);
+                        setIsOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-bold"
+                    >
+                      <Trash2 size={14} />
+                      Permanently Purge
+                    </button>
+                  ) : (
+                    <div
+                      title="Permanent purge requires Super Admin privileges."
+                      className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
+                    >
+                      <Lock size={13} className="text-gray-400" />
+                      <span>Purge (Locked)</span>
+                    </div>
+                  )}
+                </>
+              )}
             </>
           )}
         </div>

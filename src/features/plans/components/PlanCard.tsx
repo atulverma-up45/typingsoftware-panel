@@ -16,6 +16,7 @@ import {
   Building2,
 } from 'lucide-react';
 import type { Plan } from '../api/planApi';
+import { usePermissions } from '@/lib/permissions';
 
 interface PlanCardProps {
   plan: Plan;
@@ -36,6 +37,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   onRestore,
   isDeletedView = false,
 }) => {
+  const { isSuperAdmin } = usePermissions();
   const isArchived = plan.status === 'ARCHIVED';
   const priceFormatted = (plan.price / 100).toLocaleString('en-IN', {
     maximumFractionDigits: 2,
@@ -161,64 +163,70 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           View Specs
         </button>
 
-        <div className="flex items-center gap-1.5">
-          {isDeletedView ? (
-            <>
-              {onRestore && (
+        {isSuperAdmin ? (
+          <div className="flex items-center gap-1.5">
+            {isDeletedView ? (
+              <>
+                {onRestore && (
+                  <button
+                    type="button"
+                    onClick={() => onRestore(plan)}
+                    className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 transition-colors"
+                    title="Restore plan"
+                  >
+                    <RotateCcw size={13} />
+                    Restore
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => onRestore(plan)}
-                  className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 transition-colors"
-                  title="Restore plan"
+                  onClick={() => onDelete(plan)}
+                  className="flex items-center gap-1 text-xs font-medium text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors"
+                  title="Permanent purge"
                 >
-                  <RotateCcw size={13} />
-                  Restore
+                  <Trash2 size={13} />
+                  Purge
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onDelete(plan)}
-                className="flex items-center gap-1 text-xs font-medium text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors"
-                title="Permanent purge"
-              >
-                <Trash2 size={13} />
-                Purge
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => onToggleStatus(plan)}
-                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
-                  isArchived
-                    ? 'text-emerald-700 bg-emerald-50/70 border-emerald-200 hover:bg-emerald-100'
-                    : 'text-gray-600 bg-gray-50 border-gray-200 hover:bg-gray-100'
-                }`}
-                title={isArchived ? 'Activate plan' : 'Archive plan'}
-              >
-                {isArchived ? 'Activate' : 'Archive'}
-              </button>
-              <button
-                type="button"
-                onClick={() => onEdit(plan)}
-                className="flex items-center gap-1 text-xs font-medium text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] px-2.5 py-1.5 rounded-lg transition-colors"
-                title="Edit plan"
-              >
-                <Edit3 size={13} />
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(plan)}
-                className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                title="Move to trash"
-              >
-                <Trash2 size={14} />
-              </button>
-            </>
-          )}
-        </div>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onToggleStatus(plan)}
+                  className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
+                    isArchived
+                      ? 'text-emerald-700 bg-emerald-50/70 border-emerald-200 hover:bg-emerald-100'
+                      : 'text-gray-600 bg-gray-50 border-gray-200 hover:bg-gray-100'
+                  }`}
+                  title={isArchived ? 'Activate plan' : 'Archive plan'}
+                >
+                  {isArchived ? 'Activate' : 'Archive'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onEdit(plan)}
+                  className="flex items-center gap-1 text-xs font-medium text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] px-2.5 py-1.5 rounded-lg transition-colors"
+                  title="Edit plan"
+                >
+                  <Edit3 size={13} />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete(plan)}
+                  className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  title="Move to trash"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <span className="text-[11px] font-medium text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-lg">
+            Super Admin Managed
+          </span>
+        )}
       </div>
     </div>
   );

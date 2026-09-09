@@ -14,9 +14,11 @@ import {
   Building2,
   Calendar,
   Layers,
+  Lock,
 } from 'lucide-react';
 import type { Release } from '../api/releaseApi';
 import { toast } from 'sonner';
+import { usePermissions } from '@/lib/permissions';
 
 interface ReleaseCardProps {
   release: Release;
@@ -36,6 +38,7 @@ export const ReleaseCard: React.FC<ReleaseCardProps> = ({
   onDelete,
 }) => {
   const [copiedHash, setCopiedHash] = useState(false);
+  const { isSuperAdmin } = usePermissions();
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -233,35 +236,45 @@ export const ReleaseCard: React.FC<ReleaseCardProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-1">
-            {release.status === 'DRAFT' && (
+          {isSuperAdmin ? (
+            <div className="flex items-center gap-1">
+              {release.status === 'DRAFT' && (
+                <button
+                  type="button"
+                  onClick={() => onPublish(release.id)}
+                  className="flex items-center gap-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg shadow-sm transition-colors"
+                  title="Publish release to clients"
+                >
+                  <Send size={12} />
+                  Publish
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => onPublish(release.id)}
-                className="flex items-center gap-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg shadow-sm transition-colors"
-                title="Publish release to clients"
+                onClick={() => onEdit(release)}
+                className="p-1.5 text-gray-500 hover:text-[#ff8a5c] hover:bg-[#fff0eb] rounded-lg transition-colors"
+                title="Edit release"
               >
-                <Send size={12} />
-                Publish
+                <Edit3 size={14} />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onEdit(release)}
-              className="p-1.5 text-gray-500 hover:text-[#ff8a5c] hover:bg-[#fff0eb] rounded-lg transition-colors"
-              title="Edit release"
+              <button
+                type="button"
+                onClick={() => onDelete(release)}
+                className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                title="Delete release"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ) : (
+            <div
+              title="Software release management is restricted to Super Admin."
+              className="flex items-center gap-1 text-[11px] font-semibold text-gray-400 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200 opacity-60 cursor-not-allowed select-none pointer-events-none"
             >
-              <Edit3 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete(release)}
-              className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-              title="Delete release"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
+              <Lock size={12} className="text-gray-400" />
+              <span>Read-Only</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

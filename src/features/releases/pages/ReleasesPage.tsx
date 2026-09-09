@@ -19,7 +19,9 @@ import {
   Copy,
   Check,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
+import { usePermissions } from '@/lib/permissions';
 import StatCard from '@/features/dashboard/components/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
@@ -50,6 +52,7 @@ type StatusTab = 'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
 type ViewMode = 'CARDS' | 'TABLE';
 
 export const ReleasesPage: React.FC = () => {
+  const { isSuperAdmin } = usePermissions();
   // Filters & Pagination State
   const [activeTab, setActiveTab] = useState<StatusTab>('ALL');
   const [viewMode, setViewMode] = useState<ViewMode>('CARDS');
@@ -230,14 +233,24 @@ export const ReleasesPage: React.FC = () => {
               Test Client Auto-Updater
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              New Software Release
-            </button>
+            {isSuperAdmin ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                New Software Release
+              </button>
+            ) : (
+              <div
+                title="Super Admin privileges required to publish new software builds."
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 bg-gray-100 cursor-not-allowed select-none pointer-events-none opacity-60"
+              >
+                <Lock size={15} />
+                <span>New Release (Super Admin)</span>
+              </div>
+            )}
           </>
         }
       />
