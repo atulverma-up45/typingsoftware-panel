@@ -87,7 +87,7 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
           className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors duration-150 disabled:opacity-50"
           title="User actions"
         >
-          {isPending ? <Loader2 size={18} className="animate-spin text-[#ff8a5c]" /> : <MoreVertical size={18} />}
+          {isPending ? <Loader2 size={18} className="animate-spin text-primary" /> : <MoreVertical size={18} />}
         </button>
 
         {isOpen && (

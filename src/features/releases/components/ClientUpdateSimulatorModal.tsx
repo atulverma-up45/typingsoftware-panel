@@ -106,7 +106,7 @@ export const ClientUpdateSimulatorModal: React.FC<ClientUpdateSimulatorModalProp
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as ReleasePlatform)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="windows-x64">Windows (64-bit x64)</option>
                 <option value="windows-arm64">Windows (ARM64)</option>
@@ -121,7 +121,7 @@ export const ClientUpdateSimulatorModal: React.FC<ClientUpdateSimulatorModalProp
               <select
                 value={channel}
                 onChange={(e) => setChannel(e.target.value as ReleaseChannel)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="stable">Stable Channel</option>
                 <option value="beta">Beta Channel</option>
@@ -139,7 +139,7 @@ export const ClientUpdateSimulatorModal: React.FC<ClientUpdateSimulatorModalProp
                 placeholder="1.0.0"
                 value={currentVersion}
                 onChange={(e) => setCurrentVersion(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white font-mono"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white font-mono"
               />
             </div>
 
@@ -152,7 +152,7 @@ export const ClientUpdateSimulatorModal: React.FC<ClientUpdateSimulatorModalProp
                 placeholder="TYP-XXXX-XXXX-XXXX-XXXX"
                 value={licenseKey}
                 onChange={(e) => setLicenseKey(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white font-mono"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white font-mono"
               />
             </div>
           </div>

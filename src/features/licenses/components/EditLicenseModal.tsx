@@ -141,7 +141,7 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
                 max={500}
                 value={maxActivations}
                 onChange={(e) => setMaxActivations(parseInt(e.target.value) || 1)}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
             <p className="text-[11px] text-gray-400 mt-1">
@@ -168,7 +168,7 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
                 max={60}
                 value={offlineGraceDays}
                 onChange={(e) => setOfflineGraceDays(parseInt(e.target.value) || 14)}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
             <p className="text-[11px] text-gray-400 mt-1">
@@ -189,7 +189,7 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
                 type="date"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
           </div>
@@ -207,7 +207,7 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
             <button
               type="submit"
               disabled={updateMutation.isPending}
-              className="px-5 py-2 text-sm font-medium text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {updateMutation.isPending && <Loader2 size={16} className="animate-spin" />}
               <span>Save Changes</span>

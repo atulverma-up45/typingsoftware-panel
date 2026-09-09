@@ -119,7 +119,7 @@ export const ReleaseActionsDropdown: React.FC<ReleaseActionsDropdownProps> = ({
                 }}
                 className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
               >
-                <Edit3 size={14} className="text-[#ff8a5c]" />
+                <Edit3 size={14} className="text-primary" />
                 Edit Release
               </button>
 

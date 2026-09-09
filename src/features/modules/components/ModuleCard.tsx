@@ -45,14 +45,14 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
       className={`relative flex flex-col justify-between rounded-2xl border transition-all duration-200 bg-white p-6 shadow-sm hover:shadow-md ${
         !isActive || isDeletedView
           ? 'border-gray-200 opacity-85 bg-gray-50/50'
-          : 'border-gray-200 hover:border-[#ff8a5c]/50'
+          : 'border-gray-200 hover:border-primary/50'
       }`}
     >
       <div>
         {/* Header Row */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary flex items-center justify-center shrink-0">
               <Layers size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -164,7 +164,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
                 <button
                   type="button"
                   onClick={() => onEdit(module)}
-                  className="h-[36px] px-3 flex items-center gap-1.5 text-xs font-semibold text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] rounded-xl border border-[#ff8a5c]/20 transition-colors shadow-2xs"
+                  className="h-[36px] px-3 flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl border border-primary/20 transition-colors shadow-2xs"
                   title="Edit module"
                 >
                   <Edit3 size={13} />

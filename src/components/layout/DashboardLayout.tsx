@@ -13,29 +13,19 @@ import {
   Menu,
 } from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
+import { MEDIA_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 
 const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  // Sidebar collapses into a flyout drawer below the lg breakpoint (1024px)
+  const isMobile = !useMediaQuery(MEDIA_QUERY.LG);
   const location = useLocation();
   const { isSuperAdmin, isAdmin, isSupport } = usePermissions();
 
-  // Responsive mobile detector
+  // Keep sidebar visibility in sync when crossing the breakpoint
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      if (mobile) {
-        setIsSidebarOpen(false);
-      } else {
-        setIsSidebarOpen(true);
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   // Auto-close sidebar drawer when navigating to another route on mobile
   useEffect(() => {
@@ -87,7 +77,7 @@ const DashboardLayout: React.FC = () => {
       ];
 
   return (
-    <div className="flex h-screen w-full bg-[#fcfcfc] overflow-hidden font-sans text-gray-800">
+    <div className="flex h-screen w-full bg-surface overflow-hidden font-sans text-gray-800">
       {/* Mobile Drawer Overlay Backdrop */}
       {isMobile && isSidebarOpen && (
         <div
@@ -112,7 +102,7 @@ const DashboardLayout: React.FC = () => {
       </div>
 
       {/* Main App Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 bg-[#fcfcfc]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 bg-surface">
         <Header
           toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           isSidebarOpen={isSidebarOpen}
@@ -140,13 +130,13 @@ const DashboardLayout: React.FC = () => {
                 to={item.path}
                 className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] min-h-[46px] rounded-xl transition-all ${
                   isActive
-                    ? 'bg-[#fff0eb] text-[#ff8a5c] font-bold shadow-2xs'
+                    ? 'bg-primary-100 text-primary font-bold shadow-2xs'
                     : 'text-gray-500 hover:text-gray-900 active:scale-95'
                 }`}
               >
                 <div
                   className={`transition-transform duration-200 ${
-                    isActive ? 'scale-110 text-[#ff8a5c]' : 'text-gray-400'
+                    isActive ? 'scale-110 text-primary' : 'text-gray-400'
                   }`}
                 >
                   {item.icon}

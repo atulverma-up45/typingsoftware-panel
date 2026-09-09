@@ -138,7 +138,7 @@ export const SyncOperationDetailModal: React.FC<SyncOperationDetailModalProps> =
               <span className="text-gray-400 block text-[11px] mb-1">Entity Classification</span>
               <span className="font-bold text-gray-800 flex items-center gap-1.5">
                 {operation.entityType === 'DEVICE_ACTIVITY' ? (
-                  <Activity size={14} className="text-[#ff8a5c]" />
+                  <Activity size={14} className="text-primary" />
                 ) : (
                   <Sliders size={14} className="text-purple-500" />
                 )}
@@ -165,7 +165,7 @@ export const SyncOperationDetailModal: React.FC<SyncOperationDetailModalProps> =
               <button
                 type="button"
                 onClick={handleCopyDevice}
-                className="flex items-center gap-1 text-xs font-semibold text-[#ff8a5c] hover:underline"
+                className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
               >
                 {copiedDevice ? (
                   <>
@@ -193,7 +193,7 @@ export const SyncOperationDetailModal: React.FC<SyncOperationDetailModalProps> =
               <button
                 type="button"
                 onClick={handleCopyKey}
-                className="flex items-center gap-1 text-xs font-semibold text-[#ff8a5c] hover:underline"
+                className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
               >
                 {copiedKey ? (
                   <>

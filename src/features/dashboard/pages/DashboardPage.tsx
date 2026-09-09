@@ -1,5 +1,5 @@
 import React from 'react';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
 import UsageChart from '@/features/dashboard/components/UsageChart';
 import LicenseChart from '@/features/dashboard/components/LicenseChart';
 import PendingSyncs from '@/features/dashboard/components/PendingSyncs';
@@ -60,7 +60,7 @@ const Dashboard: React.FC = () => {
         icon={<LayoutDashboard size={20} />}
         badge={
           !isSuperAdmin ? (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-[#ff8a5c] border border-orange-200 flex items-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-primary border border-orange-200 flex items-center gap-1.5">
               <Building size={13} />
               Institute Portal
             </span>
@@ -92,7 +92,7 @@ const Dashboard: React.FC = () => {
             >
               <RefreshCw
                 size={15}
-                className={isFetchingMetrics ? 'animate-spin text-[#ff8a5c]' : ''}
+                className={isFetchingMetrics ? 'animate-spin text-primary' : ''}
               />
               <span className="hidden sm:inline">Refresh Telemetry</span>
             </button>
@@ -127,7 +127,7 @@ const Dashboard: React.FC = () => {
       {!isSuperAdmin && (
         <div className="p-3.5 sm:p-4 rounded-2xl bg-orange-50/60 border border-orange-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-orange-100 text-[#ff8a5c] shrink-0">
+            <div className="p-2 rounded-xl bg-orange-100 text-primary shrink-0">
               <Shield size={18} />
             </div>
             <div>
@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
           </div>
           <Link
             to="/users"
-            className="flex items-center gap-1.5 font-medium text-[#ff8a5c] hover:text-[#f77947] hover:underline self-end sm:self-auto"
+            className="flex items-center gap-1.5 font-medium text-primary hover:text-primary-600 hover:underline self-end sm:self-auto"
           >
             Manage Team <ArrowRight size={14} />
           </Link>
@@ -247,7 +247,7 @@ const Dashboard: React.FC = () => {
           <div className="lg:col-span-1 bg-white rounded-2xl sm:rounded-[20px] shadow-2xs border border-gray-100 p-5 sm:p-6 flex flex-col justify-between min-h-[360px]">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#ff8a5c] flex items-center justify-center border border-orange-100 shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 text-primary flex items-center justify-center border border-orange-100 shrink-0">
                   <Laptop size={18} />
                 </div>
                 <div>
@@ -262,7 +262,7 @@ const Dashboard: React.FC = () => {
                   className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-orange-50/50 border border-gray-100 hover:border-orange-200 transition-all text-xs font-semibold text-gray-700 hover:text-gray-900 group"
                 >
                   <span className="flex items-center gap-2.5">
-                    <Laptop size={15} className="text-[#ff8a5c]" />
+                    <Laptop size={15} className="text-primary" />
                     <span>Workstations Directory</span>
                   </span>
                   <ArrowRight

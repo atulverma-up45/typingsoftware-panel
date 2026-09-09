@@ -127,7 +127,7 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
             onClick={() => setActiveTab('SUMMARY')}
             className={`flex items-center gap-1.5 py-3 px-2 text-xs font-bold border-b-2 transition-all mr-4 ${
               activeTab === 'SUMMARY'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -138,7 +138,7 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
             onClick={() => setActiveTab('METADATA')}
             className={`flex items-center gap-1.5 py-3 px-2 text-xs font-bold border-b-2 transition-all mr-4 ${
               activeTab === 'METADATA'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -149,7 +149,7 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
             onClick={() => setActiveTab('RAW')}
             className={`flex items-center gap-1.5 py-3 px-2 text-xs font-bold border-b-2 transition-all ${
               activeTab === 'RAW'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -166,13 +166,13 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
               <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-gray-700 flex items-center gap-1.5">
-                    <Tag size={13} className="text-[#ff8a5c]" />
+                    <Tag size={13} className="text-primary" />
                     Target Entity ({auditLog.entityType})
                   </span>
                   <button
                     type="button"
                     onClick={handleCopyEntityId}
-                    className="flex items-center gap-1 font-semibold text-[#ff8a5c] hover:underline"
+                    className="flex items-center gap-1 font-semibold text-primary hover:underline"
                   >
                     {copiedEntityId ? (
                       <>
@@ -201,7 +201,7 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
                       <button
                         type="button"
                         onClick={handleCopyActorId}
-                        className="text-gray-400 hover:text-[#ff8a5c] ml-1"
+                        className="text-gray-400 hover:text-primary ml-1"
                         title="Copy Actor ID"
                       >
                         {copiedActorId ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
@@ -297,7 +297,7 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCopyJson}
-                  className="flex items-center gap-1 text-xs font-semibold text-[#ff8a5c] hover:underline"
+                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                 >
                   {copiedJson ? (
                     <>

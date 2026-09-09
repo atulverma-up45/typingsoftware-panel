@@ -108,7 +108,7 @@ export const DeviceStatusModal: React.FC<DeviceStatusModalProps> = ({
                     onClick={() => setStatus(opt.id)}
                     className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-bold transition-all ${
                       isSelected
-                        ? 'border-[#ff8a5c] bg-[#fff0eb]/50 text-gray-900 shadow-2xs'
+                        ? 'border-primary bg-primary-100/50 text-gray-900 shadow-2xs'
                         : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -141,7 +141,7 @@ export const DeviceStatusModal: React.FC<DeviceStatusModalProps> = ({
               placeholder="e.g. Workstation relocated or motherboard replaced"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full text-xs p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c]"
+              className="w-full text-xs p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-primary"
             />
           </div>
 
@@ -157,7 +157,7 @@ export const DeviceStatusModal: React.FC<DeviceStatusModalProps> = ({
             <button
               type="submit"
               disabled={updateStatusMutation.isPending || status === device.status}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
             >
               {updateStatusMutation.isPending ? (
                 <>

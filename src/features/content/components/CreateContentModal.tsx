@@ -143,7 +143,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <FileText size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -175,7 +175,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                   onClick={() => setScope('GLOBAL')}
                   className={`p-3 rounded-xl border cursor-pointer select-none transition-all ${
                     scope === 'GLOBAL'
-                      ? 'bg-[#fffaf8] border-[#ff8a5c] shadow-2xs'
+                      ? 'bg-[#fffaf8] border-primary shadow-2xs'
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -189,7 +189,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                   onClick={() => setScope('INSTITUTION')}
                   className={`p-3 rounded-xl border cursor-pointer select-none transition-all ${
                     scope === 'INSTITUTION'
-                      ? 'bg-[#fffaf8] border-[#ff8a5c] shadow-2xs'
+                      ? 'bg-[#fffaf8] border-primary shadow-2xs'
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -210,7 +210,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                   required
                   value={institutionId}
                   onChange={(e) => setInstitutionId(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">-- Select Target Institution --</option>
                   {institutions.map((inst) => (
@@ -231,7 +231,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                 required
                 value={moduleId}
                 onChange={(e) => setModuleId(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+                className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 {modules.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -258,7 +258,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. SSC CGL 2024 Tier-1 Shift-2 Test Paper, Daily Speed Drill #12"
-                className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+                className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
@@ -270,7 +270,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                 <select
                   value={contentType}
                   onChange={(e) => setContentType(e.target.value as ContentType)}
-                  className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c]"
+                  className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
                 >
                   <option value="PASSAGE">Practice Passage</option>
                   <option value="EXAM_PAPER">Official Exam Paper</option>
@@ -287,7 +287,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c]"
+                  className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
                 >
                   <option value="en">English (en)</option>
                   <option value="hi">Hindi - Krutidev (hi)</option>
@@ -302,7 +302,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value as ContentDifficulty)}
-                  className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c]"
+                  className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
                 >
                   <option value="EASY">EASY (Novice)</option>
                   <option value="MEDIUM">MEDIUM (Standard)</option>
@@ -324,7 +324,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                     onClick={() => setDurationMinutes(mins)}
                     className={`px-3 py-1 text-xs font-medium rounded-lg border transition-all ${
                       durationMinutes === mins
-                        ? 'bg-[#fff0eb] text-[#ff8a5c] border-[#ff8a5c]'
+                        ? 'bg-primary-100 text-primary border-primary'
                         : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                     }`}
                   >
@@ -337,7 +337,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                   max="180"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                  className="w-24 px-3 py-1 text-xs bg-gray-50/50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#ff8a5c]"
+                  className="w-24 px-3 py-1 text-xs bg-gray-50/50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
@@ -369,7 +369,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
               value={passageText}
               onChange={(e) => setPassageText(e.target.value)}
               placeholder="Paste or type the exercise paragraph here. Keystroke meters and word counts calculate automatically..."
-              className="w-full p-3.5 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 leading-relaxed font-sans"
+              className="w-full p-3.5 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 leading-relaxed font-sans"
             />
           </div>
 
@@ -384,7 +384,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                 onClick={() => setAllowBackspace(!allowBackspace)}
                 className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${
                   allowBackspace
-                    ? 'bg-[#fffaf8] border-[#ff8a5c]/40'
+                    ? 'bg-[#fffaf8] border-primary/40'
                     : 'bg-white border-gray-200'
                 }`}
               >
@@ -392,7 +392,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                   type="checkbox"
                   checked={allowBackspace}
                   onChange={() => setAllowBackspace(!allowBackspace)}
-                  className="mt-0.5 h-4 w-4 text-[#ff8a5c] accent-[#ff8a5c]"
+                  className="mt-0.5 h-4 w-4 text-primary accent-primary"
                 />
                 <div className="text-xs">
                   <p className="font-semibold text-gray-800">Allow Backspace Key</p>
@@ -406,7 +406,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                 onClick={() => setHighlightWord(!highlightWord)}
                 className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${
                   highlightWord
-                    ? 'bg-[#fffaf8] border-[#ff8a5c]/40'
+                    ? 'bg-[#fffaf8] border-primary/40'
                     : 'bg-white border-gray-200'
                 }`}
               >
@@ -414,7 +414,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
                   type="checkbox"
                   checked={highlightWord}
                   onChange={() => setHighlightWord(!highlightWord)}
-                  className="mt-0.5 h-4 w-4 text-[#ff8a5c] accent-[#ff8a5c]"
+                  className="mt-0.5 h-4 w-4 text-primary accent-primary"
                 />
                 <div className="text-xs">
                   <p className="font-semibold text-gray-800">Highlight Active Word</p>
@@ -470,7 +470,7 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
             <button
               type="submit"
               disabled={createContentMutation.isPending || !title.trim() || !passageText.trim()}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {createContentMutation.isPending ? 'Publishing...' : 'Publish Content'}
             </button>

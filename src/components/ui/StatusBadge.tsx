@@ -120,7 +120,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${style.dot}`} />
         </span>
       )}
-      <span>{status.replace(/_/g, ' ')}</span>
+      <span>{(status ?? '').replace(/_/g, ' ')}</span>
     </span>
   );
 };

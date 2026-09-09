@@ -2,9 +2,11 @@ import { useMemo } from "react";
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import type { PaginatedResponse } from "@/types/api";
+import type { UserStatus, UserRole } from "@/types/auth";
 
-export type UserRole = "SUPER_ADMIN" | "ADMIN" | "SUPPORT";
-export type UserStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "BANNED";
+export type { PaginatedResponse, UserStatus, UserRole };
 
 export interface User {
   id: string;
@@ -78,17 +80,6 @@ export interface InstitutionOption {
   status: string;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages?: number;
-    timestamp?: string;
-  };
-}
-
 export interface CreateUserInput {
   name: string;
   email: string;
@@ -116,7 +107,7 @@ export const useUsers = (params: {
   includeDeleted?: boolean;
 }) => {
   return useQuery({
-    queryKey: ["users", params],
+    queryKey: queryKeys.users.list(params),
     queryFn: () =>
       api.get<unknown, PaginatedResponse<User>>("/users", { params }),
   });
@@ -124,7 +115,7 @@ export const useUsers = (params: {
 
 export const useUser = (id: string | null) => {
   return useQuery({
-    queryKey: ["users", id],
+    queryKey: queryKeys.users.detail(id),
     queryFn: () => api.get<unknown, { data: User }>(`/users/${id}`),
     enabled: Boolean(id),
   });
@@ -132,7 +123,7 @@ export const useUser = (id: string | null) => {
 
 export const useUserStats = (institutionId?: string) => {
   return useQuery({
-    queryKey: ["users", "stats", institutionId],
+    queryKey: queryKeys.users.stats(institutionId),
     queryFn: () =>
       api.get<unknown, { data: UserStats }>("/users/stats", {
         params: institutionId ? { institutionId } : undefined,
@@ -175,7 +166,7 @@ export const useInstitutionMap = (enabled = true) => {
 
 export const useUserSessions = (userId: string | null) => {
   return useQuery({
-    queryKey: ["users", userId, "sessions"],
+    queryKey: queryKeys.users.sessions(userId),
     queryFn: () =>
       api.get<unknown, { data: { sessions: UserSession[]; total: number } }>(
         `/users/${userId}/sessions`,
@@ -186,7 +177,7 @@ export const useUserSessions = (userId: string | null) => {
 
 export const useUserLoginHistory = (userId: string | null, limit = 50) => {
   return useQuery({
-    queryKey: ["users", userId, "login-history", limit],
+    queryKey: queryKeys.users.loginHistory(userId, limit),
     queryFn: () =>
       api.get<unknown, { data: LoginHistoryItem[] }>(
         `/users/${userId}/login-history`,
@@ -208,8 +199,7 @@ export const useCreateUser = () => {
     mutationFn: (data: CreateUserInput) =>
       api.post<{ data: User }>("/users", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User provisioned successfully");
     },
     onError: (error: Error) => {
@@ -224,8 +214,8 @@ export const useUpdateUser = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateUserInput }) =>
       api.put(`/users/${id}`, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
       toast.success("User updated successfully");
     },
     onError: (error: Error) => {
@@ -240,10 +230,9 @@ export const useUpdateUserStatus = () => {
     mutationFn: ({ id, status }: { id: string; status: UserStatus }) =>
       api.put(`/users/${id}/status`, { status }),
     onSuccess: (_, { id, status }) => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["users", id] });
-      queryClient.invalidateQueries({ queryKey: ["users", id, "sessions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.sessions(id) });
       toast.success(`User status updated to ${status}`);
     },
     onError: (error: Error) => {
@@ -265,10 +254,9 @@ export const useUpdateUserRole = () => {
       institutionId?: string | null;
     }) => api.put(`/users/${id}/role`, { role, institutionId }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["users", id] });
-      queryClient.invalidateQueries({ queryKey: ["users", id, "sessions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.sessions(id) });
       toast.success("User role updated successfully");
     },
     onError: (error: Error) => {
@@ -283,9 +271,9 @@ export const useResetUserPassword = () => {
     mutationFn: ({ id, password }: { id: string; password: string }) =>
       api.put(`/users/${id}/password`, { password }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", id] });
-      queryClient.invalidateQueries({ queryKey: ["users", id, "sessions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.sessions(id) });
       toast.success(
         "User password reset successfully. Active sessions revoked.",
       );
@@ -320,9 +308,9 @@ export const useRevokeUserSession = () => {
     }) => api.delete(`/users/${userId}/sessions/${sessionId}`),
     onSuccess: (_, { userId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["users", userId, "sessions"],
+        queryKey: queryKeys.users.sessions(userId),
       });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("Session revoked successfully");
     },
     onError: (error: Error) => {
@@ -337,9 +325,9 @@ export const useRevokeAllUserSessions = () => {
     mutationFn: (userId: string) => api.delete(`/users/${userId}/sessions`),
     onSuccess: (_, userId) => {
       queryClient.invalidateQueries({
-        queryKey: ["users", userId, "sessions"],
+        queryKey: queryKeys.users.sessions(userId),
       });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("All active sessions terminated successfully");
     },
     onError: (error: Error) => {
@@ -353,8 +341,7 @@ export const useSoftDeleteUser = () => {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/users/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User deleted and moved to trash");
     },
     onError: (error: Error) => {
@@ -368,8 +355,7 @@ export const useRestoreUser = () => {
   return useMutation({
     mutationFn: (id: string) => api.put(`/users/${id}/restore`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User account restored successfully");
     },
     onError: (error: Error) => {
@@ -383,8 +369,7 @@ export const usePermanentDeleteUser = () => {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/users/${id}/permanent`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User permanently deleted from database");
     },
     onError: (error: Error) => {

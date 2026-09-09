@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useCreateInstitution, useCheckSlug } from '../api/institutionApi';
 import type { CreateInstitutionInput } from '../api/institutionApi';
+import { SLUG_CHECK_DEBOUNCE_MS, useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 interface CreateInstitutionModalProps {
   isOpen: boolean;
@@ -56,14 +57,8 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
   const [signatoryDesignation, setSignatoryDesignation] = useState('');
   const [website, setWebsite] = useState('');
 
-  // Debounced slug check
-  const [debouncedSlug, setDebouncedSlug] = useState('');
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSlug(slug.trim().toLowerCase());
-    }, 350);
-    return () => clearTimeout(handler);
-  }, [slug]);
+  // Debounced slug availability check (normalized: trimmed + lowercased)
+  const debouncedSlug = useDebouncedValue(slug.trim().toLowerCase(), SLUG_CHECK_DEBOUNCE_MS);
 
   const { data: slugCheck, isFetching: isCheckingSlug } = useCheckSlug(
     debouncedSlug,
@@ -152,7 +147,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#fff0eb] text-[#ff8a5c] rounded-xl">
+            <div className="p-2.5 bg-primary-100 text-primary rounded-xl">
               <GraduationCap size={22} />
             </div>
             <div>
@@ -180,7 +175,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
             onClick={() => setActiveTab('profile')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'profile'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -192,7 +187,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
             onClick={() => setActiveTab('branding')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'branding'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -220,7 +215,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                     value={name}
                     onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="e.g. Apex Typing Academy"
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
               </div>
@@ -253,7 +248,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                         ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
                         : slugCheck?.available
                         ? 'border-emerald-300 focus:ring-emerald-200 focus:border-emerald-500'
-                        : 'border-gray-200 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]'
+                        : 'border-gray-200 focus:ring-primary/30 focus:border-primary'
                     }`}
                   />
                   {/* Status Indicator Badge */}
@@ -299,7 +294,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="admin@apexinstitute.com"
-                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                     />
                   </div>
                 </div>
@@ -316,7 +311,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                     />
                   </div>
                 </div>
@@ -336,7 +331,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Suite 402, EduTech Tower, Central Market, Lucknow, UP"
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c] resize-none"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
                   />
                 </div>
               </div>
@@ -354,7 +349,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                       value="ACTIVE"
                       checked={status === 'ACTIVE'}
                       onChange={() => setStatus('ACTIVE')}
-                      className="text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                      className="text-primary focus:ring-primary"
                     />
                     <span className="font-medium text-gray-800">Active</span>
                     <span className="text-xs text-gray-400">(Ready for licensing and logins)</span>
@@ -366,7 +361,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                       value="SUSPENDED"
                       checked={status === 'SUSPENDED'}
                       onChange={() => setStatus('SUSPENDED')}
-                      className="text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                      className="text-primary focus:ring-primary"
                     />
                     <span className="font-medium text-gray-800">Suspended</span>
                     <span className="text-xs text-gray-400">(Access blocked pending setup)</span>
@@ -399,7 +394,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                         setSecondaryColor(palette.secondary);
                         setAccentColor(palette.accent);
                       }}
-                      className="p-2 border border-gray-200 rounded-xl text-left hover:border-[#ff8a5c] transition-all bg-white flex flex-col gap-1.5"
+                      className="p-2 border border-gray-200 rounded-xl text-left hover:border-primary transition-all bg-white flex flex-col gap-1.5"
                     >
                       <div className="flex gap-1">
                         <div className="w-4 h-4 rounded-full" style={{ backgroundColor: palette.primary }} />
@@ -486,7 +481,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                     value={applicationName}
                     onChange={(e) => setApplicationName(e.target.value)}
                     placeholder="e.g. Apex Typing Master"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
                 <div>
@@ -498,7 +493,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="e.g. Apex Institute of IT"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
               </div>
@@ -513,7 +508,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                   value={tagline}
                   onChange={(e) => setTagline(e.target.value)}
                   placeholder="Govt Recognized Computer Training & Skill Development Center"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 />
               </div>
 
@@ -532,7 +527,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                       value={signatoryName}
                       onChange={(e) => setSignatoryName(e.target.value)}
                       placeholder="Dr. R. K. Sharma"
-                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                     />
                   </div>
                 </div>
@@ -545,7 +540,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                     value={signatoryDesignation}
                     onChange={(e) => setSignatoryDesignation(e.target.value)}
                     placeholder="Managing Director & Controller of Exams"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
               </div>
@@ -564,7 +559,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     placeholder="https://apexinstitute.com"
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
               </div>
@@ -604,7 +599,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('branding')}
-                className="text-xs font-semibold text-[#ff8a5c] hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
               >
                 Customize Branding & Palette &rarr;
               </button>
@@ -630,7 +625,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
               <button
                 type="submit"
                 disabled={createMutation.isPending || isSlugConflict || !isSlugValid}
-                className="px-5 py-2 text-sm font-medium text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createMutation.isPending && <Loader2 size={16} className="animate-spin" />}
                 <span>Provision Center</span>

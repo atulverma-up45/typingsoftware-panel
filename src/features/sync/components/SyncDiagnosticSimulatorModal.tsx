@@ -149,7 +149,7 @@ export const SyncDiagnosticSimulatorModal: React.FC<SyncDiagnosticSimulatorModal
                 placeholder="TYP-XXXX-XXXX-XXXX-XXXX"
                 value={licenseKey}
                 onChange={(e) => setLicenseKey(e.target.value)}
-                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white uppercase"
+                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white uppercase"
               />
               <p className="text-[10px] text-gray-400 mt-1">Identifies the licensed institution</p>
             </div>
@@ -164,7 +164,7 @@ export const SyncDiagnosticSimulatorModal: React.FC<SyncDiagnosticSimulatorModal
                 placeholder="dev-workstation-lab-01"
                 value={deviceId}
                 onChange={(e) => setDeviceId(e.target.value)}
-                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               />
             </div>
           </div>
@@ -180,7 +180,7 @@ export const SyncDiagnosticSimulatorModal: React.FC<SyncDiagnosticSimulatorModal
                 placeholder="FP-BFEBFBFF-000906EA-E45A"
                 value={hardwareFingerprint}
                 onChange={(e) => setHardwareFingerprint(e.target.value)}
-                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               />
             </div>
 
@@ -194,7 +194,7 @@ export const SyncDiagnosticSimulatorModal: React.FC<SyncDiagnosticSimulatorModal
                 placeholder="1.0.0"
                 value={appVersion}
                 onChange={(e) => setAppVersion(e.target.value)}
-                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               />
             </div>
           </div>
@@ -336,7 +336,7 @@ export const SyncDiagnosticSimulatorModal: React.FC<SyncDiagnosticSimulatorModal
                 <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-gray-500 font-medium flex items-center gap-1">
-                      <Layers size={13} className="text-[#ff8a5c]" />
+                      <Layers size={13} className="text-primary" />
                       Modules Delta
                     </span>
                     <span

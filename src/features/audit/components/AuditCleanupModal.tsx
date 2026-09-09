@@ -107,7 +107,7 @@ export const AuditCleanupModal: React.FC<AuditCleanupModalProps> = ({ isOpen, on
               step={1}
               value={retentionDays}
               onChange={(e) => setRetentionDays(parseInt(e.target.value, 10) || 90)}
-              className="w-full accent-[#ff8a5c] h-2 bg-gray-200 rounded-lg cursor-pointer"
+              className="w-full accent-primary h-2 bg-gray-200 rounded-lg cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-mono">
               <span>30 days (Min)</span>

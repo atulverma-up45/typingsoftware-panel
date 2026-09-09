@@ -69,7 +69,7 @@ export const SubscriptionDetailModal: React.FC<SubscriptionDetailModalProps> = (
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <DollarSign size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -116,7 +116,7 @@ export const SubscriptionDetailModal: React.FC<SubscriptionDetailModalProps> = (
               onClick={() => setActiveTab(tab.id as any)}
               className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -205,7 +205,7 @@ export const SubscriptionDetailModal: React.FC<SubscriptionDetailModalProps> = (
                     Workstation Cap
                   </span>
                   <span className="text-sm font-bold text-gray-900 mt-1 block flex items-center gap-1">
-                    <Laptop size={15} className="text-[#ff8a5c]" />
+                    <Laptop size={15} className="text-primary" />
                     {plan?.maxActivations || 5} Stations
                   </span>
                   <span className="text-[11px] text-gray-500">Authorized seats</span>
@@ -340,7 +340,7 @@ export const SubscriptionDetailModal: React.FC<SubscriptionDetailModalProps> = (
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <Key size={16} className="text-[#ff8a5c]" />
+                            <Key size={16} className="text-primary" />
                             <span className="font-mono text-xs font-bold text-gray-900">
                               {lic.licenseKey}
                             </span>
@@ -395,7 +395,7 @@ export const SubscriptionDetailModal: React.FC<SubscriptionDetailModalProps> = (
                 onClose();
                 onRenew(subscription);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] rounded-xl transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl transition-colors"
             >
               <RotateCw size={13} />
               Renew Contract

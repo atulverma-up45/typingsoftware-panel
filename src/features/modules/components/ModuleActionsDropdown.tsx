@@ -110,7 +110,7 @@ export const ModuleActionsDropdown: React.FC<ModuleActionsDropdownProps> = ({
                   onConfigureOverride(module);
                   setIsOpen(false);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff8a5c] hover:bg-[#fff0eb]/50 text-left font-semibold"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary hover:bg-primary-100/50 text-left font-semibold"
               >
                 <Sliders size={14} />
                 Configure Tenant Override

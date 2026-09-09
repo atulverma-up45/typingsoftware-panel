@@ -18,7 +18,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "lint:fix": "eslint src tests --fix",
-    "format": "prettier --write \"src/**/*.{ts,json,md}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json,md}\"",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
@@ -31,7 +31,6 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.86.0",
-    "react-icons": "^5.7.0",
     "react-is": "^19.2.8",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
@@ -46,7 +45,6 @@
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^6.0.4",
     "autoprefixer": "^10.5.4",
     "eslint": "^10.8.0",

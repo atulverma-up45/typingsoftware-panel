@@ -71,7 +71,7 @@ export const UpdateSubscriptionModal: React.FC<UpdateSubscriptionModalProps> = (
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <Edit3 size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -110,7 +110,7 @@ export const UpdateSubscriptionModal: React.FC<UpdateSubscriptionModalProps> = (
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as SubscriptionStatus)}
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               <option value="ACTIVE">ACTIVE (In Good Standing)</option>
               <option value="TRIAL">TRIAL (Evaluation Period)</option>
@@ -130,7 +130,7 @@ export const UpdateSubscriptionModal: React.FC<UpdateSubscriptionModalProps> = (
               required
               value={expiresAtDate}
               onChange={(e) => setExpiresAtDate(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -142,7 +142,7 @@ export const UpdateSubscriptionModal: React.FC<UpdateSubscriptionModalProps> = (
               type="checkbox"
               checked={autoRenew}
               onChange={() => setAutoRenew(!autoRenew)}
-              className="mt-0.5 h-4 w-4 rounded text-[#ff8a5c] accent-[#ff8a5c]"
+              className="mt-0.5 h-4 w-4 rounded text-primary accent-primary"
             />
             <div className="text-xs">
               <p className="font-semibold text-gray-800">Auto-Renewal Flag</p>
@@ -163,7 +163,7 @@ export const UpdateSubscriptionModal: React.FC<UpdateSubscriptionModalProps> = (
             <button
               type="submit"
               disabled={updateSubscriptionMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {updateSubscriptionMutation.isPending ? 'Saving...' : 'Save Changes'}
             </button>

@@ -10,7 +10,7 @@ const PendingSyncs: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-[16px] font-bold text-gray-800 tracking-tight">Pending Syncs</h3>
         {syncs.length > 0 && (
-          <span className="bg-[#fcdabf] text-[#d65e2b] text-[11px] font-bold px-2.5 py-1 rounded-full">
+          <span className="bg-primary-250 text-primary-800 text-[11px] font-bold px-2.5 py-1 rounded-full">
             {syncs.length} stale
           </span>
         )}
@@ -47,10 +47,10 @@ const PendingSyncs: React.FC = () => {
           syncs.map((sync) => (
             <div
               key={sync.id}
-              className="bg-[#fff6f2] rounded-xl p-4 flex items-center justify-between border border-[#fdece5] hover:border-[#fc9b7f]/50 transition-colors"
+              className="bg-primary-tint rounded-xl p-4 flex items-center justify-between border border-primary-tint-border hover:border-[#fc9b7f]/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-[#f77f52] shrink-0 border border-[#fdece5] shadow-2xs">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-primary shrink-0 border border-primary-tint-border shadow-2xs">
                   <RefreshCw size={18} />
                 </div>
                 <div>
@@ -58,7 +58,7 @@ const PendingSyncs: React.FC = () => {
                   <p className="text-xs text-gray-500 mt-0.5">Last seen: {sync.date}</p>
                 </div>
               </div>
-              <div className="bg-[#fcdabf] text-[#d65e2b] text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ml-2">
+              <div className="bg-primary-250 text-primary-800 text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ml-2">
                 {sync.days} days ago
               </div>
             </div>

@@ -44,7 +44,7 @@ const RecentActivations: React.FC = () => {
           activations.map((activation) => (
             <div key={activation.id} className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff0eb] text-[#f77f52] shrink-0 font-bold text-xs border border-[#fdece5]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary shrink-0 font-bold text-xs border border-primary-tint-border">
                   {activation.initials || 'WK'}
                 </div>
                 <div>
@@ -61,7 +61,7 @@ const RecentActivations: React.FC = () => {
                 <div className="bg-[#dcfce7] text-[#16a34a] text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                   <CheckCircle2 size={11} /> active
                 </div>
-                <span className="font-bold text-xs text-[#f77f52] uppercase">
+                <span className="font-bold text-xs text-primary uppercase">
                   {activation.type}
                 </span>
               </div>

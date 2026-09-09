@@ -95,7 +95,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary flex items-center justify-center">
               <Package size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -133,7 +133,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
             onClick={() => setActiveTab('SPECS')}
             className={`flex items-center gap-1.5 py-3 px-2 text-xs font-bold border-b-2 transition-all mr-4 ${
               activeTab === 'SPECS'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -144,7 +144,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
             onClick={() => setActiveTab('CHANGELOG')}
             className={`flex items-center gap-1.5 py-3 px-2 text-xs font-bold border-b-2 transition-all mr-4 ${
               activeTab === 'CHANGELOG'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -155,7 +155,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
             onClick={() => setActiveTab('RAW')}
             className={`flex items-center gap-1.5 py-3 px-2 text-xs font-bold border-b-2 transition-all ${
               activeTab === 'RAW'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -169,9 +169,9 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
           {activeTab === 'SPECS' && (
             <div className="space-y-4">
               {/* Primary Download Banner */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-[#fff0eb]/60 border border-[#ff8a5c]/30">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-primary-100/60 border border-primary/30">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white text-[#ff8a5c] shadow-xs flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-white text-primary shadow-xs flex items-center justify-center">
                     <Download size={20} />
                   </div>
                   <div>
@@ -186,7 +186,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
                 >
                   <Download size={13} />
                   Download File
@@ -242,7 +242,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
                   <button
                     type="button"
                     onClick={handleCopyHash}
-                    className="flex items-center gap-1 text-xs font-semibold text-[#ff8a5c] hover:underline"
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                   >
                     {copiedHash ? (
                       <>
@@ -270,7 +270,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
                   <button
                     type="button"
                     onClick={handleCopyKey}
-                    className="flex items-center gap-1 text-xs font-semibold text-[#ff8a5c] hover:underline"
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                   >
                     {copiedKey ? (
                       <>
@@ -322,7 +322,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCopyJson}
-                  className="flex items-center gap-1 text-xs font-semibold text-[#ff8a5c] hover:underline"
+                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                 >
                   {copiedJson ? (
                     <>

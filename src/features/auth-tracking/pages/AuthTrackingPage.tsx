@@ -36,7 +36,7 @@ import {
   type GlobalLoginHistoryItem,
 } from '../api/authTrackingApi';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
@@ -233,7 +233,7 @@ export default function AuthTrackingPage() {
       <PageHeader
         title="Auth & Device Security Center"
         subtitle="Real-time platform session telemetry, geo-velocity threat radar, and forensic authentication auditing"
-        icon={<Radio className="text-[#ff8a5c]" size={24} />}
+        icon={<Radio className="text-primary" size={24} />}
         actions={
           <>
             <button
@@ -243,7 +243,7 @@ export default function AuthTrackingPage() {
               title="Prune dead expired sessions older than 7 days"
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs h-[38px] disabled:opacity-50"
             >
-              <Sparkles size={14} className={isPruning ? 'animate-spin text-[#ff8a5c]' : 'text-amber-500'} />
+              <Sparkles size={14} className={isPruning ? 'animate-spin text-primary' : 'text-amber-500'} />
               <span>Prune Dead Sessions</span>
             </button>
 
@@ -266,7 +266,7 @@ export default function AuthTrackingPage() {
             >
               <RefreshCw
                 size={14}
-                className={isFetchingSessions || isFetchingHistory ? 'animate-spin text-[#ff8a5c]' : ''}
+                className={isFetchingSessions || isFetchingHistory ? 'animate-spin text-primary' : ''}
               />
             </button>
           </>
@@ -335,7 +335,7 @@ export default function AuthTrackingPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
                 activeTab === tab.id
-                  ? 'bg-[#fff0eb] text-[#ff8a5c] shadow-2xs font-semibold'
+                  ? 'bg-primary-100 text-primary shadow-2xs font-semibold'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
               }`}
             >
@@ -347,7 +347,7 @@ export default function AuthTrackingPage() {
                     tab.alert
                       ? 'bg-red-500 text-white font-bold'
                       : activeTab === tab.id
-                      ? 'bg-[#ff8a5c] text-white'
+                      ? 'bg-primary text-white'
                       : 'bg-gray-200 text-gray-600'
                   }`}
                 >
@@ -420,7 +420,7 @@ export default function AuthTrackingPage() {
           ) : sessions.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-2xs">
               <EmptyState
-                icon={<Radio size={28} className="text-[#ff8a5c]" />}
+                icon={<Radio size={28} className="text-primary" />}
                 title="No active sessions found"
                 description={
                   sessionSearch || deviceFilter
@@ -451,7 +451,7 @@ export default function AuthTrackingPage() {
                     <div>
                       <div className="flex items-start justify-between gap-2.5 mb-2">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#ff8a5c] font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-orange-50 text-primary font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
                             {s.userName.slice(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0">
@@ -476,9 +476,9 @@ export default function AuthTrackingPage() {
                           <span className="text-[10px] uppercase font-bold text-gray-400 block">Device</span>
                           <div className="flex items-center gap-1 text-gray-800 font-medium mt-0.5">
                             {s.deviceType === 'mobile' ? (
-                              <Smartphone size={13} className="text-[#ff8a5c] shrink-0" />
+                              <Smartphone size={13} className="text-primary shrink-0" />
                             ) : (
-                              <Laptop size={13} className="text-[#ff8a5c] shrink-0" />
+                              <Laptop size={13} className="text-primary shrink-0" />
                             )}
                             <span className="truncate">{s.browser || 'Browser'}</span>
                           </div>
@@ -496,7 +496,7 @@ export default function AuthTrackingPage() {
                               <button
                                 type="button"
                                 onClick={(e) => handleCopy(`ip_${s.id}`, s.ipAddress, e)}
-                                className="text-gray-400 hover:text-[#ff8a5c]"
+                                className="text-gray-400 hover:text-primary"
                                 title="Copy IP"
                               >
                                 {copiedId === `ip_${s.id}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
@@ -508,7 +508,7 @@ export default function AuthTrackingPage() {
 
                       {s.institutionName && (
                         <div className="text-[11px] text-gray-500 flex items-center gap-1 mb-2">
-                          <Building2 size={12} className="text-[#ff8a5c] shrink-0" />
+                          <Building2 size={12} className="text-primary shrink-0" />
                           <span className="truncate font-medium">{s.institutionName}</span>
                         </div>
                       )}
@@ -560,7 +560,7 @@ export default function AuthTrackingPage() {
                         <tr key={s.id} className="hover:bg-gray-50/70 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#ff8a5c] font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
+                              <div className="w-9 h-9 rounded-xl bg-orange-50 text-primary font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
                                 {s.userName.slice(0, 2).toUpperCase()}
                               </div>
                               <div className="min-w-0">
@@ -583,7 +583,7 @@ export default function AuthTrackingPage() {
 
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className="p-2 rounded-lg bg-orange-50 text-[#ff8a5c] border border-orange-100">
+                              <div className="p-2 rounded-lg bg-orange-50 text-primary border border-orange-100">
                                 {s.deviceType === 'mobile' ? <Smartphone size={15} /> : <Laptop size={15} />}
                               </div>
                               <div>
@@ -610,7 +610,7 @@ export default function AuthTrackingPage() {
                                   <button
                                     type="button"
                                     onClick={(e) => handleCopy(`ip_d_${s.id}`, s.ipAddress, e)}
-                                    className="text-gray-400 hover:text-[#ff8a5c]"
+                                    className="text-gray-400 hover:text-primary"
                                     title="Copy IP"
                                   >
                                     {copiedId === `ip_d_${s.id}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
@@ -818,7 +818,7 @@ export default function AuthTrackingPage() {
                 <div key={i} className="p-4 rounded-xl bg-gray-50/80 border border-gray-200/70 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#ff8a5c] font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-orange-50 text-primary font-bold text-xs flex items-center justify-center border border-orange-100 shrink-0">
                         {loc.country ? loc.country.slice(0, 2).toUpperCase() : 'GL'}
                       </div>
                       <div className="min-w-0">
@@ -907,7 +907,7 @@ export default function AuthTrackingPage() {
           ) : history.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-2xs">
               <EmptyState
-                icon={<History size={28} className="text-[#ff8a5c]" />}
+                icon={<History size={28} className="text-primary" />}
                 title="No login audit records found"
                 description={
                   historySearch || statusFilter

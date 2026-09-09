@@ -131,7 +131,7 @@ export const SubscriptionActionsDropdown: React.FC<SubscriptionActionsDropdownPr
                       onRenew(subscription);
                       setIsOpen(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff8a5c] hover:bg-[#fff0eb]/40 text-left font-semibold"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary hover:bg-primary-100/40 text-left font-semibold"
                   >
                     <RotateCw size={14} />
                     Renew Contract

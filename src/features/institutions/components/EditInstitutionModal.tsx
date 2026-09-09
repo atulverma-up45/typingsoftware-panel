@@ -18,6 +18,7 @@ import type {
   Institution,
   UpdateInstitutionInput,
 } from '../api/institutionApi';
+import { SLUG_CHECK_DEBOUNCE_MS, useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 interface EditInstitutionModalProps {
   isOpen: boolean;
@@ -49,20 +50,11 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
     }
   }, [institution]);
 
-  // Debounced slug check only if changed from original slug
-  const [debouncedSlug, setDebouncedSlug] = useState('');
+  // Debounced slug availability check — only meaningful when the slug differs
+  // from the one already saved on the institution.
   const isSlugChanged = Boolean(institution && slug.trim().toLowerCase() !== institution.slug.toLowerCase());
-
-  useEffect(() => {
-    if (!isSlugChanged) {
-      setDebouncedSlug('');
-      return;
-    }
-    const handler = setTimeout(() => {
-      setDebouncedSlug(slug.trim().toLowerCase());
-    }, 350);
-    return () => clearTimeout(handler);
-  }, [slug, isSlugChanged]);
+  const debouncedSlugValue = useDebouncedValue(slug.trim().toLowerCase(), SLUG_CHECK_DEBOUNCE_MS);
+  const debouncedSlug = isSlugChanged ? debouncedSlugValue : '';
 
   const { data: slugCheck, isFetching: isCheckingSlug } = useCheckSlug(
     debouncedSlug,
@@ -164,7 +156,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Apex Typing Academy"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
           </div>
@@ -195,7 +187,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                     ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
                     : isSlugChanged && slugCheck?.available
                     ? 'border-emerald-300 focus:ring-emerald-200 focus:border-emerald-500'
-                    : 'border-gray-200 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]'
+                    : 'border-gray-200 focus:ring-primary/30 focus:border-primary'
                 }`}
               />
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -238,7 +230,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 />
               </div>
             </div>
@@ -255,7 +247,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 />
               </div>
             </div>
@@ -275,7 +267,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Campus address, city, state"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c] resize-none"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
               />
             </div>
           </div>
@@ -293,7 +285,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   value="ACTIVE"
                   checked={status === 'ACTIVE'}
                   onChange={() => setStatus('ACTIVE')}
-                  className="text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                  className="text-primary focus:ring-primary"
                 />
                 <span className="font-medium text-gray-800">Active</span>
               </label>
@@ -304,7 +296,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                   value="SUSPENDED"
                   checked={status === 'SUSPENDED'}
                   onChange={() => setStatus('SUSPENDED')}
-                  className="text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                  className="text-primary focus:ring-primary"
                 />
                 <span className="font-medium text-gray-800">Suspended</span>
               </label>
@@ -324,7 +316,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
             <button
               type="submit"
               disabled={updateMutation.isPending || isSlugConflict || !isSlugValid}
-              className="px-5 py-2 text-sm font-medium text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updateMutation.isPending && <Loader2 size={16} className="animate-spin" />}
               <span>Save Changes</span>

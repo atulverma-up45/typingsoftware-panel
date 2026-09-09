@@ -130,7 +130,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             onClick={() => setActiveTab('direct')}
             className={`py-3 px-3 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'direct'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -140,7 +140,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             onClick={() => setActiveTab('email')}
             className={`py-3 px-3 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'email'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -158,7 +158,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                 <button
                   type="button"
                   onClick={handleGeneratePassword}
-                  className="text-xs text-[#ff8a5c] hover:text-[#f77947] font-medium flex items-center gap-1 hover:underline"
+                  className="text-xs text-primary hover:text-primary-600 font-medium flex items-center gap-1 hover:underline"
                 >
                   <Sparkles size={13} /> Auto Generate
                 </button>
@@ -173,7 +173,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter or generate new password"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-20 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 font-mono transition-all"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-20 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-mono transition-all"
                 />
                 <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   {newPassword && (

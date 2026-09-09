@@ -1,6 +1,7 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import axios, { type AxiosError } from "axios";
 import { env } from "@/config/env";
 import { useAuthStore } from "@/stores/auth.store";
+import type { ApiErrorBody } from "@/types/api";
 
 // Create an Axios instance with default configurations
 const api = axios.create({
@@ -11,36 +12,14 @@ const api = axios.create({
   withCredentials: true, // Important for cookies/sessions with better-auth
 });
 
-// Request Interceptor
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // Modify config here if needed (e.g. adding CSRF tokens or custom headers)
-    return config;
-  },
-  (error: AxiosError) => Promise.reject(error),
-);
-
-export interface ApiErrorResponse {
-  success: boolean;
-  error?: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-  message?: string;
-}
-
 // Response Interceptor
 api.interceptors.response.use(
   (response) => response.data, // Automatically unwrap the data from axios
-  (error: AxiosError<ApiErrorResponse>) => {
+  (error: AxiosError<ApiErrorBody>) => {
     if (error.response?.status === 401) {
-      // Clear auth state on unauthorized error
-      const clearAuth = useAuthStore.getState().clearAuth;
-      clearAuth();
-
-      // Dispatch a custom event instead of hard-reloading, or fallback to reload
-      window.dispatchEvent(new CustomEvent("unauthorized"));
+      // Clear auth state on unauthorized error; the ProtectedRoute guard
+      // reacts to the store change and redirects to /login.
+      useAuthStore.getState().clearAuth();
 
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";

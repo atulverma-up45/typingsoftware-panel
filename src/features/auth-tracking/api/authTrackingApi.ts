@@ -1,6 +1,7 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface AuthTrackingOverview {
   totalActiveSessions: number;
@@ -258,10 +259,10 @@ export const useKillSession = () => {
       api.delete(`/v1/auth-tracking/sessions/${sessionId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth-tracking"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("Active session terminated immediately");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to terminate session");
     },
   });
@@ -274,10 +275,10 @@ export const useKillAllUserSessions = () => {
       api.delete(`/v1/auth-tracking/sessions/user/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth-tracking"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("All device sessions terminated for user");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to terminate user sessions");
     },
   });

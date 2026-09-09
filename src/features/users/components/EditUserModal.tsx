@@ -137,7 +137,7 @@ const EditUserModalContent: React.FC<{
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="User full name"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 transition-all"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
           </div>
@@ -154,7 +154,7 @@ const EditUserModalContent: React.FC<{
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="user@example.com"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 transition-all"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ const EditUserModalContent: React.FC<{
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as UserRole)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 appearance-none cursor-pointer"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
                   >
                     <option value="SUPER_ADMIN">Super Administrator</option>
                     <option value="ADMIN">Administrator</option>
@@ -195,7 +195,7 @@ const EditUserModalContent: React.FC<{
                     value={institutionId}
                     onChange={(e) => setInstitutionId(e.target.value)}
                     disabled={role === 'SUPER_ADMIN'}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 appearance-none cursor-pointer disabled:opacity-50"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer disabled:opacity-50"
                   >
                     <option value="">None (Global Platform)</option>
                     {isLoadingInstitutions ? (
@@ -232,7 +232,7 @@ const EditUserModalContent: React.FC<{
             <button
               type="submit"
               disabled={isPending}
-              className="px-5 py-2 text-sm font-medium text-white bg-[#ff8a5c] hover:bg-[#f77947] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-600 rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {isPending && <Loader2 size={16} className="animate-spin" />}
               Save Changes

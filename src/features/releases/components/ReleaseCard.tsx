@@ -107,14 +107,14 @@ export const ReleaseCard: React.FC<ReleaseCardProps> = ({
       className={`relative flex flex-col justify-between rounded-2xl border transition-all duration-200 bg-white p-5 shadow-sm hover:shadow-md ${
         release.status === 'ARCHIVED'
           ? 'border-gray-200 opacity-80 bg-gray-50/50'
-          : 'border-gray-200 hover:border-[#ff8a5c]/50'
+          : 'border-gray-200 hover:border-primary/50'
       }`}
     >
       <div>
         {/* Header: Version, Channel, Status */}
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary flex items-center justify-center shrink-0">
               <Package size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -178,7 +178,7 @@ export const ReleaseCard: React.FC<ReleaseCardProps> = ({
             <button
               type="button"
               onClick={handleCopyHash}
-              className="text-[#ff8a5c] hover:underline flex items-center gap-0.5 text-[10px] font-medium"
+              className="text-primary hover:underline flex items-center gap-0.5 text-[10px] font-medium"
             >
               {copiedHash ? (
                 <>
@@ -252,7 +252,7 @@ export const ReleaseCard: React.FC<ReleaseCardProps> = ({
               <button
                 type="button"
                 onClick={() => onEdit(release)}
-                className="p-1.5 text-gray-500 hover:text-[#ff8a5c] hover:bg-[#fff0eb] rounded-lg transition-colors"
+                className="p-1.5 text-gray-500 hover:text-primary hover:bg-primary-100 rounded-lg transition-colors"
                 title="Edit release"
               >
                 <Edit3 size={14} />

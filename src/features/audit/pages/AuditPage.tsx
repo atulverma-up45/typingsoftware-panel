@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ShieldCheck,
   Activity,
@@ -26,6 +26,7 @@ import { AuditCleanupModal } from '../components/AuditCleanupModal';
 import { useInstitutions } from '@/features/institutions/api/institutionApi';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import ResponsiveDataView from '@/components/ui/ResponsiveDataView';
@@ -37,7 +38,7 @@ export const AuditPage: React.FC = () => {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm, SEARCH_DEBOUNCE_MS);
   const [selectedEntityType, setSelectedEntityType] = useState<string>('ALL');
   const [selectedAction, setSelectedAction] = useState<string>('ALL');
   const [selectedInstitutionId, setSelectedInstitutionId] = useState<string>('ALL');
@@ -55,14 +56,8 @@ export const AuditPage: React.FC = () => {
   const [isCleanupOpen, setIsCleanupOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  // Reset to the first page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSearch, () => setPage(1));
 
   const { data: institutionsData } = useInstitutions({ limit: 100, status: 'ACTIVE' });
   const institutions = institutionsData?.data || [];
@@ -148,7 +143,7 @@ export const AuditPage: React.FC = () => {
               onClick={() => refetch()}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs transition-colors min-h-[38px]"
             >
-              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-primary' : ''} />
               <span>Refresh Stream</span>
             </button>
           </>
@@ -160,7 +155,7 @@ export const AuditPage: React.FC = () => {
         <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-2xs">
           <div className="flex items-center justify-between text-gray-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Total Audit Logs</span>
-            <ShieldCheck size={18} className="text-[#ff8a5c]" />
+            <ShieldCheck size={18} className="text-primary" />
           </div>
           <div className="text-3xl font-black text-gray-900">
             {stats.totalAuditLogs.toLocaleString()}
@@ -324,7 +319,7 @@ export const AuditPage: React.FC = () => {
               className="h-[38px] px-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors border border-gray-200 shrink-0 shadow-2xs"
               title="Refresh audit log"
             >
-              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-primary' : ''} />
             </button>
           </div>
         }
@@ -408,7 +403,7 @@ export const AuditPage: React.FC = () => {
                   setPage(1);
                 }}
                 title="Start Date"
-                className="h-[38px] text-xs px-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-[#ff8a5c] w-full sm:w-auto shadow-2xs"
+                className="h-[38px] text-xs px-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-primary w-full sm:w-auto shadow-2xs"
               />
               <span className="text-gray-400 text-xs">-</span>
               <input
@@ -419,7 +414,7 @@ export const AuditPage: React.FC = () => {
                   setPage(1);
                 }}
                 title="End Date"
-                className="h-[38px] text-xs px-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-[#ff8a5c] w-full sm:w-auto shadow-2xs"
+                className="h-[38px] text-xs px-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-primary w-full sm:w-auto shadow-2xs"
               />
             </div>
           </>
@@ -473,7 +468,7 @@ export const AuditPage: React.FC = () => {
                       e.stopPropagation();
                       handleCopy(`ent_${log.id}`, log.entityId, e);
                     }}
-                    className="text-gray-400 hover:text-[#ff8a5c] shrink-0"
+                    className="text-gray-400 hover:text-primary shrink-0"
                     title="Copy Entity ID"
                   >
                     {copiedId === `ent_${log.id}` ? (
@@ -505,7 +500,7 @@ export const AuditPage: React.FC = () => {
 
             <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
               <span className="font-mono text-[10px] text-gray-400">{log.ipAddress || 'Internal IP'}</span>
-              <span className="text-[#ff8a5c] font-bold inline-flex items-center gap-1">
+              <span className="text-primary font-bold inline-flex items-center gap-1">
                 <Eye size={12} /> Inspect
               </span>
             </div>
@@ -543,7 +538,7 @@ export const AuditPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={(e) => handleCopy(`ent_${log.id}`, log.entityId, e)}
-                          className="text-gray-400 hover:text-[#ff8a5c] shrink-0"
+                          className="text-gray-400 hover:text-primary shrink-0"
                           title="Copy Entity ID"
                         >
                           {copiedId === `ent_${log.id}` ? (

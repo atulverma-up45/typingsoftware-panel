@@ -22,7 +22,8 @@ import {
   AlertCircle,
   Download,
 } from 'lucide-react';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   useActivations,
@@ -76,20 +77,15 @@ export const ActivationsPage: React.FC = () => {
   // ---------------------------------------------------------------------------
   const [seatTab, setSeatTab] = useState<SeatTabType>('ALL');
   const [seatSearch, setSeatSearch] = useState('');
-  const [debouncedSeatSearch, setDebouncedSeatSearch] = useState('');
+  const debouncedSeatSearch = useDebouncedValue(seatSearch, SEARCH_DEBOUNCE_MS);
   const [seatPage, setSeatPage] = useState(1);
   const [seatLimit] = useState(10);
   const [seatSortBy, setSeatSortBy] = useState<'lastSeenAt' | 'firstActivatedAt' | 'deviceName' | 'status'>('lastSeenAt');
   const [seatSortOrder, setSeatSortOrder] = useState<'asc' | 'desc'>('desc');
   const [seatViewMode, setSeatViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSeatSearch(seatSearch);
-      setSeatPage(1);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [seatSearch]);
+  // Reset to the first seat page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSeatSearch, () => setSeatPage(1));
 
   const seatQueryParams = useMemo(() => {
     let statusFilter: ActivationStatus | undefined = undefined;
@@ -154,20 +150,15 @@ export const ActivationsPage: React.FC = () => {
   // ---------------------------------------------------------------------------
   const [deviceTab, setDeviceTab] = useState<DeviceTabType>('ALL');
   const [deviceSearch, setDeviceSearch] = useState('');
-  const [debouncedDeviceSearch, setDebouncedDeviceSearch] = useState('');
+  const debouncedDeviceSearch = useDebouncedValue(deviceSearch, SEARCH_DEBOUNCE_MS);
   const [devicePage, setDevicePage] = useState(1);
   const [deviceLimit] = useState(10);
   const [deviceSortBy, setDeviceSortBy] = useState<'lastSeenAt' | 'deviceName' | 'createdAt' | 'status'>('lastSeenAt');
   const [deviceSortOrder, setDeviceSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deviceViewMode, setDeviceViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedDeviceSearch(deviceSearch);
-      setDevicePage(1);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [deviceSearch]);
+  // Reset to the first device page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedDeviceSearch, () => setDevicePage(1));
 
   const deviceQueryParams = useMemo(() => {
     let statusFilter: DeviceStatus | undefined = undefined;
@@ -339,7 +330,7 @@ export const ActivationsPage: React.FC = () => {
         subtitle="Real-time telemetry, license slot governance, and physical desktop hardware fleet inventory"
         icon={<Monitor size={20} />}
         badge={
-          <span className="px-2.5 py-0.5 text-xs font-semibold bg-[#fff0eb] text-[#ff8a5c] rounded-full border border-[#ff8a5c]/20">
+          <span className="px-2.5 py-0.5 text-xs font-semibold bg-primary-100 text-primary rounded-full border border-primary/20">
             {viewMode === 'SEATS' ? 'Seat Activations' : 'Physical Hardware Fleet'}
           </span>
         }
@@ -355,7 +346,7 @@ export const ActivationsPage: React.FC = () => {
                   : 'text-gray-500 hover:text-gray-800'
               }`}
             >
-              <Layers size={14} className={viewMode === 'SEATS' ? 'text-[#ff8a5c]' : ''} />
+              <Layers size={14} className={viewMode === 'SEATS' ? 'text-primary' : ''} />
               <span>License Seats</span>
               {activationStats && (
                 <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-gray-100 text-gray-700 rounded-full">
@@ -373,7 +364,7 @@ export const ActivationsPage: React.FC = () => {
                   : 'text-gray-500 hover:text-gray-800'
               }`}
             >
-              <Cpu size={14} className={viewMode === 'DEVICES' ? 'text-[#ff8a5c]' : ''} />
+              <Cpu size={14} className={viewMode === 'DEVICES' ? 'text-primary' : ''} />
               <span>Hardware Fleet</span>
               {deviceStats && (
                 <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-gray-100 text-gray-700 rounded-full">
@@ -404,7 +395,7 @@ export const ActivationsPage: React.FC = () => {
                 >
                   <RefreshCw
                     size={14}
-                    className={isFetchingActivations ? 'animate-spin text-[#ff8a5c]' : ''}
+                    className={isFetchingActivations ? 'animate-spin text-primary' : ''}
                   />
                 </button>
               </div>
@@ -860,7 +851,7 @@ export const ActivationsPage: React.FC = () => {
                                 <Monitor size={18} />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900 text-sm group-hover:text-[#ff8a5c] transition-colors flex items-center gap-2">
+                                <div className="font-semibold text-gray-900 text-sm group-hover:text-primary transition-colors flex items-center gap-2">
                                   <span>{act.deviceName}</span>
                                   <span className="px-1.5 py-0.2 text-[10px] font-mono bg-gray-100 text-gray-600 rounded">
                                     v{act.appVersion}
@@ -1213,7 +1204,7 @@ export const ActivationsPage: React.FC = () => {
                 >
                   <RefreshCw
                     size={14}
-                    className={isFetchingDevices ? 'animate-spin text-[#ff8a5c]' : ''}
+                    className={isFetchingDevices ? 'animate-spin text-primary' : ''}
                   />
                 </button>
               </div>
@@ -1466,7 +1457,7 @@ export const ActivationsPage: React.FC = () => {
                                 <Cpu size={18} />
                               </div>
                               <div>
-                                <div className="font-semibold text-gray-900 text-sm group-hover:text-[#ff8a5c] transition-colors flex items-center gap-2">
+                                <div className="font-semibold text-gray-900 text-sm group-hover:text-primary transition-colors flex items-center gap-2">
                                   <span>{dev.deviceName}</span>
                                   {isSoftDeleted && (
                                     <span className="px-1.5 py-0.2 text-[10px] font-bold bg-rose-100 text-rose-700 rounded">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   RefreshCw,
   Activity,
@@ -17,7 +17,8 @@ import {
   Download,
   AlertCircle,
 } from 'lucide-react';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import { useSyncOperations, useSyncStats } from '../api/syncApi';
 import type { SyncOperation } from '../api/syncApi';
 import { SyncOperationDetailModal } from '../components/SyncOperationDetailModal';
@@ -36,7 +37,7 @@ export const SyncPage: React.FC = () => {
 
   // Filters & State
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm, SEARCH_DEBOUNCE_MS);
   const [selectedEntityType, setSelectedEntityType] = useState<string>('ALL');
   const [selectedOperation, setSelectedOperation] = useState<string>('ALL');
   const [selectedInstitutionId, setSelectedInstitutionId] = useState<string>('ALL');
@@ -53,14 +54,8 @@ export const SyncPage: React.FC = () => {
   const [isCleanupOpen, setIsCleanupOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  // Reset to the first page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSearch, () => setPage(1));
 
   const { data: institutionsData } = useInstitutions({ limit: 100, status: 'ACTIVE' });
   const institutions = institutionsData?.data || [];
@@ -220,7 +215,7 @@ export const SyncPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsSimulatorOpen(true)}
-                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-2xs transition-colors min-h-[38px]"
+                className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-2xs transition-colors min-h-[38px]"
               >
                 <Play size={15} />
                 <span>Simulate Sync</span>
@@ -378,7 +373,7 @@ export const SyncPage: React.FC = () => {
               className="h-[38px] px-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors border border-gray-200 shrink-0 shadow-2xs"
               title="Refresh logs"
             >
-              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-primary' : ''} />
             </button>
           </div>
         }
@@ -466,12 +461,12 @@ export const SyncPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <Laptop size={16} className="text-[#ff8a5c] shrink-0" />
+                    <Laptop size={16} className="text-primary shrink-0" />
                     <span className="font-mono font-bold text-gray-900 text-xs truncate">{op.deviceId}</span>
                     <button
                       type="button"
                       onClick={(e) => handleCopy(`dev_${op.id}`, op.deviceId, e)}
-                      className="text-gray-400 hover:text-[#ff8a5c]"
+                      className="text-gray-400 hover:text-primary"
                       title="Copy Device ID"
                     >
                       {copiedId === `dev_${op.id}` ? (
@@ -489,7 +484,7 @@ export const SyncPage: React.FC = () => {
                     <span className="text-[10px] uppercase font-bold text-gray-400 block">Entity</span>
                     <div className="flex items-center gap-1 mt-0.5">
                       {op.entityType === 'DEVICE_ACTIVITY' ? (
-                        <Activity size={12} className="text-[#ff8a5c]" />
+                        <Activity size={12} className="text-primary" />
                       ) : (
                         <Sliders size={12} className="text-purple-500" />
                       )}
@@ -513,7 +508,7 @@ export const SyncPage: React.FC = () => {
                       e.stopPropagation();
                       setInspectingOp(op);
                     }}
-                    className="text-[#ff8a5c] font-bold inline-flex items-center gap-1 hover:underline"
+                    className="text-primary font-bold inline-flex items-center gap-1 hover:underline"
                   >
                     <Eye size={12} /> Inspect
                   </button>
@@ -550,7 +545,7 @@ export const SyncPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={(e) => handleCopy(`dev_${op.id}`, op.deviceId, e)}
-                          className="text-gray-400 hover:text-[#ff8a5c]"
+                          className="text-gray-400 hover:text-primary"
                           title="Copy Device ID"
                         >
                           {copiedId === `dev_${op.id}` ? (
@@ -566,7 +561,7 @@ export const SyncPage: React.FC = () => {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1.5 font-medium text-gray-700">
                         {op.entityType === 'DEVICE_ACTIVITY' ? (
-                          <Activity size={13} className="text-[#ff8a5c]" />
+                          <Activity size={13} className="text-primary" />
                         ) : (
                           <Sliders size={13} className="text-purple-500" />
                         )}
@@ -584,7 +579,7 @@ export const SyncPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={(e) => handleCopy(`key_${op.id}`, op.idempotencyKey, e)}
-                          className="text-gray-400 hover:text-[#ff8a5c] shrink-0"
+                          className="text-gray-400 hover:text-primary shrink-0"
                           title="Copy Idempotency Key"
                         >
                           {copiedId === `key_${op.id}` ? (

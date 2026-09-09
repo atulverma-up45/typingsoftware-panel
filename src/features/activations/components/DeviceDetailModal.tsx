@@ -124,13 +124,13 @@ export const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({
           <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
             <div className="flex items-center justify-between mb-1">
               <span className="font-bold text-gray-700 flex items-center gap-1.5">
-                <Cpu size={14} className="text-[#ff8a5c]" />
+                <Cpu size={14} className="text-primary" />
                 Hardware Cryptographic Fingerprint
               </span>
               <button
                 type="button"
                 onClick={handleCopyFingerprint}
-                className="flex items-center gap-1 font-semibold text-[#ff8a5c] hover:underline"
+                className="flex items-center gap-1 font-semibold text-primary hover:underline"
               >
                 {copiedFingerprint ? (
                   <>
@@ -158,7 +158,7 @@ export const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({
               <button
                 type="button"
                 onClick={handleCopyId}
-                className="flex items-center gap-1 font-semibold text-[#ff8a5c] hover:underline"
+                className="flex items-center gap-1 font-semibold text-primary hover:underline"
               >
                 {copiedId ? (
                   <>

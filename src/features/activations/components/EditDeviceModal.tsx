@@ -57,7 +57,7 @@ export const EditDeviceModal: React.FC<EditDeviceModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary flex items-center justify-center">
               <Edit3 size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -87,7 +87,7 @@ export const EditDeviceModal: React.FC<EditDeviceModalProps> = ({
               placeholder="e.g. Lab 1 - Workstation #04"
               value={deviceName}
               onChange={(e) => setDeviceName(e.target.value)}
-              className="w-full text-xs font-medium px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c]"
+              className="w-full text-xs font-medium px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary"
             />
             <p className="text-[11px] text-gray-400 mt-1">
               Used by lab supervisors to locate and manage the physical computer
@@ -112,7 +112,7 @@ export const EditDeviceModal: React.FC<EditDeviceModalProps> = ({
             <button
               type="submit"
               disabled={updateDeviceMutation.isPending || !deviceName.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
             >
               {updateDeviceMutation.isPending ? (
                 <>

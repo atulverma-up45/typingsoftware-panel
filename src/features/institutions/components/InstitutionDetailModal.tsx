@@ -93,7 +93,7 @@ export const InstitutionDetailModal: React.FC<InstitutionDetailModalProps> = ({
         {/* Header with quick identity banner */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#ff8a5c]/15 text-[#ff8a5c] font-bold text-lg flex items-center justify-center border border-[#ff8a5c]/20 shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary font-bold text-lg flex items-center justify-center border border-primary/20 shrink-0">
               {institution.name.substring(0, 2).toUpperCase()}
             </div>
             <div>
@@ -142,7 +142,7 @@ export const InstitutionDetailModal: React.FC<InstitutionDetailModalProps> = ({
             onClick={() => setActiveTab('profile')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'profile'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -154,7 +154,7 @@ export const InstitutionDetailModal: React.FC<InstitutionDetailModalProps> = ({
             onClick={() => setActiveTab('branding')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'branding'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -166,7 +166,7 @@ export const InstitutionDetailModal: React.FC<InstitutionDetailModalProps> = ({
             onClick={() => setActiveTab('metrics')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'metrics'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -193,7 +193,7 @@ export const InstitutionDetailModal: React.FC<InstitutionDetailModalProps> = ({
                       <div className="text-xs text-gray-400 font-medium">Official Email</div>
                       <a
                         href={`mailto:${institution.email}`}
-                        className="text-sm font-semibold text-gray-900 hover:text-[#ff8a5c] transition-colors"
+                        className="text-sm font-semibold text-gray-900 hover:text-primary transition-colors"
                       >
                         {institution.email}
                       </a>
@@ -209,7 +209,7 @@ export const InstitutionDetailModal: React.FC<InstitutionDetailModalProps> = ({
                       {institution.phone ? (
                         <a
                           href={`tel:${institution.phone}`}
-                          className="text-sm font-semibold text-gray-900 hover:text-[#ff8a5c] transition-colors"
+                          className="text-sm font-semibold text-gray-900 hover:text-primary transition-colors"
                         >
                           {institution.phone}
                         </a>

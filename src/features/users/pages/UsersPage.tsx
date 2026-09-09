@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Users,
   Shield,
@@ -19,7 +19,8 @@ import {
   useInstitutionMap,
   type User,
 } from '../api/userApi';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import { UserActionsDropdown } from '../components/UserActionsDropdown';
 import { CreateUserModal } from '../components/CreateUserModal';
 import { EditUserModal } from '../components/EditUserModal';
@@ -31,7 +32,7 @@ import { toast } from 'sonner';
 
 // Reusable Responsive UI Module Library
 import PageHeader from '@/components/ui/PageHeader';
-import FilterToolbar, { FilterSelect, type ActiveFilterChip } from '@/components/ui/FilterToolbar';
+import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 import ResponsiveDataView from '@/components/ui/ResponsiveDataView';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Pagination from '@/components/ui/Pagination';
@@ -46,20 +47,14 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [institutionFilter, setInstitutionFilter] = useState('');
   const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  // Debounce search input by 300ms for smooth API usage
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+  // Reset to the first page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -198,7 +193,7 @@ export default function UsersPage() {
         icon={<Users size={20} />}
         badge={
           !isSuperAdmin ? (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-[#ff8a5c] border border-orange-200 flex items-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-primary border border-orange-200 flex items-center gap-1.5">
               <Building size={13} />
               Institute Scoped
             </span>
@@ -219,11 +214,11 @@ export default function UsersPage() {
               title="Refresh list"
               className="p-2 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-xl border border-gray-200 shadow-2xs transition-colors min-w-[38px] min-h-[38px] flex items-center justify-center"
             >
-              <RefreshCw size={16} className={isFetchingUsers ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <RefreshCw size={16} className={isFetchingUsers ? 'animate-spin text-primary' : ''} />
             </button>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-3.5 sm:px-4 py-2 bg-[#ff8a5c] hover:bg-[#f77947] text-white rounded-xl shadow-2xs hover:shadow-xs transition-all duration-200 font-medium text-xs sm:text-sm flex items-center gap-1.5 min-h-[38px]"
+              className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-600 text-white rounded-xl shadow-2xs hover:shadow-xs transition-all duration-200 font-medium text-xs sm:text-sm flex items-center gap-1.5 min-h-[38px]"
             >
               <Plus size={16} />
               <span>Provision User</span>
@@ -236,7 +231,7 @@ export default function UsersPage() {
       {!isSuperAdmin && (
         <div className="p-3.5 sm:p-4 rounded-2xl bg-orange-50/50 border border-orange-200/70 flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-orange-100 text-[#ff8a5c] shrink-0">
+            <div className="p-2 rounded-xl bg-orange-100 text-primary shrink-0">
               <Shield size={16} />
             </div>
             <div>
@@ -312,7 +307,7 @@ export default function UsersPage() {
               onClick={() => handleTabChange('all')}
               className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
                 activeTab === 'all'
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -322,7 +317,7 @@ export default function UsersPage() {
               onClick={() => handleTabChange('active')}
               className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
                 activeTab === 'active'
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -332,7 +327,7 @@ export default function UsersPage() {
               onClick={() => handleTabChange('suspended')}
               className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
                 activeTab === 'suspended'
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -343,7 +338,7 @@ export default function UsersPage() {
                 onClick={() => handleTabChange('trash')}
                 className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
                   activeTab === 'trash'
-                    ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-800'
                 }`}
               >
@@ -497,7 +492,7 @@ export default function UsersPage() {
                 ) : (
                   <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="px-4 py-2 rounded-xl bg-[#ff8a5c] hover:bg-[#f77947] text-xs font-medium text-white shadow-2xs transition-colors flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-600 text-xs font-medium text-white shadow-2xs transition-colors flex items-center gap-1.5"
                   >
                     <Plus size={15} /> Provision first user
                   </button>
@@ -533,7 +528,7 @@ export default function UsersPage() {
                       </div>
                     ) : (
                       <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ffb48b] to-[#f89c6d] flex items-center justify-center text-white font-bold text-sm shadow-2xs">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-300 to-primary-400 flex items-center justify-center text-white font-bold text-sm shadow-2xs">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         {user.activeSessionsCount && user.activeSessionsCount > 0 ? (
@@ -545,7 +540,7 @@ export default function UsersPage() {
                     <div className="min-w-0">
                       <div className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
                         <span
-                          className="cursor-pointer hover:text-[#ff8a5c] transition-colors truncate"
+                          className="cursor-pointer hover:text-primary transition-colors truncate"
                           onClick={() => setSelectedUserForDetails(user)}
                         >
                           {user.name}
@@ -554,7 +549,7 @@ export default function UsersPage() {
                           <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
                         )}
                         {isSelf && (
-                          <span className="px-1.5 py-0.2 rounded bg-orange-50 text-[#ff8a5c] text-[10px] font-bold border border-orange-200 shrink-0">
+                          <span className="px-1.5 py-0.2 rounded bg-orange-50 text-primary text-[10px] font-bold border border-orange-200 shrink-0">
                             YOU
                           </span>
                         )}
@@ -673,7 +668,7 @@ export default function UsersPage() {
                             </div>
                           ) : (
                             <div className="relative shrink-0">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ffb48b] to-[#f89c6d] flex items-center justify-center text-white font-bold text-sm shadow-2xs">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-300 to-primary-400 flex items-center justify-center text-white font-bold text-sm shadow-2xs">
                                 {user.name.charAt(0).toUpperCase()}
                               </div>
                               {user.activeSessionsCount && user.activeSessionsCount > 0 ? (
@@ -687,7 +682,7 @@ export default function UsersPage() {
                           <div>
                             <div className="font-semibold text-gray-900 flex items-center gap-1.5">
                               <span
-                                className="cursor-pointer hover:text-[#ff8a5c] transition-colors"
+                                className="cursor-pointer hover:text-primary transition-colors"
                                 onClick={() => setSelectedUserForDetails(user)}
                               >
                                 {user.name}
@@ -696,7 +691,7 @@ export default function UsersPage() {
                                 <CheckCircle2 size={14} className="text-emerald-500" />
                               )}
                               {isSelf && (
-                                <span className="px-1.5 py-0.2 rounded-md bg-orange-50 text-[#ff8a5c] text-[10px] font-bold border border-orange-200">
+                                <span className="px-1.5 py-0.2 rounded-md bg-orange-50 text-primary text-[10px] font-bold border border-orange-200">
                                   YOU
                                 </span>
                               )}

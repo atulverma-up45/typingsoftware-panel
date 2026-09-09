@@ -209,7 +209,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary flex items-center justify-center">
               <Package size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -233,13 +233,13 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
-                <UploadCloud size={14} className="text-[#ff8a5c]" />
+                <UploadCloud size={14} className="text-primary" />
                 Installer Binary & Checksum
               </label>
               <button
                 type="button"
                 onClick={() => setIsManualMode(!isManualMode)}
-                className="text-xs font-semibold text-[#ff8a5c] hover:underline"
+                className="text-xs font-semibold text-primary hover:underline"
               >
                 {isManualMode ? 'Switch to Direct Uploader' : 'Switch to Manual File Key'}
               </button>
@@ -253,7 +253,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                 className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
                   fileKey
                     ? 'border-emerald-300 bg-emerald-50/30'
-                    : 'border-gray-200 hover:border-[#ff8a5c]/60 bg-gray-50/50'
+                    : 'border-gray-200 hover:border-primary/60 bg-gray-50/50'
                 }`}
               >
                 <input
@@ -270,7 +270,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
 
                 {isCalculatingHash ? (
                   <div className="flex flex-col items-center gap-2">
-                    <Loader2 size={32} className="animate-spin text-[#ff8a5c]" />
+                    <Loader2 size={32} className="animate-spin text-primary" />
                     <p className="text-sm font-semibold text-gray-800">
                       Computing SHA-256 Checksum...
                     </p>
@@ -280,13 +280,13 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                   </div>
                 ) : uploadProgress !== null ? (
                   <div className="w-full max-w-xs flex flex-col items-center gap-2">
-                    <Loader2 size={28} className="animate-spin text-[#ff8a5c]" />
+                    <Loader2 size={28} className="animate-spin text-primary" />
                     <p className="text-sm font-semibold text-gray-800">
                       Uploading to Cloudflare R2 ({uploadProgress}%)
                     </p>
                     <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                       <div
-                        className="bg-[#ff8a5c] h-full transition-all duration-300"
+                        className="bg-primary h-full transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       />
                     </div>
@@ -334,7 +334,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                     placeholder="releases/windows/TypingMaster-1.2.0.exe"
                     value={fileKey}
                     onChange={(e) => setFileKey(e.target.value)}
-                    className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c]"
+                    className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -348,7 +348,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                     placeholder="47418240"
                     value={fileSize || ''}
                     onChange={(e) => setFileSize(parseInt(e.target.value, 10) || 0)}
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c]"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -370,7 +370,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                 placeholder="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
                 value={checksum}
                 onChange={(e) => setChecksum(e.target.value.trim().toLowerCase())}
-                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c]"
+                className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -387,7 +387,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                 placeholder="1.2.0"
                 value={version}
                 onChange={(e) => setVersion(e.target.value.trim())}
-                className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c]"
+                className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary"
               />
               <p className="text-[10px] text-gray-400 mt-1">e.g. 1.0.0, 1.2.4-beta.1</p>
             </div>
@@ -399,7 +399,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as ReleasePlatform)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="windows-x64">Windows (64-bit x64)</option>
                 <option value="windows-arm64">Windows (ARM64)</option>
@@ -414,7 +414,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
               <select
                 value={channel}
                 onChange={(e) => setChannel(e.target.value as ReleaseChannel)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="stable">Stable (Production Fleet)</option>
                 <option value="beta">Beta (Preview Testers)</option>
@@ -434,7 +434,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                 placeholder="1.0.0"
                 value={minSupportedVersion}
                 onChange={(e) => setMinSupportedVersion(e.target.value.trim())}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               />
               <p className="text-[10px] text-gray-400 mt-1">
                 Workstations below this version will be forced to upgrade
@@ -450,7 +450,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                   type="checkbox"
                   checked={mandatory}
                   onChange={(e) => setMandatory(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                  className="w-4 h-4 rounded text-primary focus:ring-primary"
                 />
                 <span className="text-xs font-medium text-gray-800">
                   Enforce Mandatory Workstation Upgrade
@@ -476,7 +476,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                     onClick={() => setStatus(st)}
                     className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
                       status === st
-                        ? 'bg-[#fff0eb] border-[#ff8a5c] text-[#ff8a5c]'
+                        ? 'bg-primary-100 border-primary text-primary'
                         : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -496,7 +496,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                     type="checkbox"
                     checked={isTenantSpecific}
                     onChange={(e) => setIsTenantSpecific(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                    className="w-4 h-4 rounded text-primary focus:ring-primary"
                   />
                   <span className="text-xs font-medium text-gray-800">
                     Restricted to Specific Institution (Custom Build)
@@ -506,7 +506,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
                   <select
                     value={institutionId}
                     onChange={(e) => setInstitutionId(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
                   >
                     <option value="">Select target institution...</option>
                     {institutions.map((inst) => (
@@ -534,7 +534,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
               placeholder="### What's New in v1.2.0:&#10;- Added Remington Gail keyboard layout&#10;- Improved offline sync latency&#10;- Fixed exam timer suspension bug"
               value={releaseNotes}
               onChange={(e) => setReleaseNotes(e.target.value)}
-              className="w-full text-xs font-mono p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] leading-relaxed"
+              className="w-full text-xs font-mono p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-primary leading-relaxed"
             />
           </div>
 
@@ -550,7 +550,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
             <button
               type="submit"
               disabled={createReleaseMutation.isPending || isCalculatingHash || uploadProgress !== null}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
             >
               {createReleaseMutation.isPending ? (
                 <>

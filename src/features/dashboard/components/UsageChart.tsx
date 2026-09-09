@@ -51,7 +51,7 @@ const UsageChart: React.FC = () => {
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <div className="animate-pulse flex flex-col items-center gap-2 text-gray-300">
-              <Activity size={32} className="animate-spin text-[#ff8a5c]" />
+              <Activity size={32} className="animate-spin text-primary" />
               <span className="text-xs">Loading usage trends...</span>
             </div>
           </div>

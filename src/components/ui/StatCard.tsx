@@ -1,18 +1,58 @@
 import React from 'react';
 import { Users2, BrainCircuit, Layers, FileText } from 'lucide-react';
 
-interface StatCardProps {
+/**
+ * Shared KPI stat card used by every module page and the dashboard.
+ * Lives in `components/ui` because it is app-wide — feature folders must not
+ * export components consumed by other features.
+ */
+export interface StatCardProps {
   title: string;
   value: string | number;
+  /** Visual accent family. */
   type: 'orange' | 'blue' | 'cyan' | 'coral' | 'emerald' | 'purple';
   isLoading?: boolean;
   subtitle?: string;
+  /** Overrides the default per-type icon. */
   icon?: React.ReactNode;
   onClick?: () => void;
   active?: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
+const STAT_CARD_STYLES = {
+  orange: {
+    bg: 'bg-gradient-to-br from-[#ff9f68] to-[#f77947]',
+    iconBg: 'bg-white/20',
+    icon: <Users2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
+  },
+  blue: {
+    bg: 'bg-gradient-to-br from-[#8ba7fa] to-[#7191f4]',
+    iconBg: 'bg-white/20',
+    icon: <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
+  },
+  cyan: {
+    bg: 'bg-gradient-to-br from-[#77dbe8] to-[#5ecbe0]',
+    iconBg: 'bg-white/20',
+    icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
+  },
+  coral: {
+    bg: 'bg-gradient-to-br from-[#fc9b7f] to-[#f97b58]',
+    iconBg: 'bg-white/20',
+    icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
+  },
+  emerald: {
+    bg: 'bg-gradient-to-br from-[#48bb78] to-[#38a169]',
+    iconBg: 'bg-white/20',
+    icon: <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
+  },
+  purple: {
+    bg: 'bg-gradient-to-br from-[#9f7aea] to-[#805ad5]',
+    iconBg: 'bg-white/20',
+    icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
+  },
+} as const;
+
+export const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   type,
@@ -22,40 +62,7 @@ const StatCard: React.FC<StatCardProps> = ({
   onClick,
   active = false,
 }) => {
-  const styles = {
-    orange: {
-      bg: 'bg-gradient-to-br from-[#ffb48b] to-[#f89c6d]',
-      iconBg: 'bg-white/20',
-      icon: <Users2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
-    },
-    blue: {
-      bg: 'bg-gradient-to-br from-[#8ba7fa] to-[#7191f4]',
-      iconBg: 'bg-white/20',
-      icon: <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
-    },
-    cyan: {
-      bg: 'bg-gradient-to-br from-[#77dbe8] to-[#5ecbe0]',
-      iconBg: 'bg-white/20',
-      icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
-    },
-    coral: {
-      bg: 'bg-gradient-to-br from-[#fc9b7f] to-[#f97b58]',
-      iconBg: 'bg-white/20',
-      icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
-    },
-    emerald: {
-      bg: 'bg-gradient-to-br from-[#48bb78] to-[#38a169]',
-      iconBg: 'bg-white/20',
-      icon: <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
-    },
-    purple: {
-      bg: 'bg-gradient-to-br from-[#9f7aea] to-[#805ad5]',
-      iconBg: 'bg-white/20',
-      icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
-    },
-  };
-
-  const currentStyle = styles[type] || styles.orange;
+  const currentStyle = STAT_CARD_STYLES[type] ?? STAT_CARD_STYLES.orange;
 
   return (
     <div
@@ -75,7 +82,9 @@ const StatCard: React.FC<StatCardProps> = ({
             value
           )}
         </h3>
-        {subtitle && <p className="text-white/75 text-[10px] sm:text-[11px] mt-1 line-clamp-1">{subtitle}</p>}
+        {subtitle && (
+          <p className="text-white/75 text-[10px] sm:text-[11px] mt-1 line-clamp-1">{subtitle}</p>
+        )}
       </div>
 
       <div
@@ -87,5 +96,4 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 };
 
-export { StatCard };
 export default StatCard;

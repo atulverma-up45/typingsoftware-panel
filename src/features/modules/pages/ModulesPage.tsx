@@ -20,7 +20,8 @@ import {
   Lock,
 } from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -52,7 +53,7 @@ export const ModulesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ModuleTab>('ACTIVE');
   const [viewMode, setViewMode] = useState<ViewMode>('CARDS');
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm, SEARCH_DEBOUNCE_MS);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(12);
   const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'key' | 'version'>('createdAt');
@@ -67,14 +68,8 @@ export const ModulesPage: React.FC = () => {
   const [moduleToRestore, setModuleToRestore] = useState<TypingModule | null>(null);
   const [moduleToPurge, setModuleToPurge] = useState<TypingModule | null>(null);
 
-  // Debounce search
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  // Reset to the first page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Query Params
   const queryParams = useMemo(() => {
@@ -217,7 +212,7 @@ export const ModulesPage: React.FC = () => {
       <PageHeader
         title="Typing Modules & Engines"
         subtitle="Configure core educational modules, multi-font keyboards, exam engines, and institution-level overrides"
-        icon={<Layers className="text-[#ff8a5c]" size={24} />}
+        icon={<Layers className="text-primary" size={24} />}
         actions={
           <>
             <button
@@ -237,7 +232,7 @@ export const ModulesPage: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
               title="Refresh Modules & Statistics"
             >
-              <RefreshCw size={14} className={isFetchingModules ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <RefreshCw size={14} className={isFetchingModules ? 'animate-spin text-primary' : ''} />
               Refresh
             </button>
 
@@ -253,7 +248,7 @@ export const ModulesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
               >
                 <Plus size={16} strokeWidth={2.5} />
                 Register Module
@@ -352,7 +347,7 @@ export const ModulesPage: React.FC = () => {
             }}
             className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
               activeTab === tab.id
-                ? 'bg-[#fff0eb] text-[#ff8a5c] shadow-2xs'
+                ? 'bg-primary-100 text-primary shadow-2xs'
                 : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
             }`}
           >
@@ -360,7 +355,7 @@ export const ModulesPage: React.FC = () => {
             {typeof tab.count === 'number' && (
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  activeTab === tab.id ? 'bg-[#ff8a5c] text-white' : 'bg-gray-200 text-gray-600'
+                  activeTab === tab.id ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'
                 }`}
               >
                 {tab.count}
@@ -443,7 +438,7 @@ export const ModulesPage: React.FC = () => {
         </div>
       ) : modules.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-gray-200 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-primary-100 text-primary flex items-center justify-center mb-3">
             <Layers size={28} />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Typing Modules Found</h3>
@@ -458,7 +453,7 @@ export const ModulesPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
             >
               <Plus size={15} strokeWidth={2.5} />
               Register First Typing Module
@@ -533,7 +528,7 @@ export const ModulesPage: React.FC = () => {
                     <tr key={mod.id} className="hover:bg-gray-50/70 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary flex items-center justify-center shrink-0">
                             <Layers size={16} />
                           </div>
                           <div>

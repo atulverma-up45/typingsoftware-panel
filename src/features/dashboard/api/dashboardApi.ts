@@ -1,5 +1,6 @@
 import api from "@/lib/api/client";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface SuperAdminMetrics {
   totalInstitutions: number;
@@ -85,7 +86,7 @@ interface ApiResponse<T> {
  */
 export const useDashboardMetrics = (institutionId?: string | null) => {
   return useQuery({
-    queryKey: ["dashboard", "metrics", institutionId],
+    queryKey: queryKeys.dashboard.metrics(institutionId),
     queryFn: async () => {
       const response = await api.get<
         unknown,
@@ -105,7 +106,7 @@ export const useDashboardMetrics = (institutionId?: string | null) => {
  */
 export const useDashboardUsage = (days = 7) => {
   return useQuery({
-    queryKey: ["dashboard", "usage", days],
+    queryKey: queryKeys.dashboard.usage(days),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<UsageStatItem[]>>(
         "/v1/dashboard/usage",
@@ -125,7 +126,7 @@ export const useDashboardUsage = (days = 7) => {
  */
 export const useDashboardGrowth = (months = 5, enabled = true) => {
   return useQuery({
-    queryKey: ["dashboard", "growth", months],
+    queryKey: queryKeys.dashboard.growth(months),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<GrowthStatItem[]>>(
         "/v1/dashboard/growth",
@@ -146,7 +147,7 @@ export const useDashboardGrowth = (months = 5, enabled = true) => {
  */
 export const useDashboardPendingSyncs = (days = 7, limit = 10) => {
   return useQuery({
-    queryKey: ["dashboard", "pending-syncs", days, limit],
+    queryKey: queryKeys.dashboard.pendingSyncs(days, limit),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<PendingSyncItem[]>>(
         "/v1/dashboard/pending-syncs",
@@ -166,7 +167,7 @@ export const useDashboardPendingSyncs = (days = 7, limit = 10) => {
  */
 export const useDashboardRecentActivations = (limit = 10) => {
   return useQuery({
-    queryKey: ["dashboard", "recent-activations", limit],
+    queryKey: queryKeys.dashboard.recentActivations(limit),
     queryFn: async () => {
       const response = await api.get<
         unknown,
@@ -186,7 +187,7 @@ export const useDashboardRecentActivations = (limit = 10) => {
  */
 export const useDashboardEvents = (limit = 10) => {
   return useQuery({
-    queryKey: ["dashboard", "events", limit],
+    queryKey: queryKeys.dashboard.events(limit),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<PlatformEventItem[]>>(
         "/v1/dashboard/events",
@@ -206,7 +207,7 @@ export const useDashboardEvents = (limit = 10) => {
  */
 export const useDashboardSubscriptions = (enabled = true) => {
   return useQuery({
-    queryKey: ["dashboard", "subscriptions"],
+    queryKey: queryKeys.dashboard.subscriptions,
     queryFn: async () => {
       const response = await api.get<
         unknown,
@@ -225,7 +226,7 @@ export const useDashboardSubscriptions = (enabled = true) => {
  */
 export const useDashboardTopInstitutions = (limit = 5, enabled = true) => {
   return useQuery({
-    queryKey: ["dashboard", "top-institutions", limit],
+    queryKey: queryKeys.dashboard.topInstitutions(limit),
     queryFn: async () => {
       const response = await api.get<
         unknown,

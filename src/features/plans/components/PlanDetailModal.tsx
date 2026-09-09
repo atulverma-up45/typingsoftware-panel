@@ -94,7 +94,7 @@ export const PlanDetailModal: React.FC<PlanDetailModalProps> = ({ isOpen, onClos
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <Layers size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -135,7 +135,7 @@ export const PlanDetailModal: React.FC<PlanDetailModalProps> = ({ isOpen, onClos
               onClick={() => setActiveTab(tab.id as any)}
               className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -166,7 +166,7 @@ export const PlanDetailModal: React.FC<PlanDetailModalProps> = ({ isOpen, onClos
                     Lab Workstations
                   </span>
                   <span className="text-lg font-bold text-gray-900 mt-1 block flex items-center gap-1.5">
-                    <Laptop size={17} className="text-[#ff8a5c]" />
+                    <Laptop size={17} className="text-primary" />
                     {plan.maxActivations} Seats
                   </span>
                   <span className="text-[11px] text-gray-500">Per subscribed institute</span>
@@ -293,7 +293,7 @@ export const PlanDetailModal: React.FC<PlanDetailModalProps> = ({ isOpen, onClos
                 <button
                   type="button"
                   onClick={() => handleCopy(JSON.stringify(plan, null, 2), 'JSON Data')}
-                  className="flex items-center gap-1 text-xs text-[#ff8a5c] font-medium hover:underline"
+                  className="flex items-center gap-1 text-xs text-primary font-medium hover:underline"
                 >
                   <Copy size={13} />
                   Copy JSON

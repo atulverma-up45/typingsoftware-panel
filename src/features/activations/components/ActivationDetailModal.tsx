@@ -147,7 +147,7 @@ export const ActivationDetailModal: React.FC<ActivationDetailModalProps> = ({
             onClick={() => setActiveTab('hardware')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'hardware'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -159,7 +159,7 @@ export const ActivationDetailModal: React.FC<ActivationDetailModalProps> = ({
             onClick={() => setActiveTab('license')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'license'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -171,7 +171,7 @@ export const ActivationDetailModal: React.FC<ActivationDetailModalProps> = ({
             onClick={() => setActiveTab('controls')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'controls'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -244,7 +244,7 @@ export const ActivationDetailModal: React.FC<ActivationDetailModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCopy(activation.hardwareFingerprint, 'Fingerprint')}
-                    className="text-xs text-[#ff8a5c] hover:underline flex items-center gap-1 font-medium"
+                    className="text-xs text-primary hover:underline flex items-center gap-1 font-medium"
                   >
                     {copiedField === 'Fingerprint' ? <Check size={11} /> : <Copy size={11} />}
                     <span>Copy Digest</span>

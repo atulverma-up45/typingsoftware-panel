@@ -102,7 +102,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <Edit3 size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -130,7 +130,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -142,7 +142,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c]"
+                className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               >
                 <option value="en">English (en)</option>
                 <option value="hi">Hindi - Krutidev (hi)</option>
@@ -157,7 +157,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as ContentDifficulty)}
-                className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c]"
+                className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               >
                 <option value="EASY">EASY</option>
                 <option value="MEDIUM">MEDIUM</option>
@@ -176,7 +176,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
                 max="180"
                 value={durationMinutes}
                 onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c]"
+                className="w-full px-3 py-2 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -197,7 +197,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
               required
               value={passageText}
               onChange={(e) => setPassageText(e.target.value)}
-              className="w-full p-3.5 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 leading-relaxed font-sans"
+              className="w-full p-3.5 text-xs bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 leading-relaxed font-sans"
             />
           </div>
 
@@ -253,7 +253,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
             <button
               type="submit"
               disabled={updateContentMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {updateContentMutation.isPending ? 'Saving...' : 'Save Content Changes'}
             </button>

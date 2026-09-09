@@ -1,8 +1,10 @@
+/* eslint-disable react-refresh/only-export-components -- intentional barrel: RBAC constants, logic, hook, and guard components are consumed together app-wide */
 import React from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import Tooltip from '@/components/ui/Tooltip';
+import { type UserRole } from '@/types/auth';
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'SUPPORT';
+export type { UserRole };
 
 export const PERMISSIONS = {
   // Institutions
@@ -172,7 +174,8 @@ export function canAccessRoute(role: string | undefined, path: string): boolean 
  */
 export function usePermissions() {
   const user = useAuthStore((state) => state.user);
-  const rawRole = user?.role || 'ADMIN';
+  // Fail-closed: an unknown/missing role grants no capabilities.
+  const rawRole = user?.role ?? '';
   const role = rawRole.toUpperCase() as UserRole;
 
   const isSuperAdmin = role === 'SUPER_ADMIN';

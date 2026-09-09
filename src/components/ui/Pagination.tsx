@@ -50,7 +50,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               aria-label="Items per page"
-              className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 font-medium text-gray-700 focus:outline-none focus:border-[#ff8a5c] cursor-pointer shadow-2xs"
+              className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 font-medium text-gray-700 focus:outline-none focus:border-primary cursor-pointer shadow-2xs"
             >
               {pageSizeOptions.map((opt) => (
                 <option key={opt} value={opt}>

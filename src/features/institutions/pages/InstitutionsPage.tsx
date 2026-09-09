@@ -37,7 +37,8 @@ import type {
   Institution,
   InstitutionStatus,
 } from '../api/institutionApi';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import { CreateInstitutionModal } from '../components/CreateInstitutionModal';
 import { EditInstitutionModal } from '../components/EditInstitutionModal';
 import { InstitutionStatusModal } from '../components/InstitutionStatusModal';
@@ -62,21 +63,15 @@ export const InstitutionsPage: React.FC = () => {
   // Filters & Pagination State
   const [activeTab, setActiveTab] = useState<TabType>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm, SEARCH_DEBOUNCE_MS);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'status' | 'slug'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  // Debounce search input (300ms)
-  React.useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchTerm]);
+  // Reset to the first page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Derive query parameters based on tab
   const queryParams = useMemo(() => {
@@ -203,7 +198,7 @@ export const InstitutionsPage: React.FC = () => {
         subtitle="Manage authorized coaching centers, tenant domains, white-label client styling, and lab allocations"
         icon={<GraduationCap size={20} />}
         badge={
-          <span className="px-2.5 py-0.5 text-xs font-semibold bg-[#fff0eb] text-[#ff8a5c] rounded-full border border-[#ff8a5c]/20">
+          <span className="px-2.5 py-0.5 text-xs font-semibold bg-primary-100 text-primary rounded-full border border-primary/20">
             Multi-Tenant
           </span>
         }
@@ -224,13 +219,13 @@ export const InstitutionsPage: React.FC = () => {
             >
               <RefreshCw
                 size={16}
-                className={isFetchingInstitutions ? 'animate-spin text-[#ff8a5c]' : ''}
+                className={isFetchingInstitutions ? 'animate-spin text-primary' : ''}
               />
             </button>
             {isSuperAdmin && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 min-h-[38px]"
+                className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 min-h-[38px]"
               >
                 <Plus size={16} />
                 <span>Provision Institution</span>
@@ -453,7 +448,7 @@ export const InstitutionsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="px-4 py-2 text-xs font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-2xs transition-all inline-flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-2xs transition-all inline-flex items-center gap-1.5"
                   >
                     <Plus size={15} />
                     <span>Provision Center</span>
@@ -478,7 +473,7 @@ export const InstitutionsPage: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <h4
-                        className="font-semibold text-gray-900 text-sm hover:text-[#ff8a5c] transition-colors truncate cursor-pointer"
+                        className="font-semibold text-gray-900 text-sm hover:text-primary transition-colors truncate cursor-pointer"
                         onClick={() => setDetailInstitution(inst)}
                       >
                         {inst.name}
@@ -531,7 +526,7 @@ export const InstitutionsPage: React.FC = () => {
                   <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-100 bg-gray-50/50 -mx-4 -mb-4 p-2.5 rounded-b-2xl truncate">
                     <a
                       href={`mailto:${inst.email}`}
-                      className="hover:text-[#ff8a5c] flex items-center gap-1.5 truncate"
+                      className="hover:text-primary flex items-center gap-1.5 truncate"
                     >
                       <Mail size={12} className="text-gray-400 shrink-0" />
                       <span className="truncate">{inst.email}</span>
@@ -566,11 +561,11 @@ export const InstitutionsPage: React.FC = () => {
                       {/* Name & Slug */}
                       <td className="py-3.5 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center border border-gray-200 group-hover:border-[#ff8a5c]/40 group-hover:bg-[#fff0eb] group-hover:text-[#ff8a5c] transition-all shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center border border-gray-200 group-hover:border-primary/40 group-hover:bg-primary-100 group-hover:text-primary transition-all shrink-0">
                             {inst.name.substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-semibold text-gray-900 text-sm group-hover:text-[#ff8a5c] transition-colors flex items-center gap-2">
+                            <div className="font-semibold text-gray-900 text-sm group-hover:text-primary transition-colors flex items-center gap-2">
                               <span>{inst.name}</span>
                               {inst.phone && (
                                 <span className="text-[10px] text-gray-400 hidden sm:inline">
@@ -607,7 +602,7 @@ export const InstitutionsPage: React.FC = () => {
                         <div className="space-y-1">
                           <a
                             href={`mailto:${inst.email}`}
-                            className="text-gray-800 font-medium hover:text-[#ff8a5c] flex items-center gap-1.5 transition-colors truncate max-w-[200px]"
+                            className="text-gray-800 font-medium hover:text-primary flex items-center gap-1.5 transition-colors truncate max-w-[200px]"
                           >
                             <Mail size={12} className="text-gray-400 shrink-0" />
                             <span className="truncate">{inst.email}</span>

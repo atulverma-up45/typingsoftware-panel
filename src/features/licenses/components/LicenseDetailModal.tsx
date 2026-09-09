@@ -116,7 +116,7 @@ export const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#fff0eb] text-[#ff8a5c] font-bold flex items-center justify-center border border-[#ff8a5c]/20 shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-primary-100 text-primary font-bold flex items-center justify-center border border-primary/20 shrink-0">
               <Key size={22} />
             </div>
             <div>
@@ -171,7 +171,7 @@ export const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({
             onClick={() => setActiveTab('specs')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'specs'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -183,7 +183,7 @@ export const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({
             onClick={() => setActiveTab('devices')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'devices'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -198,7 +198,7 @@ export const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({
             onClick={() => setActiveTab('subscription')}
             className={`py-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
               activeTab === 'subscription'
-                ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -254,7 +254,7 @@ export const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCopy(license.keyHash, 'Key Hash')}
-                    className="text-xs text-[#ff8a5c] hover:underline flex items-center gap-1"
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
                   >
                     {copiedField === 'Key Hash' ? <Check size={11} /> : <Copy size={11} />}
                     <span>Copy Hash</span>

@@ -82,7 +82,7 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({ isOpen, onClos
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <Edit3 size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -110,7 +110,7 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({ isOpen, onClos
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -122,7 +122,7 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({ isOpen, onClos
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -171,7 +171,7 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({ isOpen, onClos
                 setConfigJson(e.target.value);
                 setJsonError(null);
               }}
-              className={`w-full p-3 text-xs font-mono bg-gray-900 text-gray-100 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 ${
+              className={`w-full p-3 text-xs font-mono bg-gray-900 text-gray-100 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 ${
                 jsonError ? 'border-rose-500' : 'border-gray-700'
               }`}
             />
@@ -194,7 +194,7 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({ isOpen, onClos
             <button
               type="submit"
               disabled={updateModuleMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {updateModuleMutation.isPending ? 'Saving...' : 'Save Module'}
             </button>

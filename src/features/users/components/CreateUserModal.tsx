@@ -115,7 +115,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-50 text-[#ff8a5c] border border-orange-100">
+            <div className="p-2.5 rounded-xl bg-orange-50 text-primary border border-orange-100">
               <UserIcon size={20} />
             </div>
             <div>
@@ -150,7 +150,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Alex Johnson"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 transition-all"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
           </div>
@@ -168,7 +168,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="user@institution.edu"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 transition-all"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
           </div>
@@ -182,7 +182,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
               <button
                 type="button"
                 onClick={handleGeneratePassword}
-                className="text-xs text-[#ff8a5c] hover:text-[#f77947] font-medium flex items-center gap-1 hover:underline"
+                className="text-xs text-primary hover:text-primary-600 font-medium flex items-center gap-1 hover:underline"
               >
                 <Sparkles size={13} /> Auto Generate
               </button>
@@ -196,7 +196,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimum 8 characters"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-20 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 font-mono transition-all"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-20 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-mono transition-all"
               />
               <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 {password && (
@@ -237,7 +237,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 appearance-none cursor-pointer"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
                 >
                   {isSuperAdmin && <option value="SUPER_ADMIN">Super Administrator</option>}
                   <option value="ADMIN">Administrator</option>
@@ -260,7 +260,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
                     value={institutionId}
                     onChange={(e) => setInstitutionId(e.target.value)}
                     disabled={role === 'SUPER_ADMIN'}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20 appearance-none cursor-pointer disabled:opacity-50"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-8 py-2.5 text-sm text-gray-900 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer disabled:opacity-50"
                   >
                     <option value="">None (Global Platform)</option>
                     {isLoadingInstitutions ? (
@@ -296,7 +296,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
             <button
               type="submit"
               disabled={isPending}
-              className="px-5 py-2 text-sm font-medium text-white bg-[#ff8a5c] hover:bg-[#f77947] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-600 rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {isPending && <Loader2 size={16} className="animate-spin" />}
               Provision User

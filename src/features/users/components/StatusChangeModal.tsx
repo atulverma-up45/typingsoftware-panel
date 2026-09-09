@@ -93,7 +93,7 @@ const StatusChangeModalContent: React.FC<{
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-50 text-[#ff8a5c] border border-orange-100">
+            <div className="p-2.5 rounded-xl bg-orange-50 text-primary border border-orange-100">
               <ShieldAlert size={20} />
             </div>
             <div>
@@ -122,7 +122,7 @@ const StatusChangeModalContent: React.FC<{
                   onClick={() => setSelectedStatus(opt.value)}
                   className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3.5 ${
                     isSelected
-                      ? 'border-[#ff8a5c] bg-orange-50/30 ring-1 ring-[#ff8a5c]/20'
+                      ? 'border-primary bg-orange-50/30 ring-1 ring-primary/20'
                       : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/50'
                   }`}
                 >
@@ -164,7 +164,7 @@ const StatusChangeModalContent: React.FC<{
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#ff8a5c] hover:bg-[#f77947] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-600 rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {isPending && <Loader2 size={16} className="animate-spin" />}
               Update Status

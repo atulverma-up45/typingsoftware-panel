@@ -167,7 +167,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
           {/* Header */}
           <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#ffb48b] to-[#f89c6d] flex items-center justify-center text-white font-bold text-xl shadow-sm shrink-0">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-primary-300 to-primary-400 flex items-center justify-center text-white font-bold text-xl shadow-sm shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -211,7 +211,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
               onClick={() => setActiveTab('overview')}
               className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
                 activeTab === 'overview'
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -221,7 +221,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
               onClick={() => setActiveTab('sessions')}
               className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
                 activeTab === 'sessions'
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -231,7 +231,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
               onClick={() => setActiveTab('history')}
               className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-colors ${
                 activeTab === 'history'
-                  ? 'border-[#ff8a5c] text-[#ff8a5c]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -243,7 +243,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
           <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
             {isLoadingUser ? (
               <div className="py-12 flex flex-col items-center justify-center space-y-3">
-                <Loader2 size={28} className="animate-spin text-[#ff8a5c]" />
+                <Loader2 size={28} className="animate-spin text-primary" />
                 <p className="text-xs text-gray-500">Loading user profile...</p>
               </div>
             ) : activeTab === 'overview' ? (
@@ -358,7 +358,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                 {isLoadingSessions ? (
                   <div className="py-12 flex flex-col items-center justify-center space-y-2">
-                    <Loader2 size={24} className="animate-spin text-[#ff8a5c]" />
+                    <Loader2 size={24} className="animate-spin text-primary" />
                     <p className="text-xs text-gray-400">Loading active sessions...</p>
                   </div>
                 ) : sessions.length === 0 ? (
@@ -433,7 +433,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                 {isLoadingHistory ? (
                   <div className="py-12 flex flex-col items-center justify-center space-y-2">
-                    <Loader2 size={24} className="animate-spin text-[#ff8a5c]" />
+                    <Loader2 size={24} className="animate-spin text-primary" />
                     <p className="text-xs text-gray-400">Loading audit history...</p>
                   </div>
                 ) : history.length === 0 ? (

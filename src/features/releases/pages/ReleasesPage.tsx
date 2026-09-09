@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Package,
   CheckCircle2,
@@ -22,7 +22,8 @@ import {
   Lock,
 } from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
@@ -57,7 +58,7 @@ export const ReleasesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<StatusTab>('ALL');
   const [viewMode, setViewMode] = useState<ViewMode>('CARDS');
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm, SEARCH_DEBOUNCE_MS);
   const [selectedChannel, setSelectedChannel] = useState<string>('ALL');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'createdAt' | 'version' | 'publishedAt' | 'fileSize'>('createdAt');
@@ -74,14 +75,8 @@ export const ReleasesPage: React.FC = () => {
   const [releaseToDelete, setReleaseToDelete] = useState<Release | null>(null);
   const [copiedHashId, setCopiedHashId] = useState<string | null>(null);
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  // Reset to the first page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Queries & Mutations
   const queryParams = {
@@ -200,7 +195,7 @@ export const ReleasesPage: React.FC = () => {
       <PageHeader
         title="Software Releases & Updates"
         subtitle="Manage desktop software distribution binaries, auto-updater rules, and version channels"
-        icon={<Package className="text-[#ff8a5c]" size={24} />}
+        icon={<Package className="text-primary" size={24} />}
         actions={
           <>
             <button
@@ -220,7 +215,7 @@ export const ReleasesPage: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
               title="Refresh Releases & Statistics"
             >
-              <RefreshCw size={14} className={isLoading ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <RefreshCw size={14} className={isLoading ? 'animate-spin text-primary' : ''} />
               Refresh
             </button>
 
@@ -237,7 +232,7 @@ export const ReleasesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
               >
                 <Plus size={16} strokeWidth={2.5} />
                 New Software Release
@@ -478,7 +473,7 @@ export const ReleasesPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
+              className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
             >
               <Plus size={15} strokeWidth={2.5} />
               Publish First Release
@@ -535,7 +530,7 @@ export const ReleasesPage: React.FC = () => {
                   <tr key={rel.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary flex items-center justify-center shrink-0">
                           <Package size={16} />
                         </div>
                         <div>
@@ -581,7 +576,7 @@ export const ReleasesPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={(e) => handleCopyHash(rel.id, rel.checksum, e)}
-                            className="text-gray-400 hover:text-[#ff8a5c]"
+                            className="text-gray-400 hover:text-primary"
                             title="Copy SHA-256"
                           >
                             {copiedHashId === rel.id ? (

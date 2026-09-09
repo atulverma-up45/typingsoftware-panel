@@ -24,7 +24,8 @@ import {
   AlertCircle,
   Lock,
 } from 'lucide-react';
-import StatCard from '@/features/dashboard/components/StatCard';
+import StatCard from '@/components/ui/StatCard';
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -65,7 +66,7 @@ export const SubscriptionsPage: React.FC = () => {
   // Filters & State
   const [activeTab, setActiveTab] = useState<SubscriptionTab>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm, SEARCH_DEBOUNCE_MS);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState<string>('');
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [page, setPage] = useState(1);
@@ -84,14 +85,8 @@ export const SubscriptionsPage: React.FC = () => {
   const [subscriptionToRestore, setSubscriptionToRestore] = useState<Subscription | null>(null);
   const [subscriptionToPurge, setSubscriptionToPurge] = useState<Subscription | null>(null);
 
-  // Debounce search
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  // Reset to the first page whenever the committed (debounced) search changes
+  useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Query Params
   const queryParams = useMemo(() => {
@@ -239,7 +234,7 @@ export const SubscriptionsPage: React.FC = () => {
       <PageHeader
         title="Subscriptions & Contracts"
         subtitle="Institutional billing contracts, term validity periods, automated renewals, and license provisioning"
-        icon={<DollarSign className="text-[#ff8a5c]" size={24} />}
+        icon={<DollarSign className="text-primary" size={24} />}
         actions={
           <>
             <button
@@ -259,7 +254,7 @@ export const SubscriptionsPage: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
               title="Refresh Subscriptions & Statistics"
             >
-              <RefreshCw size={14} className={isFetchingSubscriptions ? 'animate-spin text-[#ff8a5c]' : ''} />
+              <RefreshCw size={14} className={isFetchingSubscriptions ? 'animate-spin text-primary' : ''} />
               Refresh
             </button>
 
@@ -275,7 +270,7 @@ export const SubscriptionsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
               >
                 <Plus size={16} strokeWidth={2.5} />
                 Provision Subscription
@@ -387,7 +382,7 @@ export const SubscriptionsPage: React.FC = () => {
               }}
               className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
                 activeTab === tab.id
-                  ? 'bg-[#fff0eb] text-[#ff8a5c] shadow-2xs'
+                  ? 'bg-primary-100 text-primary shadow-2xs'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
               }`}
             >
@@ -395,7 +390,7 @@ export const SubscriptionsPage: React.FC = () => {
               {typeof tab.count === 'number' && (
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    activeTab === tab.id ? 'bg-[#ff8a5c] text-white' : 'bg-gray-200 text-gray-600'
+                    activeTab === tab.id ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'
                   }`}
                 >
                   {tab.count}
@@ -531,7 +526,7 @@ export const SubscriptionsPage: React.FC = () => {
         </div>
       ) : subscriptions.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-gray-200 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-primary-100 text-primary flex items-center justify-center mb-3">
             <DollarSign size={28} />
           </div>
           <h3 className="text-base font-bold text-gray-900">No Subscriptions Found</h3>
@@ -546,7 +541,7 @@ export const SubscriptionsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
             >
               <Plus size={15} strokeWidth={2.5} />
               Provision First Subscription
@@ -575,7 +570,7 @@ export const SubscriptionsPage: React.FC = () => {
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#ff8a5c] flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
                           {sub.institution?.name?.slice(0, 2).toUpperCase() || 'IN'}
                         </div>
                         <div className="min-w-0">
@@ -601,7 +596,7 @@ export const SubscriptionsPage: React.FC = () => {
                       <div>
                         <span className="text-[10px] uppercase font-bold text-gray-400 block">Seat Usage</span>
                         <div className="flex items-center gap-1 font-semibold text-gray-800">
-                          <Laptop size={12} className="text-[#ff8a5c]" />
+                          <Laptop size={12} className="text-primary" />
                           <span>{totalActive} / {totalCapacity || sub.plan?.maxActivations || 5} PCs</span>
                         </div>
                         <span className="text-[10px] text-gray-400 block">
@@ -640,7 +635,7 @@ export const SubscriptionsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setRenewingSubscription(sub)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] rounded-xl border border-[#ff8a5c]/30 transition-colors shadow-2xs"
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl border border-primary/30 transition-colors shadow-2xs"
                       >
                         <RotateCw size={12} />
                         Renew
@@ -690,7 +685,7 @@ export const SubscriptionsPage: React.FC = () => {
                 <div key={sub.id} className="p-4 space-y-3 hover:bg-gray-50/50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#ff8a5c] flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
+                      <div className="w-10 h-10 rounded-xl bg-orange-50 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
                         {sub.institution?.name?.slice(0, 2).toUpperCase() || 'IN'}
                       </div>
                       <div className="min-w-0">
@@ -716,7 +711,7 @@ export const SubscriptionsPage: React.FC = () => {
                     <div>
                       <span className="text-[10px] uppercase font-bold text-gray-400 block">Seat Usage</span>
                       <div className="flex items-center gap-1 font-semibold text-gray-800">
-                        <Laptop size={12} className="text-[#ff8a5c]" />
+                        <Laptop size={12} className="text-primary" />
                         <span>{totalActive} / {totalCapacity || sub.plan?.maxActivations || 5} PCs</span>
                       </div>
                       <span className="text-[10px] text-gray-400 block">
@@ -754,7 +749,7 @@ export const SubscriptionsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setRenewingSubscription(sub)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] rounded-xl border border-[#ff8a5c]/30 transition-colors shadow-2xs"
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl border border-primary/30 transition-colors shadow-2xs"
                       >
                         <RotateCw size={12} />
                         Renew
@@ -817,7 +812,7 @@ export const SubscriptionsPage: React.FC = () => {
                       {/* Customer Column */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#ff8a5c] flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
+                          <div className="w-9 h-9 rounded-xl bg-orange-50 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
                             {sub.institution?.name?.slice(0, 2).toUpperCase() || 'IN'}
                           </div>
                           <div>
@@ -879,7 +874,7 @@ export const SubscriptionsPage: React.FC = () => {
                       {/* Seat Allocation Column */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                          <Laptop size={14} className="text-[#ff8a5c]" />
+                          <Laptop size={14} className="text-primary" />
                           <span>
                             <strong>{totalActive}</strong> / {totalCapacity || sub.plan?.maxActivations || 5} PCs
                           </span>
@@ -910,7 +905,7 @@ export const SubscriptionsPage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setRenewingSubscription(sub)}
-                              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] rounded-lg border border-[#ff8a5c]/30 transition-colors shadow-2xs"
+                              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-lg border border-primary/30 transition-colors shadow-2xs"
                               title="Quick Renew Contract"
                             >
                               <RotateCw size={12} />

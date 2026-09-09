@@ -69,7 +69,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         <div
           className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
             isCurrentlyActive
-              ? 'text-[#ff8a5c]'
+              ? 'text-primary'
               : isDark
               ? 'text-gray-400'
               : 'text-gray-400'
@@ -86,11 +86,11 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         } pr-8 py-1.5 focus:outline-none shadow-2xs ${
           isDark
             ? isCurrentlyActive
-              ? 'bg-black/40 border-[#ff8a5c] text-white ring-1 ring-[#ff8a5c]/30'
-              : 'bg-black/30 hover:bg-black/40 border-white/10 text-gray-200 focus:border-[#ff8a5c]'
+              ? 'bg-black/40 border-primary text-white ring-1 ring-primary/30'
+              : 'bg-black/30 hover:bg-black/40 border-white/10 text-gray-200 focus:border-primary'
             : isCurrentlyActive
-            ? 'bg-[#fff8f5] border-[#ff8a5c] text-[#d95d2c] font-semibold ring-1 ring-[#ff8a5c]/20'
-            : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20'
+            ? 'bg-primary-50 border-primary text-primary-700 font-semibold ring-1 ring-primary/20'
+            : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20'
         } border ${className}`}
         {...props}
       >
@@ -100,7 +100,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
       <div
         className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
           isCurrentlyActive
-            ? 'text-[#ff8a5c]'
+            ? 'text-primary'
             : isDark
             ? 'text-gray-400'
             : 'text-gray-400'
@@ -206,8 +206,8 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               placeholder={searchPlaceholder}
               className={`w-full rounded-xl pl-9 pr-12 py-2 text-sm sm:text-xs transition-all h-[38px] shadow-2xs focus:outline-none ${
                 isDark
-                  ? 'bg-black/30 hover:bg-black/40 focus:bg-black/50 border border-white/10 text-white placeholder-gray-500 focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20'
-                  : 'bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20'
+                  ? 'bg-black/30 hover:bg-black/40 focus:bg-black/50 border border-white/10 text-white placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  : 'bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20'
               }`}
             />
 
@@ -256,8 +256,8 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               className={`md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all h-[38px] ${
                 isMobileFiltersOpen || effectiveActiveCount > 0
                   ? isDark
-                    ? 'bg-[#ff8a5c]/20 border-[#ff8a5c] text-[#ff8a5c]'
-                    : 'bg-[#fff0eb] border-[#ff8a5c] text-[#ff8a5c]'
+                    ? 'bg-primary/20 border-primary text-primary'
+                    : 'bg-primary-100 border-primary text-primary'
                   : isDark
                   ? 'bg-white/5 border-white/10 text-gray-200 hover:bg-white/10'
                   : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
@@ -266,7 +266,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               <Filter size={13} />
               <span>Filters</span>
               {effectiveActiveCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#ff8a5c] text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
                   {effectiveActiveCount}
                 </span>
               )}
@@ -288,8 +288,8 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               onClick={onClearFilters}
               className={`hidden md:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-colors shadow-2xs h-[38px] ${
                 isDark
-                  ? 'text-gray-300 hover:text-[#ff8a5c] hover:bg-white/5 border-white/10'
-                  : 'text-gray-500 hover:text-[#ff8a5c] hover:bg-orange-50/50 border-gray-200'
+                  ? 'text-gray-300 hover:text-primary hover:bg-white/5 border-white/10'
+                  : 'text-gray-500 hover:text-primary hover:bg-orange-50/50 border-gray-200'
               }`}
               title="Reset all filters"
             >
@@ -313,8 +313,8 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                 className={`p-1.5 rounded-lg transition-all ${
                   viewMode === 'TABLE'
                     ? isDark
-                      ? 'bg-white/20 text-[#ff8a5c] shadow-2xs font-bold'
-                      : 'bg-white text-[#ff8a5c] shadow-2xs font-bold'
+                      ? 'bg-white/20 text-primary shadow-2xs font-bold'
+                      : 'bg-white text-primary shadow-2xs font-bold'
                     : isDark
                     ? 'text-gray-400 hover:text-white'
                     : 'text-gray-500 hover:text-gray-900'
@@ -329,8 +329,8 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                 className={`p-1.5 rounded-lg transition-all ${
                   viewMode === 'CARDS'
                     ? isDark
-                      ? 'bg-white/20 text-[#ff8a5c] shadow-2xs font-bold'
-                      : 'bg-white text-[#ff8a5c] shadow-2xs font-bold'
+                      ? 'bg-white/20 text-primary shadow-2xs font-bold'
+                      : 'bg-white text-primary shadow-2xs font-bold'
                     : isDark
                     ? 'text-gray-400 hover:text-white'
                     : 'text-gray-500 hover:text-gray-900'
@@ -363,7 +363,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
                 isDark
                   ? 'bg-white/10 text-gray-200 border-white/10'
-                  : 'bg-[#fff0eb] text-[#d95d2c] border-[#ff8a5c]/30 shadow-2xs'
+                  : 'bg-primary-100 text-primary-700 border-primary/30 shadow-2xs'
               }`}
             >
               <span className={isDark ? 'text-gray-400 font-normal' : 'text-gray-500 font-normal'}>
@@ -390,8 +390,8 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               onClick={onClearFilters}
               className={`text-xs font-semibold transition-colors ml-1.5 underline ${
                 isDark
-                  ? 'text-gray-400 hover:text-[#ff8a5c]'
-                  : 'text-gray-500 hover:text-[#ff8a5c]'
+                  ? 'text-gray-400 hover:text-primary'
+                  : 'text-gray-500 hover:text-primary'
               }`}
             >
               Clear all
@@ -413,7 +413,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               <button
                 type="button"
                 onClick={onClearFilters}
-                className="text-[#ff8a5c] hover:underline font-bold text-xs flex items-center gap-1"
+                className="text-primary hover:underline font-bold text-xs flex items-center gap-1"
               >
                 <RotateCcw size={11} />
                 <span>Reset All</span>

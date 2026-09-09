@@ -89,7 +89,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <RotateCw size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -179,7 +179,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
                   onClick={() => setDurationDays(preset.value)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
                     durationDays === preset.value
-                      ? 'bg-[#fff0eb] text-[#ff8a5c] border-[#ff8a5c]'
+                      ? 'bg-primary-100 text-primary border-primary'
                       : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -193,7 +193,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
               required
               value={durationDays}
               onChange={(e) => setDurationDays(Number(e.target.value))}
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -205,7 +205,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
             <select
               value={targetPlanId}
               onChange={(e) => setTargetPlanId(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -229,7 +229,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
               type="checkbox"
               checked={autoRenew}
               onChange={() => setAutoRenew(!autoRenew)}
-              className="mt-0.5 h-4 w-4 rounded text-[#ff8a5c] accent-[#ff8a5c]"
+              className="mt-0.5 h-4 w-4 rounded text-primary accent-primary"
             />
             <div className="text-xs">
               <p className="font-semibold text-gray-800">Keep Auto-Renew Enabled</p>
@@ -251,7 +251,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
             <button
               type="submit"
               disabled={renewSubscriptionMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {renewSubscriptionMutation.isPending ? 'Renewing...' : 'Confirm Renewal'}
             </button>

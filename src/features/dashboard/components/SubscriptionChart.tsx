@@ -29,7 +29,7 @@ const SubscriptionChart: React.FC<SubscriptionChartProps> = ({ enabled = true })
       <div className="flex-1 w-full min-h-0 relative mt-4">
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
-            <div className="w-36 h-36 rounded-full border-4 border-gray-100 border-t-[#ff8a5c] animate-spin" />
+            <div className="w-36 h-36 rounded-full border-4 border-gray-100 border-t-primary animate-spin" />
           </div>
         ) : data.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">

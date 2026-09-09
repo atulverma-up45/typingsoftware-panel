@@ -105,7 +105,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary flex items-center justify-center">
               <Edit3 size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -133,7 +133,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
           {/* Read-only Specs Alert */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
             <div className="flex items-center gap-2 text-gray-600">
-              <Package size={14} className="text-[#ff8a5c]" />
+              <Package size={14} className="text-primary" />
               <span>Storage Key: <strong className="font-mono text-gray-800">{release.fileKey}</strong></span>
             </div>
             <span className="text-gray-400 font-mono text-[11px] truncate max-w-[150px]">
@@ -149,7 +149,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as ReleasePlatform)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="windows-x64">Windows (64-bit x64)</option>
                 <option value="windows-arm64">Windows (ARM64)</option>
@@ -164,7 +164,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
               <select
                 value={channel}
                 onChange={(e) => setChannel(e.target.value as ReleaseChannel)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="stable">Stable (Production Fleet)</option>
                 <option value="beta">Beta (Preview Testers)</option>
@@ -182,7 +182,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
                 required
                 value={minSupportedVersion}
                 onChange={(e) => setMinSupportedVersion(e.target.value.trim())}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c]"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -193,7 +193,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ReleaseStatus)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="DRAFT">Draft</option>
                 <option value="PUBLISHED">Published</option>
@@ -208,7 +208,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
                 type="checkbox"
                 checked={mandatory}
                 onChange={(e) => setMandatory(e.target.checked)}
-                className="w-4 h-4 rounded text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                className="w-4 h-4 rounded text-primary focus:ring-primary"
               />
               <span className="text-xs font-semibold text-gray-800">
                 Mark as Mandatory Workstation Upgrade
@@ -226,7 +226,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
                 type="checkbox"
                 checked={isTenantSpecific}
                 onChange={(e) => setIsTenantSpecific(e.target.checked)}
-                className="w-4 h-4 rounded text-[#ff8a5c] focus:ring-[#ff8a5c]"
+                className="w-4 h-4 rounded text-primary focus:ring-primary"
               />
               <span className="text-xs font-semibold text-gray-800">
                 Custom Tenant Build (Restricted to Institution)
@@ -236,7 +236,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
               <select
                 value={institutionId}
                 onChange={(e) => setInstitutionId(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] bg-white"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="">Select target institution...</option>
                 {institutions.map((inst) => (
@@ -257,7 +257,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
               rows={4}
               value={releaseNotes}
               onChange={(e) => setReleaseNotes(e.target.value)}
-              className="w-full text-xs font-mono p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#ff8a5c] leading-relaxed"
+              className="w-full text-xs font-mono p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-primary leading-relaxed"
             />
           </div>
 
@@ -273,7 +273,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
             <button
               type="submit"
               disabled={updateReleaseMutation.isPending}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
             >
               {updateReleaseMutation.isPending ? (
                 <>

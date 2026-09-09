@@ -201,7 +201,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
       >
         {/* Search Input Bar */}
         <div className="relative flex items-center px-4 py-3.5 border-b border-gray-100">
-          <Search size={18} className="text-[#ff8a5c] shrink-0 mr-3" />
+          <Search size={18} className="text-primary shrink-0 mr-3" />
           <input
             ref={inputRef}
             type="text"
@@ -250,7 +250,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all ${
                     isSelected
-                      ? 'bg-[#fff0eb] text-[#ff8a5c]'
+                      ? 'bg-primary-100 text-primary'
                       : 'hover:bg-gray-50 text-gray-700'
                   }`}
                 >
@@ -258,7 +258,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                     <div
                       className={`p-2 rounded-lg shrink-0 ${
                         isSelected
-                          ? 'bg-[#ff8a5c] text-white'
+                          ? 'bg-primary text-white'
                           : 'bg-gray-100 text-gray-500'
                       }`}
                     >
@@ -273,7 +273,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                   <ArrowRight
                     size={14}
                     className={`transition-transform ${
-                      isSelected ? 'translate-x-0 text-[#ff8a5c]' : '-translate-x-1 opacity-0'
+                      isSelected ? 'translate-x-0 text-primary' : '-translate-x-1 opacity-0'
                     }`}
                   />
                 </button>

@@ -172,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, onCloseMobile }) => {
           onClick={onCloseMobile}
           className="flex items-center gap-3 overflow-hidden whitespace-nowrap focus:outline-none"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff8a5c] to-[#f77947] text-white shadow-2xs shrink-0">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white shadow-2xs shrink-0">
             <Keyboard size={22} strokeWidth={2.5} />
           </div>
           {isSidebarOpen && (
@@ -220,13 +220,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, onCloseMobile }) => {
                       isSidebarOpen ? 'px-3.5 py-2.5' : 'justify-center py-2.5'
                     } ${
                       isActive
-                        ? 'bg-[#fff0eb] text-[#ff8a5c] font-semibold shadow-2xs'
+                        ? 'bg-primary-100 text-primary font-semibold shadow-2xs'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
                     <div
                       className={`shrink-0 transition-transform ${
-                        isActive ? 'text-[#ff8a5c] scale-105' : 'text-gray-400'
+                        isActive ? 'text-primary scale-105' : 'text-gray-400'
                       }`}
                     >
                       {item.icon}
@@ -237,7 +237,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, onCloseMobile }) => {
                       </span>
                     )}
                     {isSidebarOpen && item.badge && (
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-orange-100 text-[#ff8a5c] font-bold">
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-orange-100 text-primary font-bold">
                         {item.badge}
                       </span>
                     )}

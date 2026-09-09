@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import EmptyState from './EmptyState';
+import { MEDIA_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 
 export interface ResponsiveDataViewProps<T> {
   items: T[];
@@ -42,22 +43,12 @@ export function ResponsiveDataView<T>({
 }: ResponsiveDataViewProps<T>) {
   const [internalViewMode, setInternalViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  // Automatically adapt to mobile screen size on initial load / resize if not controlled
+  // Automatically adapt to mobile screens when the view mode is not controlled
+  const isMobileViewport = !useMediaQuery(MEDIA_QUERY.MD);
   useEffect(() => {
     if (controlledViewMode !== undefined) return;
-
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setInternalViewMode('CARDS');
-      } else {
-        setInternalViewMode('TABLE');
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [controlledViewMode]);
+    setInternalViewMode(isMobileViewport ? 'CARDS' : 'TABLE');
+  }, [controlledViewMode, isMobileViewport]);
 
   const effectiveViewMode = controlledViewMode ?? internalViewMode;
   const effectiveMobileCardClass =

@@ -98,7 +98,7 @@ export const ContentStatusModal: React.FC<ContentStatusModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <FileCheck2 size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -137,7 +137,7 @@ export const ContentStatusModal: React.FC<ContentStatusModalProps> = ({
                     name="content-status"
                     checked={status === opt.status}
                     onChange={() => setStatus(opt.status)}
-                    className="mt-0.5 h-4 w-4 text-[#ff8a5c] accent-[#ff8a5c]"
+                    className="mt-0.5 h-4 w-4 text-primary accent-primary"
                   />
                   <div className="text-xs">
                     <div className="flex items-center gap-1.5">
@@ -160,7 +160,7 @@ export const ContentStatusModal: React.FC<ContentStatusModalProps> = ({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Ready for official exam, Typo corrections completed..."
-              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+              className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -175,7 +175,7 @@ export const ContentStatusModal: React.FC<ContentStatusModalProps> = ({
             <button
               type="submit"
               disabled={updateStatusMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {updateStatusMutation.isPending ? 'Updating...' : 'Update Status'}
             </button>

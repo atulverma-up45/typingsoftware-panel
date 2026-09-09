@@ -154,7 +154,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#fff0eb] text-[#ff8a5c] rounded-xl">
+            <div className="p-2.5 bg-primary-100 text-primary rounded-xl">
               <Key size={22} />
             </div>
             <div>
@@ -245,7 +245,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
               <button
                 type="button"
                 onClick={handleModalClose}
-                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all"
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all"
               >
                 Done & Return to Directory
               </button>
@@ -269,7 +269,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
                     value={institutionId}
                     onChange={(e) => setInstitutionId(e.target.value)}
                     disabled={isLoadingInstitutions}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c] bg-white"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white"
                   >
                     <option value="">Select Institution...</option>
                     {institutions.map((inst) => (
@@ -303,7 +303,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
                   value={subscriptionId}
                   onChange={(e) => setSubscriptionId(e.target.value)}
                   disabled={isLoadingSubscriptions || !subscriptionsList || subscriptionsList.length === 0}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c] bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white disabled:bg-gray-50 disabled:text-gray-400"
                 >
                   {!subscriptionsList || subscriptionsList.length === 0 ? (
                     <option value="">No subscriptions available for this institution</option>
@@ -342,7 +342,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
                     max={500}
                     value={maxActivations}
                     onChange={(e) => setMaxActivations(parseInt(e.target.value) || 1)}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
                 <p className="text-[11px] text-gray-400 mt-1">Number of lab PCs allowed to activate</p>
@@ -363,7 +363,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
                     max={60}
                     value={offlineGraceDays}
                     onChange={(e) => setOfflineGraceDays(parseInt(e.target.value) || 14)}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
                 <p className="text-[11px] text-gray-400 mt-1">
@@ -385,7 +385,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
                   type="date"
                   value={customExpiresAt}
                   onChange={(e) => setCustomExpiresAt(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a5c]/30 focus:border-[#ff8a5c]"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 />
               </div>
               <p className="text-[11px] text-gray-400 mt-1">
@@ -406,7 +406,7 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
               <button
                 type="submit"
                 disabled={createMutation.isPending || !subscriptionId}
-                className="px-5 py-2 text-sm font-medium text-white bg-[#ff8a5c] hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createMutation.isPending && <Loader2 size={16} className="animate-spin" />}
                 <span>Mint License Key</span>

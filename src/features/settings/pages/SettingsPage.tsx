@@ -63,7 +63,7 @@ export const SettingsPage: React.FC = () => {
       <PageHeader
         title="System Settings & Platform Status"
         subtitle="Manage administrator profile, interface preferences, and monitor backend cloud health"
-        icon={<Settings className="text-[#ff8a5c]" size={24} />}
+        icon={<Settings className="text-primary" size={24} />}
         badge={
           isSuperAdmin ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200/60">
@@ -81,7 +81,7 @@ export const SettingsPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-2xs">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center font-bold text-lg">
+                <div className="w-12 h-12 rounded-2xl bg-primary-100 text-primary flex items-center justify-center font-bold text-lg">
                   {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'A'}
                 </div>
                 <div>
@@ -134,7 +134,7 @@ export const SettingsPage: React.FC = () => {
           {/* Interface & Operational Preferences */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-2xs space-y-4">
             <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-              <Activity size={16} className="text-[#ff8a5c]" />
+              <Activity size={16} className="text-primary" />
               Console & Telemetry Preferences
             </h3>
 
@@ -146,7 +146,7 @@ export const SettingsPage: React.FC = () => {
                 <select
                   value={autoPollInterval}
                   onChange={(e) => setAutoPollInterval(e.target.value)}
-                  className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-[#ff8a5c]"
+                  className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-primary"
                 >
                   <option value="10">10 Seconds (High Velocity)</option>
                   <option value="15">15 Seconds (Balanced Default)</option>
@@ -162,7 +162,7 @@ export const SettingsPage: React.FC = () => {
                 <select
                   value={timeDisplayFormat}
                   onChange={(e) => setTimeDisplayFormat(e.target.value as any)}
-                  className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-[#ff8a5c]"
+                  className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-primary"
                 >
                   <option value="LOCAL">Local System Timezone</option>
                   <option value="UTC">Universal Coordinated Time (UTC)</option>
@@ -182,7 +182,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={() => setDensityMode(mode)}
                     className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
                       densityMode === mode
-                        ? 'bg-[#fff0eb] border-[#ff8a5c] text-[#ff8a5c]'
+                        ? 'bg-primary-100 border-primary text-primary'
                         : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -196,7 +196,7 @@ export const SettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSavePreferences}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#ff7a45] shadow-xs transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
               >
                 Save Preferences
               </button>
@@ -210,7 +210,7 @@ export const SettingsPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-2xs">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
               <div className="flex items-center gap-2">
-                <Database size={18} className="text-[#ff8a5c]" />
+                <Database size={18} className="text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
                   Cloud Backend Health
                 </h3>

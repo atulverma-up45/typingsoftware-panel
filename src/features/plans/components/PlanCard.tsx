@@ -59,7 +59,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       className={`relative flex flex-col justify-between rounded-2xl border transition-all duration-200 bg-white p-6 shadow-sm hover:shadow-md ${
         isArchived || isDeletedView
           ? 'border-gray-200 opacity-80 bg-gray-50/50'
-          : 'border-gray-200 hover:border-[#ff8a5c]/50'
+          : 'border-gray-200 hover:border-primary/50'
       }`}
     >
       {/* Top Header */}
@@ -88,7 +88,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               </p>
             )}
           </div>
-          <div className="h-9 w-9 rounded-xl bg-[#fff0eb] text-[#ff8a5c] flex items-center justify-center shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-primary-100 text-primary flex items-center justify-center shrink-0">
             <Layers size={18} strokeWidth={2.2} />
           </div>
         </div>
@@ -111,7 +111,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         {/* Capacity & Validity Chips */}
         <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
           <div className="flex items-center gap-2 p-2 rounded-xl bg-orange-50/50 border border-orange-100 text-orange-800">
-            <Laptop size={15} className="text-[#ff8a5c] shrink-0" />
+            <Laptop size={15} className="text-primary shrink-0" />
             <span className="font-semibold">
               {plan.maxActivations} {plan.maxActivations === 1 ? 'Station' : 'Stations'}
             </span>
@@ -205,7 +205,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 <button
                   type="button"
                   onClick={() => onEdit(plan)}
-                  className="flex items-center gap-1 text-xs font-medium text-[#ff8a5c] bg-[#fff0eb] hover:bg-[#ffe2d6] px-2.5 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1 text-xs font-medium text-primary bg-primary-100 hover:bg-[#ffe2d6] px-2.5 py-1.5 rounded-lg transition-colors"
                   title="Edit plan"
                 >
                   <Edit3 size={13} />

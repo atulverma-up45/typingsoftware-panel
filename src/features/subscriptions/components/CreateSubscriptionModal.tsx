@@ -121,7 +121,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fffaf8]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff0eb] text-[#ff8a5c]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary">
               <DollarSign size={20} strokeWidth={2.2} />
             </div>
             <div>
@@ -158,7 +158,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
                   required
                   value={institutionId}
                   onChange={(e) => setInstitutionId(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">-- Select Institution Customer --</option>
                   {institutions.map((inst) => (
@@ -182,7 +182,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
                   required
                   value={planId}
                   onChange={(e) => setPlanId(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">-- Select Commercial Plan --</option>
                   {plans.map((p) => {
@@ -208,7 +208,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="inline-flex items-center gap-1 font-semibold text-orange-800 bg-white px-2 py-1 rounded-lg border border-orange-200">
-                    <Laptop size={13} className="text-[#ff8a5c]" />
+                    <Laptop size={13} className="text-primary" />
                     {selectedPlan.maxActivations} Stations
                   </span>
                 </div>
@@ -232,7 +232,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
                   required
                   value={startsAtDate}
                   onChange={(e) => setStartsAtDate(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -246,7 +246,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
                   required
                   value={durationDays}
                   onChange={(e) => setDurationDays(Number(e.target.value))}
-                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#ff8a5c] focus:ring-2 focus:ring-[#ff8a5c]/20"
+                  className="w-full px-3.5 py-2 text-sm bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -310,7 +310,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
                 type="checkbox"
                 checked={autoRenew}
                 onChange={() => setAutoRenew(!autoRenew)}
-                className="mt-0.5 h-4 w-4 rounded text-[#ff8a5c] accent-[#ff8a5c]"
+                className="mt-0.5 h-4 w-4 rounded text-primary accent-primary"
               />
               <div className="text-xs">
                 <p className="font-semibold text-gray-800">Automatic Renewal Enabled</p>
@@ -329,7 +329,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
                 type="checkbox"
                 checked={createInitialLicense}
                 onChange={() => setCreateInitialLicense(!createInitialLicense)}
-                className="mt-0.5 h-4 w-4 rounded text-[#ff8a5c] accent-[#ff8a5c]"
+                className="mt-0.5 h-4 w-4 rounded text-primary accent-primary"
               />
               <div className="text-xs">
                 <p className="font-semibold text-emerald-900 flex items-center gap-1.5">
@@ -355,7 +355,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
             <button
               type="submit"
               disabled={createSubscriptionMutation.isPending || !institutionId || !planId}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#ff8a5c] hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {createSubscriptionMutation.isPending
                 ? 'Provisioning...'
