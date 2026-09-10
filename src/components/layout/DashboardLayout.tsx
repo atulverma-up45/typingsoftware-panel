@@ -1,38 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
-import {
-  LayoutDashboard,
-  Users,
-  Shield,
-  BrainCircuit,
-  Layers,
-  FileText,
-  GraduationCap,
-  Menu,
-} from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
 import { MEDIA_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
+import { getMobileDockForRole } from '@/config/navigation';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   // Sidebar collapses into a flyout drawer below the lg breakpoint (1024px)
   const isMobile = !useMediaQuery(MEDIA_QUERY.LG);
   const location = useLocation();
-  const { isSuperAdmin, isAdmin, isSupport } = usePermissions();
+  const { role } = usePermissions();
 
-  // Keep sidebar visibility in sync when crossing the breakpoint
-  useEffect(() => {
+  // Sidebar state adjustments happen during render (React-endorsed pattern —
+  // see "You Might Not Need an Effect") instead of setState-in-effect, which
+  // triggers cascading renders:
+  //   - crossing the lg breakpoint resets desktop-open / mobile-closed state
+  //   - navigating on mobile auto-closes the drawer
+  const [prevIsMobile, setPrevIsMobile] = useState(isMobile);
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+  if (prevIsMobile !== isMobile) {
+    setPrevIsMobile(isMobile);
     setIsSidebarOpen(!isMobile);
-  }, [isMobile]);
-
-  // Auto-close sidebar drawer when navigating to another route on mobile
-  useEffect(() => {
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
-  }, [location.pathname, isMobile]);
+  }
+  if (prevPathname !== location.pathname) {
+    setPrevPathname(location.pathname);
+    if (isMobile) setIsSidebarOpen(false);
+  }
 
   // Lock body scroll when mobile drawer is open to prevent awkward background panning
   useEffect(() => {
@@ -46,35 +43,13 @@ const DashboardLayout: React.FC = () => {
     };
   }, [isMobile, isSidebarOpen]);
 
-  // Role-Adapted Mobile Bottom Quick Navigation Destinations
-  // For Librarian/ADMIN: strictly focused on high-frequency daily classroom & computer lab tasks:
-  // 1. Dashboard (real-time activity)
-  // 2. Students (/users: lookups, enrollment, password resets)
-  // 3. Workstations (/activations: seat unlocking, deallocations, live PCs)
-  // 4. Passages (/content: daily test prompts & practice text)
-  // 5. More (Slide-out drawer for everything else)
-  const mobileNavItems = isAdmin
-    ? [
-        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} strokeWidth={2} /> },
-        { name: 'Students', path: '/users', icon: <Users size={20} strokeWidth={2} /> },
-        { name: 'Workstations', path: '/activations', icon: <BrainCircuit size={20} strokeWidth={2} /> },
-        { name: 'Passages', path: '/content', icon: <FileText size={20} strokeWidth={2} /> },
-      ]
-    : isSupport
-    ? [
-        // Support role: read-only tenant & license inspection
-        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} strokeWidth={2} /> },
-        { name: 'Tenants', path: '/institutions', icon: <GraduationCap size={20} strokeWidth={2} /> },
-        { name: 'Licenses', path: '/licenses', icon: <Shield size={20} strokeWidth={2} /> },
-        { name: 'Devices', path: '/activations', icon: <BrainCircuit size={20} strokeWidth={2} /> },
-      ]
-    : [
-        // Super Admin: executive oversight
-        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} strokeWidth={2} /> },
-        { name: 'Users', path: '/users', icon: <Users size={20} strokeWidth={2} /> },
-        { name: 'Tenants', path: '/institutions', icon: <GraduationCap size={20} strokeWidth={2} /> },
-        { name: 'Workstations', path: '/activations', icon: <BrainCircuit size={20} strokeWidth={2} /> },
-      ];
+  // Role-adapted mobile bottom dock — built from the navigation registry
+  // (config/navigation.ts), which also defines per-role dock labels.
+  const mobileNavItems = getMobileDockForRole(role).map((item) => ({
+    name: item.name,
+    path: item.path,
+    icon: <item.icon size={20} strokeWidth={2} />,
+  }));
 
   return (
     <div className="flex h-screen w-full bg-surface overflow-hidden font-sans text-gray-800">
@@ -110,7 +85,11 @@ const DashboardLayout: React.FC = () => {
 
         {/* Scrollable Page Container with Mobile Bottom Nav Padding */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-3.5 sm:p-5 lg:p-7 pb-24 lg:pb-8 custom-scrollbar">
-          <Outlet />
+          {/* Route-level error isolation: a crashing page never takes down
+              the shell, and navigating away (resetKey) recovers it. */}
+          <ErrorBoundary resetKey={location.pathname} variant="page">
+            <Outlet />
+          </ErrorBoundary>
         </main>
 
         {/* Mobile Quick Action Dock (Visible only on mobile/tablet viewports < 1024px) */}

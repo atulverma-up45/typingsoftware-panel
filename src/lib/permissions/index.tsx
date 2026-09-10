@@ -2,6 +2,7 @@
 import React from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import Tooltip from '@/components/ui/Tooltip';
+import { getAccessibleRolesForPath } from '@/config/navigation';
 import { type UserRole } from '@/types/auth';
 
 export type { UserRole };
@@ -141,32 +142,13 @@ export function hasAnyRole(userRole: string | undefined, allowedRoles: UserRole[
 }
 
 /**
- * Checks if a route path is accessible for a given role
+ * Checks if a route path is accessible for a given role.
+ * Single source of truth: the route registry (`config/navigation.ts`).
  */
-export function canAccessRoute(role: string | undefined, path: string): boolean {
+export function canAccessRoute(role: UserRole | string | undefined, path: string): boolean {
   if (!role) return false;
-  const upperRole = role.toUpperCase();
-
-  // Super Admin can access all routes
-  if (upperRole === 'SUPER_ADMIN') return true;
-
-  // /auth-tracking is exclusively for SUPER_ADMIN
-  if (path === '/auth-tracking' || path.startsWith('/auth-tracking/')) {
-    return false;
-  }
-
-  // /plans is exclusively for SUPER_ADMIN
-  if (path === '/plans' || path.startsWith('/plans/')) {
-    return false;
-  }
-
-  // /users is only for SUPER_ADMIN and ADMIN (Librarians)
-  if (path === '/users' || path.startsWith('/users/')) {
-    return upperRole === 'ADMIN';
-  }
-
-  // Other routes are accessible (though actions within them may be restricted)
-  return true;
+  const accessibleRoles = getAccessibleRolesForPath(path);
+  return accessibleRoles.includes((role as UserRole).toUpperCase() as UserRole);
 }
 
 /**
@@ -197,6 +179,12 @@ export function usePermissions() {
   // Senior UI/UX Anti-Trick Permission Flags:
   // Centralized authority rules so components never duplicate or guess logic
   const canMutateModules = isSuperAdmin;
+  // Tenant overrides target the institution↔module link, which the API opens to
+  // ADMIN as well — unlike module CRUD (SUPER_ADMIN only). Keep in sync with
+  // the typing-module routes so the UI never shows a 403-bound action.
+  const canConfigureModuleOverrides = isSuperAdmin || isAdmin;
+  // User CRUD accepts SUPER_ADMIN + ADMIN (POST /users) — SUPPORT is read-only
+  const canMutateUsers = isSuperAdmin || isAdmin;
   const canMutateContent = isSuperAdmin;
   const canMutateReleases = isSuperAdmin;
   const canMutatePlans = isSuperAdmin;
@@ -218,6 +206,8 @@ export function usePermissions() {
     hasAnyRole: checkRoles,
     // Direct capability flags
     canMutateModules,
+    canConfigureModuleOverrides,
+    canMutateUsers,
     canMutateContent,
     canMutateReleases,
     canMutatePlans,
@@ -239,7 +229,7 @@ export function usePermissions() {
 interface ProtectedActionProps {
   permission?: Permission;
   allowed?: boolean;
-  children: React.ReactElement<any>;
+  children: React.ReactElement<React.HTMLAttributes<HTMLElement> & { disabled?: boolean }>;
   tooltipMessage?: string;
   fallbackHidden?: boolean;
 }

@@ -1,6 +1,9 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import { queryKeys } from "@/lib/queryKeys";
+import type { ApiSuccessEnvelope, PaginatedResponse } from "@/types/api";
 
 export type ReleasePlatform = "windows-x64" | "windows-arm64" | "windows-x86";
 export type ReleaseChannel = "stable" | "beta";
@@ -36,17 +39,6 @@ export interface ReleaseStats {
   archivedReleases: number;
   stableReleases: number;
   betaReleases: number;
-}
-
-export interface PaginatedReleasesResponse {
-  data: Release[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
 }
 
 export interface ReleaseListParams {
@@ -127,32 +119,40 @@ export interface UploadResult {
 // ---------------------------------------------------------------------------
 
 export const useReleases = (params: ReleaseListParams = {}) => {
-  return useQuery<PaginatedReleasesResponse>({
-    queryKey: ["releases", params],
+  return useQuery<PaginatedResponse<Release>>({
+    queryKey: queryKeys.releases.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/releases", { params });
+      const response = await api.get<unknown, PaginatedResponse<Release>>(
+        API_ENDPOINTS.RELEASES,
+        { params },
+      );
       return response;
     },
   });
 };
 
-export const useReleaseStats = () => {
+export const useReleaseStats = (enabled = true) => {
   return useQuery<ReleaseStats>({
-    queryKey: ["releases", "stats"],
+    queryKey: queryKeys.releases.stats,
     queryFn: async () => {
-      const response = await api.get("/releases/stats");
-      return response.data?.data || response.data;
+      const response = await api.get<unknown, ApiSuccessEnvelope<ReleaseStats>>(
+        API_ENDPOINTS.RELEASE_STATS,
+      );
+      return response.data;
     },
+    enabled,
   });
 };
 
 export const useRelease = (id?: string) => {
   return useQuery<Release>({
-    queryKey: ["releases", id],
+    queryKey: queryKeys.releases.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Release ID is required");
-      const response = await api.get(`/releases/${id}`);
-      return response.data?.data || response.data;
+      const response = await api.get<unknown, ApiSuccessEnvelope<Release>>(
+        API_ENDPOINTS.RELEASE(id),
+      );
+      return response.data;
     },
     enabled: !!id,
   });
@@ -163,10 +163,13 @@ export const useLatestReleaseSimulator = (
   enabled: boolean = false,
 ) => {
   return useQuery<LatestReleaseResponse>({
-    queryKey: ["releases", "latest-simulator", params],
+    queryKey: queryKeys.releases.latest(params),
     queryFn: async () => {
-      const response = await api.get("/releases/latest", { params });
-      return response.data?.data || response.data;
+      const response = await api.get<unknown, ApiSuccessEnvelope<LatestReleaseResponse>>(
+        API_ENDPOINTS.RELEASE_LATEST,
+        { params },
+      );
+      return response.data;
     },
     enabled,
     retry: false,
@@ -182,17 +185,18 @@ export const useCreateRelease = () => {
 
   return useMutation({
     mutationFn: async (input: CreateReleaseInput) => {
-      const response = await api.post("/releases", input);
-      return response.data?.data || response.data;
+      const response = await api.post<unknown, ApiSuccessEnvelope<Release>>(
+        API_ENDPOINTS.RELEASES,
+        input,
+      );
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["releases"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.all });
       toast.success("Software release created successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to create release";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create release");
     },
   });
 };
@@ -208,18 +212,19 @@ export const useUpdateRelease = () => {
       id: string;
       data: UpdateReleaseInput;
     }) => {
-      const response = await api.put(`/releases/${id}`, data);
-      return response.data?.data || response.data;
+      const response = await api.put<unknown, ApiSuccessEnvelope<Release>>(
+        API_ENDPOINTS.RELEASE(id),
+        data,
+      );
+      return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["releases"] });
-      queryClient.invalidateQueries({ queryKey: ["releases", variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.detail(variables.id) });
       toast.success("Release updated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update release";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update release");
     },
   });
 };
@@ -235,18 +240,19 @@ export const useUpdateReleaseStatus = () => {
       id: string;
       data: UpdateReleaseStatusInput;
     }) => {
-      const response = await api.put(`/releases/${id}/status`, data);
-      return response.data?.data || response.data;
+      const response = await api.put<unknown, ApiSuccessEnvelope<Release>>(
+        API_ENDPOINTS.RELEASE_STATUS(id),
+        data,
+      );
+      return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["releases"] });
-      queryClient.invalidateQueries({ queryKey: ["releases", variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.detail(variables.id) });
       toast.success("Release status updated");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update release status";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update release status");
     },
   });
 };
@@ -256,18 +262,18 @@ export const usePublishRelease = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post(`/releases/${id}/publish`);
-      return response.data?.data || response.data;
+      const response = await api.post<unknown, ApiSuccessEnvelope<Release>>(
+        API_ENDPOINTS.RELEASE_PUBLISH(id),
+      );
+      return response.data;
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["releases"] });
-      queryClient.invalidateQueries({ queryKey: ["releases", id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.detail(id) });
       toast.success("Release published to production");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to publish release";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to publish release");
     },
   });
 };
@@ -277,17 +283,17 @@ export const useDeleteRelease = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete(`/releases/${id}`);
-      return response.data?.data || response.data;
+      const response = await api.delete<unknown, ApiSuccessEnvelope<Release>>(
+        API_ENDPOINTS.RELEASE(id),
+      );
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["releases"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.releases.all });
       toast.success("Release removed successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to delete release";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete release");
     },
   });
 };
@@ -305,7 +311,7 @@ export const useUploadBinary = () => {
     }): Promise<UploadResult> => {
       const arrayBuffer = await file.arrayBuffer();
 
-      const response = await api.post("/uploads", arrayBuffer, {
+      const response = await api.post<unknown, ApiSuccessEnvelope<UploadResult>>(API_ENDPOINTS.UPLOADS, arrayBuffer, {
         headers: {
           "Content-Type": file.type || "application/octet-stream",
           "x-filename": encodeURIComponent(file.name),
@@ -321,12 +327,10 @@ export const useUploadBinary = () => {
         },
       });
 
-      return response.data?.data || response.data;
+      return response.data;
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to upload binary file";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to upload binary file");
     },
   });
 };

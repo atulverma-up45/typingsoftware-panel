@@ -19,34 +19,39 @@ export interface StatCardProps {
   active?: boolean;
 }
 
+/**
+ * Accent families. The brand `orange` family uses the theme tokens defined in
+ * `styles/globals.css`; the other families use Tailwind's standard palette —
+ * never hard-coded brand hex values.
+ */
 const STAT_CARD_STYLES = {
   orange: {
-    bg: 'bg-gradient-to-br from-[#ff9f68] to-[#f77947]',
+    bg: 'bg-gradient-to-br from-primary to-primary-600',
     iconBg: 'bg-white/20',
     icon: <Users2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
   },
   blue: {
-    bg: 'bg-gradient-to-br from-[#8ba7fa] to-[#7191f4]',
+    bg: 'bg-gradient-to-br from-indigo-300 to-indigo-400',
     iconBg: 'bg-white/20',
     icon: <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
   },
   cyan: {
-    bg: 'bg-gradient-to-br from-[#77dbe8] to-[#5ecbe0]',
+    bg: 'bg-gradient-to-br from-cyan-300 to-cyan-400',
     iconBg: 'bg-white/20',
     icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
   },
   coral: {
-    bg: 'bg-gradient-to-br from-[#fc9b7f] to-[#f97b58]',
+    bg: 'bg-gradient-to-br from-orange-300 to-orange-500',
     iconBg: 'bg-white/20',
     icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
   },
   emerald: {
-    bg: 'bg-gradient-to-br from-[#48bb78] to-[#38a169]',
+    bg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
     iconBg: 'bg-white/20',
     icon: <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
   },
   purple: {
-    bg: 'bg-gradient-to-br from-[#9f7aea] to-[#805ad5]',
+    bg: 'bg-gradient-to-br from-purple-400 to-purple-600',
     iconBg: 'bg-white/20',
     icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
   },

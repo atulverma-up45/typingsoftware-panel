@@ -1,6 +1,9 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import { queryKeys } from "@/lib/queryKeys";
+import type { ApiSuccessEnvelope, PaginatedResponse } from "@/types/api";
 
 export type AuditEntityType =
   | "USER"
@@ -48,17 +51,6 @@ export interface AuditMetrics {
   logsLast7Days: number;
 }
 
-export interface PaginatedAuditLogsResponse {
-  data: AuditLog[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
-
 export interface AuditLogListParams {
   page?: number;
   limit?: number;
@@ -91,11 +83,14 @@ export const useAuditLogs = (
   params: AuditLogListParams = {},
   refetchInterval: number | false = false,
 ) => {
-  return useQuery<PaginatedAuditLogsResponse>({
-    queryKey: ["audit-logs", params],
+  return useQuery<PaginatedResponse<AuditLog>>({
+    queryKey: queryKeys.audit.list(params),
     queryFn: async () => {
-      const response = await api.get("/audit-logs", { params });
-      return response.data;
+      const response = await api.get<unknown, PaginatedResponse<AuditLog>>(
+        API_ENDPOINTS.AUDIT_LOGS,
+        { params },
+      );
+      return response;
     },
     refetchInterval,
   });
@@ -103,10 +98,12 @@ export const useAuditLogs = (
 
 export const useAuditStats = (refetchInterval: number | false = false) => {
   return useQuery<AuditMetrics>({
-    queryKey: ["audit-logs", "stats"],
+    queryKey: queryKeys.audit.stats,
     queryFn: async () => {
-      const response = await api.get("/audit-logs/stats");
-      return response.data?.data || response.data;
+      const response = await api.get<unknown, ApiSuccessEnvelope<AuditMetrics>>(
+        API_ENDPOINTS.AUDIT_LOG_STATS,
+      );
+      return response.data;
     },
     refetchInterval,
   });
@@ -114,11 +111,13 @@ export const useAuditStats = (refetchInterval: number | false = false) => {
 
 export const useAuditLog = (id?: string) => {
   return useQuery<AuditLog>({
-    queryKey: ["audit-logs", id],
+    queryKey: queryKeys.audit.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Audit log ID is required");
-      const response = await api.get(`/audit-logs/${id}`);
-      return response.data?.data || response.data;
+      const response = await api.get<unknown, ApiSuccessEnvelope<AuditLog>>(
+        API_ENDPOINTS.AUDIT_LOG(id),
+      );
+      return response.data;
     },
     enabled: !!id,
   });
@@ -135,19 +134,20 @@ export const useCleanupAuditLogs = () => {
     mutationFn: async (
       input: AuditCleanupInput,
     ): Promise<AuditCleanupResponse> => {
-      const response = await api.post("/audit-logs/cleanup", input);
-      return response.data?.data || response.data;
+      const response = await api.post<unknown, ApiSuccessEnvelope<AuditCleanupResponse>>(
+        API_ENDPOINTS.AUDIT_LOGS_CLEANUP,
+        input,
+      );
+      return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.audit.all });
       toast.success(
         `Successfully pruned ${data.deletedCount} regulatory audit records`,
       );
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to prune audit logs";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to prune audit logs");
     },
   });
 };

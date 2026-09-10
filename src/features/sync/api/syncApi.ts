@@ -1,6 +1,9 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import { queryKeys } from "@/lib/queryKeys";
+import type { ApiSuccessEnvelope, PaginatedResponse } from "@/types/api";
 
 export type SyncEntityType = "DEVICE_ACTIVITY" | "LOCAL_SETTING";
 export type SyncOperationType = "CREATE" | "UPDATE" | "DELETE";
@@ -25,17 +28,6 @@ export interface SyncMetrics {
   totalSyncOperations: number;
   syncsLast24Hours: number;
   distinctDevicesSynced: number;
-}
-
-export interface PaginatedSyncOperationsResponse {
-  data: SyncOperation[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
 }
 
 export interface SyncOperationListParams {
@@ -120,10 +112,13 @@ export const useSyncOperations = (
   params: SyncOperationListParams = {},
   refetchInterval: number | false = false,
 ) => {
-  return useQuery<PaginatedSyncOperationsResponse>({
-    queryKey: ["sync-operations", params],
+  return useQuery<PaginatedResponse<SyncOperation>>({
+    queryKey: queryKeys.sync.operations(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/sync/operations", { params });
+      const response = await api.get<unknown, PaginatedResponse<SyncOperation>>(
+        API_ENDPOINTS.SYNC_OPERATIONS,
+        { params },
+      );
       return response;
     },
     refetchInterval,
@@ -132,10 +127,12 @@ export const useSyncOperations = (
 
 export const useSyncStats = (refetchInterval: number | false = false) => {
   return useQuery<SyncMetrics>({
-    queryKey: ["sync-operations", "stats"],
+    queryKey: queryKeys.sync.stats,
     queryFn: async () => {
-      const response = await api.get("/sync/stats");
-      return response.data?.data || response.data;
+      const response = await api.get<unknown, ApiSuccessEnvelope<SyncMetrics>>(
+        API_ENDPOINTS.SYNC_STATS,
+      );
+      return response.data;
     },
     refetchInterval,
   });
@@ -144,12 +141,14 @@ export const useSyncStats = (refetchInterval: number | false = false) => {
 export const useSyncSimulator = () => {
   return useMutation({
     mutationFn: async (input: SyncRequestInput): Promise<SyncResponse> => {
-      const response = await api.post("/sync", input);
-      return response.data?.data || response.data;
+      const response = await api.post<unknown, ApiSuccessEnvelope<SyncResponse>>(
+        API_ENDPOINTS.SYNC,
+        input,
+      );
+      return response.data;
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || "Sync simulation failed";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Sync simulation failed");
     },
   });
 };
@@ -165,19 +164,20 @@ export const useCleanupSyncHistory = () => {
     mutationFn: async (
       input: SyncCleanupInput,
     ): Promise<SyncCleanupResponse> => {
-      const response = await api.post("/sync/operations/cleanup", input);
-      return response.data?.data || response.data;
+      const response = await api.post<unknown, ApiSuccessEnvelope<SyncCleanupResponse>>(
+        API_ENDPOINTS.SYNC_OPERATIONS_CLEANUP,
+        input,
+      );
+      return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["sync-operations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sync.all });
       toast.success(
         `Successfully purged ${data.deletedCount} stale idempotency records`,
       );
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to clean up sync logs";
-      toast.error(message);
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to clean up sync logs");
     },
   });
 };

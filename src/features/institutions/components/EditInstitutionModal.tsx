@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   X,
   Edit3,
@@ -50,7 +50,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
     }
   }, [institution]);
 
-  // Debounced slug availability check — only meaningful when the slug differs
+  // Debounced slug availability check â€” only meaningful when the slug differs
   // from the one already saved on the institution.
   const isSlugChanged = Boolean(institution && slug.trim().toLowerCase() !== institution.slug.toLowerCase());
   const debouncedSlugValue = useDebouncedValue(slug.trim().toLowerCase(), SLUG_CHECK_DEBOUNCE_MS);
@@ -155,7 +155,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Apex Typing Academy"
+                placeholder="e.g. Apex Typing Expert"
                 className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>

@@ -32,4 +32,32 @@ export const queryKeys = {
     subscriptions: ['dashboard', 'subscriptions'] as const,
     topInstitutions: (limit: number) => ['dashboard', 'top-institutions', limit] as const,
   },
+
+  sync: {
+    all: ['sync'] as const,
+    operations: (params?: BaseListParams) => ['sync', 'operations', params] as const,
+    stats: ['sync', 'stats'] as const,
+  },
+
+  audit: {
+    all: ['audit-logs'] as const,
+    list: (params?: BaseListParams) => ['audit-logs', 'list', params] as const,
+    stats: ['audit-logs', 'stats'] as const,
+    detail: (id: string | null | undefined) => ['audit-logs', 'detail', id] as const,
+  },
+
+  releases: {
+    all: ['releases'] as const,
+    list: (params?: BaseListParams) => ['releases', 'list', params] as const,
+    stats: ['releases', 'stats'] as const,
+    detail: (id: string | null | undefined) => ['releases', 'detail', id] as const,
+    // `object` (not BaseListParams): the update-simulator query carries
+    // domain-specific fields (platform/channel/licenseKey) with no overlap.
+    latest: (params?: object) => ['releases', 'latest', params] as const,
+  },
+
+  settings: {
+    all: ['settings'] as const,
+    health: ['settings', 'system-health'] as const,
+  },
 } as const;

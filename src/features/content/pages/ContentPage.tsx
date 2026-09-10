@@ -597,16 +597,21 @@ export const ContentPage: React.FC = () => {
               ? 'The recycle bin is currently empty.'
               : 'Create typing exercise passages and official exam papers for students.'}
           </p>
-          {activeTab !== 'TRASH' && (
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
-            >
-              <Plus size={15} strokeWidth={2.5} />
-              Draft First Content Item
-            </button>
-          )}
+          {activeTab !== 'TRASH' &&
+            (isSuperAdmin ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+              >
+                <Plus size={15} strokeWidth={2.5} />
+                Draft First Content Item
+              </button>
+            ) : (
+              <p className="text-xs text-gray-400">
+                Content authoring is restricted to Super Admins.
+              </p>
+            ))}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">

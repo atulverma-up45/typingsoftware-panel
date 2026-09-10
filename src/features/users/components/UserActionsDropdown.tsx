@@ -21,6 +21,7 @@ import {
   useSendResetPasswordEmail,
 } from '../api/userApi';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 import { ConfirmationModal } from './ConfirmationModal';
 
 interface UserActionsDropdownProps {
@@ -49,7 +50,8 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
 
   const currentUser = useAuthStore((state) => state.user);
   const isSelf = currentUser?.id === user.id;
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  // Canonical RBAC source — never derive role gates from the store directly
+  const { isSuperAdmin } = usePermissions();
 
   const { mutate: updateRole, isPending: isUpdatingRole } = useUpdateUserRole();
   const { mutate: softDelete, isPending: isSoftDeleting } = useSoftDeleteUser();

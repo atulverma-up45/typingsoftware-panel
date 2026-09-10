@@ -7,7 +7,7 @@ import {
   useUpdateUserRole,
   useInstitutions,
 } from '../api/userApi';
-import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 
 interface EditUserModalProps {
   user: User | null;
@@ -19,8 +19,9 @@ const EditUserModalContent: React.FC<{
   user: User;
   onClose: () => void;
 }> = ({ user, onClose }) => {
-  const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  // Canonical RBAC source — role/institution mutation is SUPER_ADMIN-only
+  // (mirrors the API's PUT /users/:id/role restriction)
+  const { isSuperAdmin } = usePermissions();
 
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);

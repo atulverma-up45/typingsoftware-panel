@@ -28,6 +28,7 @@ import { ResetPasswordModal } from '../components/ResetPasswordModal';
 import { UserDetailModal } from '../components/UserDetailModal';
 import { StatusChangeModal } from '../components/StatusChangeModal';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePermissions } from '@/lib/permissions';
 import { toast } from 'sonner';
 
 // Reusable Responsive UI Module Library
@@ -40,7 +41,8 @@ import EmptyState from '@/components/ui/EmptyState';
 
 export default function UsersPage() {
   const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  // Canonical RBAC source — never derive role gates from the store directly
+  const { isSuperAdmin, canMutateUsers } = usePermissions();
 
   // Filters & Tabs State
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'suspended' | 'trash'>('all');
@@ -101,7 +103,7 @@ export default function UsersPage() {
   });
 
   const usersList: User[] = usersData?.data || [];
-  const meta = usersData?.meta || { page: 1, limit: pageSize, total: 0 };
+  const meta = usersData?.meta || { page: 1, limit: pageSize, total: 0, totalPages: 1 };
   const totalUsers = meta.total || 0;
   const totalPages = Math.ceil(totalUsers / pageSize) || 1;
 
@@ -216,13 +218,16 @@ export default function UsersPage() {
             >
               <RefreshCw size={16} className={isFetchingUsers ? 'animate-spin text-primary' : ''} />
             </button>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-600 text-white rounded-xl shadow-2xs hover:shadow-xs transition-all duration-200 font-medium text-xs sm:text-sm flex items-center gap-1.5 min-h-[38px]"
-            >
-              <Plus size={16} />
-              <span>Provision User</span>
-            </button>
+            {/* User provisioning accepts SUPER_ADMIN + ADMIN (POST /users) */}
+            {canMutateUsers && (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-600 text-white rounded-xl shadow-2xs hover:shadow-xs transition-all duration-200 font-medium text-xs sm:text-sm flex items-center gap-1.5 min-h-[38px]"
+              >
+                <Plus size={16} />
+                <span>Provision User</span>
+              </button>
+            )}
           </>
         }
       />
@@ -489,13 +494,17 @@ export default function UsersPage() {
                   >
                     Clear all filters
                   </button>
-                ) : (
+                ) : canMutateUsers ? (
                   <button
                     onClick={() => setIsCreateModalOpen(true)}
                     className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-600 text-xs font-medium text-white shadow-2xs transition-colors flex items-center gap-1.5"
                   >
                     <Plus size={15} /> Provision first user
                   </button>
+                ) : (
+                  <span className="text-xs text-gray-400">
+                    User provisioning is restricted to administrators.
+                  </span>
                 )
               }
             />

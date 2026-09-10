@@ -32,6 +32,7 @@ interface BrandingEditorModalProps {
 }
 
 const PRESET_PALETTES = [
+  { name: 'Typing Expert Orange', primary: '#F77F52', secondary: '#D65E2B', accent: '#FF8A5C' },
   { name: 'Corporate Blue', primary: '#2563EB', secondary: '#1E40AF', accent: '#06B6D4' },
   { name: 'Emerald Forest', primary: '#059669', secondary: '#065F46', accent: '#10B981' },
   { name: 'Royal Violet', primary: '#7C3AED', secondary: '#5B21B6', accent: '#A78BFA' },
@@ -54,6 +55,9 @@ export const BrandingEditorModal: React.FC<BrandingEditorModalProps> = ({
   const [primaryColor, setPrimaryColor] = useState('#2563EB');
   const [secondaryColor, setSecondaryColor] = useState('#1E40AF');
   const [accentColor, setAccentColor] = useState('#06B6D4');
+  const [primaryColor, setPrimaryColor] = useState('#F77F52');
+  const [secondaryColor, setSecondaryColor] = useState('#D65E2B');
+  const [accentColor, setAccentColor] = useState('#FF8A5C');
   const [tagline, setTagline] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [signatoryName, setSignatoryName] = useState('');

@@ -10,8 +10,25 @@ export interface PaginatedResponse<T> {
     page: number;
     limit: number;
     total: number;
-    totalPages?: number;
+    /** Always provided by the backend for paginated lists. */
+    totalPages: number;
     timestamp?: string;
+  };
+}
+
+/**
+ * Full success envelope returned by every backend endpoint (see
+ * `successResponse` in the API's `lib/response.ts`). The axios interceptor
+ * already unwraps the transport layer, so query hooks receive this shape
+ * directly: `{ success, data, meta }`.
+ */
+export interface ApiSuccessEnvelope<T> {
+  success: boolean;
+  data: T;
+  meta: {
+    timestamp: string;
+    requestId?: string;
+    [key: string]: unknown;
   };
 }
 

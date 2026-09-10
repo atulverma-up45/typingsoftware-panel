@@ -61,7 +61,7 @@ type SubscriptionTab =
   | 'TRASH';
 
 export const SubscriptionsPage: React.FC = () => {
-  const { isSuperAdmin, isSupport } = usePermissions();
+  const { isSuperAdmin, isSupport, canMutateSubscriptions } = usePermissions();
 
   // Filters & State
   const [activeTab, setActiveTab] = useState<SubscriptionTab>('ALL');
@@ -537,16 +537,21 @@ export const SubscriptionsPage: React.FC = () => {
               ? 'The recycle bin is currently empty.'
               : 'Provision commercial subscription contracts to grant computer labs software licenses.'}
           </p>
-          {activeTab !== 'TRASH' && (
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
-            >
-              <Plus size={15} strokeWidth={2.5} />
-              Provision First Subscription
-            </button>
-          )}
+          {activeTab !== 'TRASH' &&
+            (canMutateSubscriptions ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+              >
+                <Plus size={15} strokeWidth={2.5} />
+                Provision First Subscription
+              </button>
+            ) : (
+              <p className="text-xs text-gray-400">
+                Subscription provisioning is restricted to administrators.
+              </p>
+            ))}
         </div>
       ) : viewMode === 'CARDS' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">

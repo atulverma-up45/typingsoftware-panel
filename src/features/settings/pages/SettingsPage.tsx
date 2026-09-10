@@ -18,43 +18,57 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api/client';
 import { toast } from 'sonner';
 import PageHeader from '@/components/ui/PageHeader';
+import { useSystemHealth } from '../api/healthApi';
 
-interface HealthStatus {
-  status: string;
-  service: string;
-  version: string;
-  database?: {
-    status: string;
-    latencyMs: number;
-  };
-  timestamp: string;
+/** Persisted console & telemetry preferences (localStorage-backed). */
+interface DisplayPreferences {
+  autoPollInterval: string;
+  timeDisplayFormat: 'LOCAL' | 'UTC';
+  densityMode: 'COMFORTABLE' | 'COMPACT';
+}
+
+const PREFERENCES_STORAGE_KEY = 'admin-panel:display-preferences';
+
+const DEFAULT_PREFERENCES: DisplayPreferences = {
+  autoPollInterval: '15',
+  timeDisplayFormat: 'LOCAL',
+  densityMode: 'COMFORTABLE',
+};
+
+/** Reads saved preferences, falling back to defaults on absence/corruption. */
+function loadDisplayPreferences(): DisplayPreferences {
+  try {
+    const stored = window.localStorage.getItem(PREFERENCES_STORAGE_KEY);
+    if (!stored) return DEFAULT_PREFERENCES;
+    return { ...DEFAULT_PREFERENCES, ...(JSON.parse(stored) as Partial<DisplayPreferences>) };
+  } catch {
+    return DEFAULT_PREFERENCES;
+  }
 }
 
 export const SettingsPage: React.FC = () => {
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
-  // Preferences State
-  const [autoPollInterval, setAutoPollInterval] = useState('15');
-  const [timeDisplayFormat, setTimeDisplayFormat] = useState<'LOCAL' | 'UTC'>('LOCAL');
-  const [densityMode, setDensityMode] = useState<'COMFORTABLE' | 'COMPACT'>('COMFORTABLE');
+  // Preferences State (persisted via "Save Preferences")
+  const [preferences, setPreferences] = useState<DisplayPreferences>(loadDisplayPreferences);
+  const updatePreference = <K extends keyof DisplayPreferences>(
+    key: K,
+    value: DisplayPreferences[K],
+  ) => setPreferences((current) => ({ ...current, [key]: value }));
 
-  // Backend Health Query
-  const { data: healthData, isLoading: isHealthLoading, refetch: refetchHealth } = useQuery<HealthStatus>({
-    queryKey: ['system-health'],
-    queryFn: async () => {
-      const response = await api.get('/health/ready');
-      return response.data?.data || response.data;
-    },
-    refetchInterval: 30000, // check every 30s
-  });
+  // Backend Health Query (deep readiness probe served at the API server root)
+  const { data: healthData, isLoading: isHealthLoading, refetch: refetchHealth } = useSystemHealth();
 
   const handleSavePreferences = () => {
-    toast.success('System preferences saved successfully');
+    try {
+      window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+      toast.success('System preferences saved');
+    } catch {
+      toast.error('Could not save preferences in this browser');
+    }
   };
 
   return (
@@ -144,8 +158,8 @@ export const SettingsPage: React.FC = () => {
                   Default Telemetry Auto-Poll Frequency
                 </label>
                 <select
-                  value={autoPollInterval}
-                  onChange={(e) => setAutoPollInterval(e.target.value)}
+                  value={preferences.autoPollInterval}
+                  onChange={(e) => updatePreference('autoPollInterval', e.target.value)}
                   className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-primary"
                 >
                   <option value="10">10 Seconds (High Velocity)</option>
@@ -160,8 +174,8 @@ export const SettingsPage: React.FC = () => {
                   Timestamp Display Mode
                 </label>
                 <select
-                  value={timeDisplayFormat}
-                  onChange={(e) => setTimeDisplayFormat(e.target.value as any)}
+                  value={preferences.timeDisplayFormat}
+                  onChange={(e) => updatePreference('timeDisplayFormat', e.target.value as DisplayPreferences['timeDisplayFormat'])}
                   className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-primary"
                 >
                   <option value="LOCAL">Local System Timezone</option>
@@ -179,9 +193,9 @@ export const SettingsPage: React.FC = () => {
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => setDensityMode(mode)}
+                    onClick={() => updatePreference('densityMode', mode)}
                     className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
-                      densityMode === mode
+                      preferences.densityMode === mode
                         ? 'bg-primary-100 border-primary text-primary'
                         : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
@@ -196,7 +210,7 @@ export const SettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSavePreferences}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-600 shadow-xs transition-colors"
               >
                 Save Preferences
               </button>

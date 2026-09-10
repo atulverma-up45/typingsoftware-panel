@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   X,
   GraduationCap,
@@ -24,6 +24,7 @@ interface CreateInstitutionModalProps {
 }
 
 const PRESET_PALETTES = [
+  { name: 'Typing Expert Orange', primary: '#F77F52', secondary: '#D65E2B', accent: '#FF8A5C' },
   { name: 'Corporate Blue', primary: '#2563EB', secondary: '#1E40AF', accent: '#06B6D4' },
   { name: 'Emerald Forest', primary: '#059669', secondary: '#065F46', accent: '#10B981' },
   { name: 'Royal Violet', primary: '#7C3AED', secondary: '#5B21B6', accent: '#A78BFA' },
@@ -52,6 +53,9 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
   const [primaryColor, setPrimaryColor] = useState('#2563EB');
   const [secondaryColor, setSecondaryColor] = useState('#1E40AF');
   const [accentColor, setAccentColor] = useState('#06B6D4');
+  const [primaryColor, setPrimaryColor] = useState('#F77F52');
+  const [secondaryColor, setSecondaryColor] = useState('#D65E2B');
+  const [accentColor, setAccentColor] = useState('#FF8A5C');
   const [tagline, setTagline] = useState('Govt Recognized Computer Training & Skill Development Center');
   const [signatoryName, setSignatoryName] = useState('');
   const [signatoryDesignation, setSignatoryDesignation] = useState('');
@@ -82,6 +86,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
     }
     if (!applicationName) {
       setApplicationName(val ? `${val} Typing Master` : '');
+      setApplicationName(val ? `${val} Typing Expert` : '');
     }
   };
 
@@ -116,6 +121,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
       status,
       branding: {
         applicationName: applicationName.trim() || `${name.trim()} Typing Master`,
+        applicationName: applicationName.trim() || `${name.trim()} Typing Expert`,
         displayName: displayName.trim() || name.trim(),
         primaryColor,
         secondaryColor,
@@ -214,7 +220,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                     required
                     value={name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder="e.g. Apex Typing Academy"
+                    placeholder="e.g. Apex Typing Expert"
                     className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
                 </div>
@@ -242,7 +248,7 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
                       setIsSlugManuallyEdited(true);
                       setSlug(e.target.value.toLowerCase().trim());
                     }}
-                    placeholder="apex-typing-academy"
+                    placeholder="apex-typing-expert"
                     className={`w-full pl-8 pr-28 py-2 text-sm font-mono border rounded-xl focus:outline-none focus:ring-2 ${
                       isSlugConflict
                         ? 'border-red-300 focus:ring-red-200 focus:border-red-500'

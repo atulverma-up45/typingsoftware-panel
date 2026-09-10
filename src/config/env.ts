@@ -18,7 +18,12 @@ if (!parsedEnv.success) {
   throw new Error("Invalid environment variables");
 }
 
-const defaultAuthUrl = (() => {
+/**
+ * Origin of the API server (e.g. "http://localhost:8787").
+ * Needed for endpoints served at the server root instead of under /api —
+ * e.g. the /health liveness & readiness probes consumed by SettingsPage.
+ */
+const apiOrigin = (() => {
   try {
     return new URL(parsedEnv.data.VITE_API_BASE_URL).origin;
   } catch {
@@ -28,5 +33,6 @@ const defaultAuthUrl = (() => {
 
 export const env = {
   API_BASE_URL: parsedEnv.data.VITE_API_BASE_URL,
-  AUTH_URL: parsedEnv.data.VITE_AUTH_URL || defaultAuthUrl,
+  API_ORIGIN: apiOrigin,
+  AUTH_URL: parsedEnv.data.VITE_AUTH_URL || apiOrigin,
 };

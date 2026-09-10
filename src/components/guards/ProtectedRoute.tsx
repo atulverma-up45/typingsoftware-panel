@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
 import { type UserRole, hasAnyRole } from "@/lib/permissions";
-import { toast } from "sonner";
+import { ForbiddenPage } from "@/components/errors/ForbiddenPage";
 
 export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -87,18 +87,10 @@ export function RoleRoute({ allowedRoles }: RoleRouteProps) {
   const userRole = user?.role as UserRole | undefined;
   const isAllowed = Boolean(userRole) && hasAnyRole(userRole, allowedRoles);
 
-  useEffect(() => {
-    if (!isAllowed) {
-      toast.error("Access Restricted", {
-        description: userRole
-          ? `Your role (${userRole}) is not authorized to access this module.`
-          : "Your session role could not be verified. Access is denied.",
-      });
-    }
-  }, [isAllowed, userRole]);
-
+  // Honest in-place 403 (no silent redirect) — the app shell stays, the user
+  // gets an explanation and a way out. Mirrors the API's 403 semantics.
   if (!isAllowed) {
-    return <Navigate to="/dashboard" replace />;
+    return <ForbiddenPage role={userRole} />;
   }
 
   return <Outlet />;

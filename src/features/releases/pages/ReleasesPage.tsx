@@ -54,7 +54,6 @@ type ViewMode = 'CARDS' | 'TABLE';
 
 export const ReleasesPage: React.FC = () => {
   const { isSuperAdmin } = usePermissions();
-  // Filters & Pagination State
   const [activeTab, setActiveTab] = useState<StatusTab>('ALL');
   const [viewMode, setViewMode] = useState<ViewMode>('CARDS');
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,10 +96,12 @@ export const ReleasesPage: React.FC = () => {
     error,
     refetch,
   } = useReleases(queryParams);
-  const { data: statsData, isLoading: isLoadingStats, refetch: refetchStats } = useReleaseStats();
+  // Release analytics are SUPER_ADMIN-only on the API — gate the request so
+  // ADMIN/SUPPORT don't fire a guaranteed 403 (they fall back to zeroed KPIs).
+  const { data: statsData, isLoading: isLoadingStats, refetch: refetchStats } = useReleaseStats(isSuperAdmin);
 
   const handleRefreshAll = () => {
-    refetchStats();
+    if (isSuperAdmin) refetchStats();
     refetch();
   };
 
@@ -469,16 +470,21 @@ export const ReleasesPage: React.FC = () => {
               ? 'No release builds match your applied filter criteria.'
               : 'Deploy your first client installer package to begin servicing workstation fleets.'}
           </p>
-          {!searchTerm && selectedChannel === 'ALL' && selectedPlatform === 'ALL' && (
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
-            >
-              <Plus size={15} strokeWidth={2.5} />
-              Publish First Release
-            </button>
-          )}
+          {!searchTerm && selectedChannel === 'ALL' && selectedPlatform === 'ALL' &&
+            (isSuperAdmin ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
+              >
+                <Plus size={15} strokeWidth={2.5} />
+                Publish First Release
+              </button>
+            ) : (
+              <p className="mt-4 text-xs text-gray-400">
+                Release publishing is restricted to Super Admins.
+              </p>
+            ))}
         </div>
       ) : viewMode === 'CARDS' ? (
         /* CARDS VIEW */

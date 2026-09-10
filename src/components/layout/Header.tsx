@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Search, Bell, PanelLeft, Building2, Menu, LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
 import SearchModal from '@/components/ui/SearchModal';
+import { signOut } from '@/lib/auth-client';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -44,8 +45,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     });
   };
 
-  const handleLogout = () => {
-    clearAuth();
+  // Sign out on the server first (revokes the session cookie), then clear
+  // local state. ProtectedRoute reacts to the store change and redirects.
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch {
+      // Session may already be invalid server-side — proceed with local sign-out.
+    } finally {
+      clearAuth();
+    }
   };
 
   const getInitials = (name: string) => {

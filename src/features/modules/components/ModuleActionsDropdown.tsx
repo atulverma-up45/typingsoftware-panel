@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TypingModule } from '../api/moduleApi';
+import { usePermissions } from '@/lib/permissions';
 
 interface ModuleActionsDropdownProps {
   module: TypingModule;
@@ -36,6 +37,9 @@ export const ModuleActionsDropdown: React.FC<ModuleActionsDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Canonical RBAC source — never derive role gates from the store directly
+  const { canMutateModules, canConfigureModuleOverrides } = usePermissions();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -92,68 +96,81 @@ export const ModuleActionsDropdown: React.FC<ModuleActionsDropdownProps> = ({
 
           {!isDeletedView ? (
             <>
-              <button
-                type="button"
-                onClick={() => {
-                  onEdit(module);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-blue-600 hover:bg-blue-50/50 text-left"
-              >
-                <Edit3 size={14} />
-                Edit Configuration
-              </button>
+              {/* Module CRUD is SUPER_ADMIN-only (POST/PATCH/DELETE /typing-modules) */}
+              {canMutateModules && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onEdit(module);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-blue-600 hover:bg-blue-50/50 text-left"
+                >
+                  <Edit3 size={14} />
+                  Edit Configuration
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  onConfigureOverride(module);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary hover:bg-primary-100/50 text-left font-semibold"
-              >
-                <Sliders size={14} />
-                Configure Tenant Override
-              </button>
+              {/* Tenant override accepts ADMIN too (POST /institutions/:id/modules) */}
+              {canConfigureModuleOverrides && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onConfigureOverride(module);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary hover:bg-primary-100/50 text-left font-semibold"
+                >
+                  <Sliders size={14} />
+                  Configure Tenant Override
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  onToggleStatus(module);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-              >
-                {isActive ? (
-                  <>
-                    <XCircle size={14} className="text-gray-400" />
-                    Deactivate Module
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 size={14} className="text-emerald-500" />
-                    Activate Module
-                  </>
-                )}
-              </button>
+              {canMutateModules && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onToggleStatus(module);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
+                >
+                  {isActive ? (
+                    <>
+                      <XCircle size={14} className="text-gray-400" />
+                      Deactivate Module
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={14} className="text-emerald-500" />
+                      Activate Module
+                    </>
+                  )}
+                </button>
+              )}
 
-              <div className="h-px bg-gray-100 my-1" />
+              {canMutateModules && (
+                <>
+                  <div className="h-px bg-gray-100 my-1" />
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(module);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
-              >
-                <Trash2 size={14} />
-                Move to Trash
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(module);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
+                  >
+                    <Trash2 size={14} />
+                    Move to Trash
+                  </button>
+                </>
+              )}
             </>
           ) : (
             <>
-              {onRestore && (
+              {/* Recycle-bin actions are SUPER_ADMIN-only (restore / permanent purge) */}
+              {canMutateModules && onRestore && (
                 <button
                   type="button"
                   onClick={() => {
@@ -167,17 +184,19 @@ export const ModuleActionsDropdown: React.FC<ModuleActionsDropdownProps> = ({
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  onDelete(module);
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-bold"
-              >
-                <Trash2 size={14} />
-                Permanently Purge
-              </button>
+              {canMutateModules && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onDelete(module);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-bold"
+                >
+                  <Trash2 size={14} />
+                  Permanently Purge
+                </button>
+              )}
             </>
           )}
         </div>

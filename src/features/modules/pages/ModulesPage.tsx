@@ -449,16 +449,21 @@ export const ModulesPage: React.FC = () => {
               ? 'The recycle bin is currently empty.'
               : 'Register typing module capabilities to enable specialized typing engines and exam simulators.'}
           </p>
-          {activeTab !== 'TRASH' && (
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
-            >
-              <Plus size={15} strokeWidth={2.5} />
-              Register First Typing Module
-            </button>
-          )}
+          {activeTab !== 'TRASH' &&
+            (isSuperAdmin ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+              >
+                <Plus size={15} strokeWidth={2.5} />
+                Register First Typing Module
+              </button>
+            ) : (
+              <p className="text-xs text-gray-400">
+                Module registration is restricted to Super Admins.
+              </p>
+            ))}
         </div>
       ) : viewMode === 'CARDS' ? (
         /* CARDS VIEW */

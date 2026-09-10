@@ -36,7 +36,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
   onRestore,
   isDeletedView = false,
 }) => {
-  const { isSuperAdmin, isAdmin } = usePermissions();
+  const { canMutateModules, canConfigureModuleOverrides } = usePermissions();
   const isActive = module.status === 'ACTIVE';
   const configKeys = Object.keys(module.configuration || {});
 
@@ -101,9 +101,9 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
           View Specs
         </button>
 
-        {!isSuperAdmin ? (
+        {!canMutateModules ? (
           <div className="flex items-center flex-wrap gap-1.5">
-            {isAdmin && onConfigureOverride && !isDeletedView && (
+            {canConfigureModuleOverrides && onConfigureOverride && !isDeletedView && (
               <button
                 type="button"
                 onClick={() => onConfigureOverride(module)}
