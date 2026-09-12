@@ -1,6 +1,8 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type LicenseStatus = "ACTIVE" | "EXPIRED" | "REVOKED" | "SUSPENDED";
 
@@ -138,9 +140,9 @@ export interface RevokeLicenseInput {
  */
 export const useLicenses = (params: LicenseListParams = {}) => {
   return useQuery<PaginatedLicensesResponse>({
-    queryKey: ["licenses", params],
+    queryKey: queryKeys.licenses.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/licenses", { params });
+      const response = await api.get<any, any>(API_ENDPOINTS.LICENSES, { params });
       return response;
     },
   });
@@ -151,9 +153,9 @@ export const useLicenses = (params: LicenseListParams = {}) => {
  */
 export const useLicenseStats = (institutionId?: string, enabled = true) => {
   return useQuery<LicenseStats>({
-    queryKey: ["licenses", "stats", institutionId],
+    queryKey: queryKeys.licenses.stats(institutionId),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/licenses/stats", {
+      const response = await api.get<any, any>(API_ENDPOINTS.LICENSE_STATS, {
         params: institutionId ? { institutionId } : undefined,
       });
       return response.data;
@@ -168,10 +170,10 @@ export const useLicenseStats = (institutionId?: string, enabled = true) => {
  */
 export const useLicense = (id: string | null | undefined) => {
   return useQuery<License>({
-    queryKey: ["licenses", "detail", id],
+    queryKey: queryKeys.licenses.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("License ID required");
-      const response = await api.get<any, any>(`/v1/licenses/${id}`);
+      const response = await api.get<any, any>(API_ENDPOINTS.LICENSE(id));
       return response.data;
     },
     enabled: !!id,
@@ -185,10 +187,10 @@ export const useSubscriptionsForInstitution = (
   institutionId?: string | null,
 ) => {
   return useQuery<LicenseSubscription[]>({
-    queryKey: ["subscriptions", "for-institution", institutionId],
+    queryKey: queryKeys.subscriptions.forInstitution(institutionId),
     queryFn: async () => {
       if (!institutionId) return [];
-      const response = await api.get<any, any>("/v1/subscriptions", {
+      const response = await api.get<any, any>(API_ENDPOINTS.SUBSCRIPTIONS, {
         params: { institutionId, limit: 50 },
       });
       return response.data || [];
@@ -209,13 +211,13 @@ export const useCreateLicense = () => {
 
   return useMutation({
     mutationFn: async (data: CreateLicenseInput) => {
-      const response = await api.post<any, any>("/v1/licenses", data);
+      const response = await api.post<any, any>(API_ENDPOINTS.LICENSES, data);
       return response.data as License;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("License key generated successfully");
     },
     onError: (error: any) => {
@@ -240,15 +242,15 @@ export const useUpdateLicense = () => {
       id: string;
       data: UpdateLicenseInput;
     }) => {
-      const response = await api.put<any, any>(`/v1/licenses/${id}`, data);
+      const response = await api.put<any, any>(API_ENDPOINTS.LICENSE(id), data);
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
       queryClient.invalidateQueries({
-        queryKey: ["licenses", "detail", variables.id],
+        queryKey: queryKeys.licenses.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["licenses", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License updated successfully");
     },
     onError: (error: any) => {
@@ -274,17 +276,17 @@ export const useUpdateLicenseStatus = () => {
       data: UpdateLicenseStatusInput;
     }) => {
       const response = await api.put<any, any>(
-        `/v1/licenses/${id}/status`,
+        API_ENDPOINTS.LICENSE_STATUS(id),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
       queryClient.invalidateQueries({
-        queryKey: ["licenses", "detail", variables.id],
+        queryKey: queryKeys.licenses.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["licenses", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success(`License marked as ${variables.data.status}`);
     },
     onError: (error: any) => {
@@ -310,17 +312,17 @@ export const useRevokeLicense = () => {
       data: RevokeLicenseInput;
     }) => {
       const response = await api.post<any, any>(
-        `/v1/licenses/${id}/revoke`,
+        API_ENDPOINTS.LICENSE_REVOKE(id),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
       queryClient.invalidateQueries({
-        queryKey: ["licenses", "detail", variables.id],
+        queryKey: queryKeys.licenses.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["licenses", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License revoked successfully");
     },
     onError: (error: any) => {
@@ -339,12 +341,12 @@ export const useSoftDeleteLicense = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/licenses/${id}`);
+      const response = await api.delete<any, any>(API_ENDPOINTS.LICENSE(id));
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License moved to trash");
     },
     onError: (error: any) => {
@@ -364,14 +366,14 @@ export const useRestoreLicense = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.put<any, any>(
-        `/v1/licenses/${id}/restore`,
+        API_ENDPOINTS.LICENSE_RESTORE(id),
         {},
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License restored successfully");
     },
     onError: (error: any) => {
@@ -391,13 +393,13 @@ export const usePermanentDeleteLicense = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete<any, any>(
-        `/v1/licenses/${id}/permanent`,
+        API_ENDPOINTS.LICENSE_PERMANENT(id),
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License permanently purged");
     },
     onError: (error: any) => {

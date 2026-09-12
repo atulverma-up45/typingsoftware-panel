@@ -1,6 +1,8 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type DeviceStatus = "ACTIVE" | "REVOKED" | "SUSPECT";
 
@@ -78,9 +80,9 @@ export interface RevokeDeviceInput {
 
 export const useDevices = (params: DeviceListParams = {}) => {
   return useQuery<PaginatedDevicesResponse>({
-    queryKey: ["devices", params],
+    queryKey: queryKeys.devices.list(params),
     queryFn: async () => {
-      const response = await api.get("/devices", { params });
+      const response = await api.get(API_ENDPOINTS.DEVICES, { params });
       return response.data;
     },
   });
@@ -88,9 +90,9 @@ export const useDevices = (params: DeviceListParams = {}) => {
 
 export const useDeviceStats = (institutionId?: string) => {
   return useQuery<DeviceStats>({
-    queryKey: ["devices", "stats", institutionId],
+    queryKey: queryKeys.devices.stats(institutionId),
     queryFn: async () => {
-      const response = await api.get("/devices/stats", {
+      const response = await api.get(API_ENDPOINTS.DEVICE_STATS, {
         params: institutionId ? { institutionId } : undefined,
       });
       return response.data?.data || response.data;
@@ -100,10 +102,10 @@ export const useDeviceStats = (institutionId?: string) => {
 
 export const useDevice = (id?: string) => {
   return useQuery<Device>({
-    queryKey: ["devices", id],
+    queryKey: queryKeys.devices.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Device ID is required");
-      const response = await api.get(`/devices/${id}`);
+      const response = await api.get(API_ENDPOINTS.DEVICE(id));
       return response.data?.data || response.data;
     },
     enabled: !!id,
@@ -125,13 +127,13 @@ export const useUpdateDevice = () => {
       id: string;
       data: UpdateDeviceInput;
     }) => {
-      const response = await api.put(`/devices/${id}`, data);
+      const response = await api.put(API_ENDPOINTS.DEVICE(id), data);
       return response.data?.data || response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] });
-      queryClient.invalidateQueries({ queryKey: ["devices", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["activations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       toast.success("Workstation label updated");
     },
     onError: (error: any) => {
@@ -153,13 +155,13 @@ export const useUpdateDeviceStatus = () => {
       id: string;
       data: UpdateDeviceStatusInput;
     }) => {
-      const response = await api.put(`/devices/${id}/status`, data);
+      const response = await api.put(API_ENDPOINTS.DEVICE_STATUS(id), data);
       return response.data?.data || response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] });
-      queryClient.invalidateQueries({ queryKey: ["devices", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["activations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       toast.success("Workstation status updated");
     },
     onError: (error: any) => {
@@ -181,12 +183,12 @@ export const useRevokeDevice = () => {
       id: string;
       data: RevokeDeviceInput;
     }) => {
-      const response = await api.post(`/devices/${id}/revoke`, data);
+      const response = await api.post(API_ENDPOINTS.DEVICE_REVOKE(id), data);
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] });
-      queryClient.invalidateQueries({ queryKey: ["activations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       toast.success("Workstation revoked and blacklisted");
     },
     onError: (error: any) => {
@@ -202,11 +204,11 @@ export const useSoftDeleteDevice = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete(`/devices/${id}`);
+      const response = await api.delete(API_ENDPOINTS.DEVICE(id));
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
       toast.success("Workstation moved to Recycle Bin");
     },
     onError: (error: any) => {
@@ -222,11 +224,11 @@ export const useRestoreDevice = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.put(`/devices/${id}/restore`);
+      const response = await api.put(API_ENDPOINTS.DEVICE_RESTORE(id));
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
       toast.success("Workstation restored from Recycle Bin");
     },
     onError: (error: any) => {
@@ -242,11 +244,11 @@ export const usePermanentDeleteDevice = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete(`/devices/${id}/permanent`);
+      const response = await api.delete(API_ENDPOINTS.DEVICE_PERMANENT(id));
       return response.data?.data || response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
       toast.success("Workstation permanently deleted");
     },
     onError: (error: any) => {

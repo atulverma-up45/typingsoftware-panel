@@ -1,6 +1,7 @@
 import api from "@/lib/api/client";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export interface SuperAdminMetrics {
   totalInstitutions: number;
@@ -91,7 +92,7 @@ export const useDashboardMetrics = (institutionId?: string | null) => {
       const response = await api.get<
         unknown,
         ApiResponse<DashboardMetricsPayload>
-      >("/v1/dashboard/metrics", {
+      >(API_ENDPOINTS.DASHBOARD_METRICS, {
         params: institutionId ? { institutionId } : undefined,
       });
       return response.data;
@@ -109,7 +110,7 @@ export const useDashboardUsage = (days = 7) => {
     queryKey: queryKeys.dashboard.usage(days),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<UsageStatItem[]>>(
-        "/v1/dashboard/usage",
+        API_ENDPOINTS.DASHBOARD_USAGE,
         {
           params: { days },
         },
@@ -129,7 +130,7 @@ export const useDashboardGrowth = (months = 5, enabled = true) => {
     queryKey: queryKeys.dashboard.growth(months),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<GrowthStatItem[]>>(
-        "/v1/dashboard/growth",
+        API_ENDPOINTS.DASHBOARD_GROWTH,
         {
           params: { months },
         },
@@ -150,7 +151,7 @@ export const useDashboardPendingSyncs = (days = 7, limit = 10) => {
     queryKey: queryKeys.dashboard.pendingSyncs(days, limit),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<PendingSyncItem[]>>(
-        "/v1/dashboard/pending-syncs",
+        API_ENDPOINTS.DASHBOARD_PENDING_SYNCS,
         {
           params: { days, limit },
         },
@@ -172,7 +173,7 @@ export const useDashboardRecentActivations = (limit = 10) => {
       const response = await api.get<
         unknown,
         ApiResponse<RecentActivationItem[]>
-      >("/v1/dashboard/recent-activations", {
+      >(API_ENDPOINTS.DASHBOARD_RECENT_ACTIVATIONS, {
         params: { limit },
       });
       return response.data || [];
@@ -190,7 +191,7 @@ export const useDashboardEvents = (limit = 10) => {
     queryKey: queryKeys.dashboard.events(limit),
     queryFn: async () => {
       const response = await api.get<unknown, ApiResponse<PlatformEventItem[]>>(
-        "/v1/dashboard/events",
+        API_ENDPOINTS.DASHBOARD_EVENTS,
         {
           params: { limit },
         },
@@ -212,7 +213,7 @@ export const useDashboardSubscriptions = (enabled = true) => {
       const response = await api.get<
         unknown,
         ApiResponse<SubscriptionBreakdownItem[]>
-      >("/v1/dashboard/subscriptions");
+      >(API_ENDPOINTS.DASHBOARD_SUBSCRIPTIONS);
       return response.data || [];
     },
     enabled,
@@ -231,7 +232,7 @@ export const useDashboardTopInstitutions = (limit = 5, enabled = true) => {
       const response = await api.get<
         unknown,
         ApiResponse<TopInstitutionItem[]>
-      >("/v1/dashboard/top-institutions", {
+      >(API_ENDPOINTS.DASHBOARD_TOP_INSTITUTIONS, {
         params: { limit },
       });
       return response.data || [];

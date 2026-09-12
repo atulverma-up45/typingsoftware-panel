@@ -1,6 +1,8 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type PlanStatus = "ACTIVE" | "ARCHIVED";
 
@@ -98,9 +100,9 @@ export interface UpdatePlanStatusInput {
  */
 export const usePlans = (params: PlanListParams = {}) => {
   return useQuery<PaginatedPlansResponse>({
-    queryKey: ["plans", params],
+    queryKey: queryKeys.plans.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/plans", { params });
+      const response = await api.get<any, any>(API_ENDPOINTS.PLANS, { params });
       return response;
     },
   });
@@ -111,9 +113,9 @@ export const usePlans = (params: PlanListParams = {}) => {
  */
 export const usePlanStats = (enabled = true) => {
   return useQuery<PlanStats>({
-    queryKey: ["plans", "stats"],
+    queryKey: queryKeys.plans.stats,
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/plans/stats");
+      const response = await api.get<any, any>(API_ENDPOINTS.PLAN_STATS);
       return response.data;
     },
     enabled,
@@ -126,10 +128,10 @@ export const usePlanStats = (enabled = true) => {
  */
 export const usePlan = (id: string | null | undefined) => {
   return useQuery<Plan>({
-    queryKey: ["plans", "detail", id],
+    queryKey: queryKeys.plans.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Plan ID is required");
-      const response = await api.get<any, any>(`/v1/plans/${id}`);
+      const response = await api.get<any, any>(API_ENDPOINTS.PLAN(id));
       return response.data;
     },
     enabled: !!id,
@@ -148,12 +150,12 @@ export const useCreatePlan = () => {
 
   return useMutation({
     mutationFn: async (data: CreatePlanInput) => {
-      const response = await api.post<any, any>("/v1/plans", data);
+      const response = await api.post<any, any>(API_ENDPOINTS.PLANS, data);
       return response.data as Plan;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans"] });
-      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Commercial plan created successfully");
     },
     onError: (error: any) => {
@@ -171,15 +173,15 @@ export const useUpdatePlan = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdatePlanInput }) => {
-      const response = await api.put<any, any>(`/v1/plans/${id}`, data);
+      const response = await api.put<any, any>(API_ENDPOINTS.PLAN(id), data);
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.all });
       queryClient.invalidateQueries({
-        queryKey: ["plans", "detail", variables.id],
+        queryKey: queryKeys.plans.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan configuration updated successfully");
     },
     onError: (error: any) => {
@@ -203,15 +205,15 @@ export const useUpdatePlanStatus = () => {
       id: string;
       data: UpdatePlanStatusInput;
     }) => {
-      const response = await api.put<any, any>(`/v1/plans/${id}/status`, data);
+      const response = await api.put<any, any>(API_ENDPOINTS.PLAN_STATUS(id), data);
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.all });
       queryClient.invalidateQueries({
-        queryKey: ["plans", "detail", variables.id],
+        queryKey: queryKeys.plans.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success(`Plan marked as ${variables.data.status}`);
     },
     onError: (error: any) => {
@@ -230,12 +232,12 @@ export const useSoftDeletePlan = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/plans/${id}`);
+      const response = await api.delete<any, any>(API_ENDPOINTS.PLAN(id));
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans"] });
-      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan archived / moved to trash");
     },
     onError: (error: any) => {
@@ -253,12 +255,12 @@ export const useRestorePlan = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.put<any, any>(`/v1/plans/${id}/restore`, {});
+      const response = await api.put<any, any>(API_ENDPOINTS.PLAN_RESTORE(id), {});
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans"] });
-      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan restored successfully");
     },
     onError: (error: any) => {
@@ -276,12 +278,12 @@ export const usePermanentDeletePlan = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/plans/${id}/permanent`);
+      const response = await api.delete<any, any>(API_ENDPOINTS.PLAN_PERMANENT(id));
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans"] });
-      queryClient.invalidateQueries({ queryKey: ["plans", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan permanently purged");
     },
     onError: (error: any) => {

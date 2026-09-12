@@ -1,6 +1,8 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type ActivationStatus = "ACTIVE" | "DEACTIVATED" | "REVOKED";
 
@@ -90,9 +92,9 @@ export interface RevokeActivationInput {
  */
 export const useActivations = (params: ActivationListParams = {}) => {
   return useQuery<PaginatedActivationsResponse>({
-    queryKey: ["activations", params],
+    queryKey: queryKeys.activations.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/activations", { params });
+      const response = await api.get<any, any>(API_ENDPOINTS.ACTIVATIONS, { params });
       return response;
     },
   });
@@ -103,9 +105,9 @@ export const useActivations = (params: ActivationListParams = {}) => {
  */
 export const useActivationStats = (institutionId?: string, enabled = true) => {
   return useQuery<ActivationStats>({
-    queryKey: ["activations", "stats", institutionId],
+    queryKey: queryKeys.activations.stats(institutionId),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/activations/stats", {
+      const response = await api.get<any, any>(API_ENDPOINTS.ACTIVATION_STATS, {
         params: institutionId ? { institutionId } : undefined,
       });
       return response.data;
@@ -120,10 +122,10 @@ export const useActivationStats = (institutionId?: string, enabled = true) => {
  */
 export const useActivation = (id: string | null | undefined) => {
   return useQuery<Activation>({
-    queryKey: ["activations", "detail", id],
+    queryKey: queryKeys.activations.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Activation ID required");
-      const response = await api.get<any, any>(`/v1/activations/${id}`);
+      const response = await api.get<any, any>(API_ENDPOINTS.ACTIVATION(id));
       return response.data;
     },
     enabled: !!id,
@@ -149,19 +151,19 @@ export const useDeactivateActivation = () => {
       data: DeactivateDeviceInput;
     }) => {
       const response = await api.post<any, any>(
-        `/v1/activations/${id}/deactivate`,
+        API_ENDPOINTS.ACTIVATION_DEACTIVATE(id),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["activations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       queryClient.invalidateQueries({
-        queryKey: ["activations", "detail", variables.id],
+        queryKey: queryKeys.activations.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["activations", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.statsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Workstation seat deactivated successfully");
     },
     onError: (error: any) => {
@@ -188,19 +190,19 @@ export const useReactivateActivation = () => {
       data: ReactivateDeviceInput;
     }) => {
       const response = await api.post<any, any>(
-        `/v1/activations/${id}/reactivate`,
+        API_ENDPOINTS.ACTIVATION_REACTIVATE(id),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["activations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       queryClient.invalidateQueries({
-        queryKey: ["activations", "detail", variables.id],
+        queryKey: queryKeys.activations.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["activations", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.statsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Workstation seat reactivated successfully");
     },
     onError: (error: any) => {
@@ -227,19 +229,19 @@ export const useRevokeActivation = () => {
       data: RevokeActivationInput;
     }) => {
       const response = await api.post<any, any>(
-        `/v1/activations/${id}/revoke`,
+        API_ENDPOINTS.ACTIVATION_REVOKE(id),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["activations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       queryClient.invalidateQueries({
-        queryKey: ["activations", "detail", variables.id],
+        queryKey: queryKeys.activations.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["activations", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activations.statsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Workstation terminal permanently revoked");
     },
     onError: (error: any) => {

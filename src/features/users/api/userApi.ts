@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -74,13 +73,6 @@ export interface UserStats {
   superAdmins: number;
 }
 
-export interface InstitutionOption {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-}
-
 export interface CreateUserInput {
   name: string;
   email: string;
@@ -133,39 +125,6 @@ export const useUserStats = (institutionId?: string) => {
         params: institutionId ? { institutionId } : undefined,
       }),
   });
-};
-
-export const useInstitutions = (enabled = true) => {
-  return useQuery({
-    queryKey: ["institutions", "dropdown-list"],
-    queryFn: async () => {
-      const response = await api.get<
-        unknown,
-        PaginatedResponse<InstitutionOption>
-      >("/v1/institutions", {
-        params: { limit: 100 },
-      });
-      return response.data || [];
-    },
-    enabled,
-    staleTime: 60000,
-  });
-};
-
-/**
- * Enterprise hook to resolve institutionId -> InstitutionOption in O(1)
- */
-export const useInstitutionMap = (enabled = true) => {
-  const { data: institutions = [], ...rest } = useInstitutions(enabled);
-  const institutionMap = useMemo(() => {
-    const map = new Map<string, InstitutionOption>();
-    for (const inst of institutions) {
-      map.set(inst.id, inst);
-    }
-    return map;
-  }, [institutions]);
-
-  return { institutions, institutionMap, ...rest };
 };
 
 export const useUserSessions = (userId: string | null) => {

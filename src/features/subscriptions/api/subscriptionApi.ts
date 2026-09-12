@@ -2,6 +2,8 @@ import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { Plan } from "@/features/plans/api/planApi";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type SubscriptionStatus =
   "TRIAL" | "ACTIVE" | "PAST_DUE" | "EXPIRED" | "CANCELLED" | "SUSPENDED";
@@ -122,9 +124,9 @@ export interface UpdateSubscriptionStatusInput {
  */
 export const useSubscriptions = (params: SubscriptionListParams = {}) => {
   return useQuery<PaginatedSubscriptionsResponse>({
-    queryKey: ["subscriptions", params],
+    queryKey: queryKeys.subscriptions.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/subscriptions", { params });
+      const response = await api.get<any, any>(API_ENDPOINTS.SUBSCRIPTIONS, { params });
       return response;
     },
   });
@@ -138,9 +140,9 @@ export const useSubscriptionStats = (
   enabled = true,
 ) => {
   return useQuery<SubscriptionStats>({
-    queryKey: ["subscriptions", "stats", institutionId],
+    queryKey: queryKeys.subscriptions.stats(institutionId),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/subscriptions/stats", {
+      const response = await api.get<any, any>(API_ENDPOINTS.SUBSCRIPTION_STATS, {
         params: institutionId ? { institutionId } : undefined,
       });
       return response.data;
@@ -155,10 +157,10 @@ export const useSubscriptionStats = (
  */
 export const useSubscription = (id: string | null | undefined) => {
   return useQuery<Subscription>({
-    queryKey: ["subscriptions", "detail", id],
+    queryKey: queryKeys.subscriptions.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Subscription ID is required");
-      const response = await api.get<any, any>(`/v1/subscriptions/${id}`);
+      const response = await api.get<any, any>(API_ENDPOINTS.SUBSCRIPTION(id));
       return response.data;
     },
     enabled: !!id,
@@ -177,14 +179,14 @@ export const useCreateSubscription = () => {
 
   return useMutation({
     mutationFn: async (data: CreateSubscriptionInput) => {
-      const response = await api.post<any, any>("/v1/subscriptions", data);
+      const response = await api.post<any, any>(API_ENDPOINTS.SUBSCRIPTIONS, data);
       return response.data as Subscription;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Subscription contract provisioned successfully");
     },
     onError: (error: any) => {
@@ -210,19 +212,19 @@ export const useRenewSubscription = () => {
       data: RenewSubscriptionInput;
     }) => {
       const response = await api.post<any, any>(
-        `/v1/subscriptions/${id}/renew`,
+        API_ENDPOINTS.SUBSCRIPTION_RENEW(id),
         data,
       );
       return response.data as Subscription;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
       queryClient.invalidateQueries({
-        queryKey: ["subscriptions", "detail", variables.id],
+        queryKey: queryKeys.subscriptions.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Subscription contract renewed successfully");
     },
     onError: (error: any) => {
@@ -247,15 +249,15 @@ export const useUpdateSubscription = () => {
       id: string;
       data: UpdateSubscriptionInput;
     }) => {
-      const response = await api.put<any, any>(`/v1/subscriptions/${id}`, data);
+      const response = await api.put<any, any>(API_ENDPOINTS.SUBSCRIPTION(id), data);
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
       queryClient.invalidateQueries({
-        queryKey: ["subscriptions", "detail", variables.id],
+        queryKey: queryKeys.subscriptions.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription updated successfully");
     },
     onError: (error: any) => {
@@ -281,17 +283,17 @@ export const useUpdateSubscriptionStatus = () => {
       data: UpdateSubscriptionStatusInput;
     }) => {
       const response = await api.put<any, any>(
-        `/v1/subscriptions/${id}/status`,
+        API_ENDPOINTS.SUBSCRIPTION_STATUS(id),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
       queryClient.invalidateQueries({
-        queryKey: ["subscriptions", "detail", variables.id],
+        queryKey: queryKeys.subscriptions.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success(`Subscription transitioned to ${variables.data.status}`);
     },
     onError: (error: any) => {
@@ -310,12 +312,12 @@ export const useSoftDeleteSubscription = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/subscriptions/${id}`);
+      const response = await api.delete<any, any>(API_ENDPOINTS.SUBSCRIPTION(id));
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription moved to trash / cancelled");
     },
     onError: (error: any) => {
@@ -335,14 +337,14 @@ export const useRestoreSubscription = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.put<any, any>(
-        `/v1/subscriptions/${id}/restore`,
+        API_ENDPOINTS.SUBSCRIPTION_RESTORE(id),
         {},
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription restored successfully");
     },
     onError: (error: any) => {
@@ -362,13 +364,13 @@ export const usePermanentDeleteSubscription = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete<any, any>(
-        `/v1/subscriptions/${id}/permanent`,
+        API_ENDPOINTS.SUBSCRIPTION_PERMANENT(id),
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription permanently purged");
     },
     onError: (error: any) => {

@@ -2,6 +2,7 @@ import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export interface AuthTrackingOverview {
   totalActiveSessions: number;
@@ -170,10 +171,10 @@ export interface PaginatedResult<T> {
 
 export const useAuthTrackingOverview = () => {
   return useQuery({
-    queryKey: ["auth-tracking", "overview"],
+    queryKey: queryKeys.authTracking.overview,
     queryFn: () =>
       api.get<any, { data: AuthTrackingOverview }>(
-        "/v1/auth-tracking/overview",
+        API_ENDPOINTS.AUTH_TRACKING_OVERVIEW,
       ),
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
@@ -181,19 +182,19 @@ export const useAuthTrackingOverview = () => {
 
 export const useThreatRadar = () => {
   return useQuery({
-    queryKey: ["auth-tracking", "threats"],
+    queryKey: queryKeys.authTracking.threats,
     queryFn: () =>
-      api.get<any, { data: ThreatRadarData }>("/v1/auth-tracking/threats"),
+      api.get<any, { data: ThreatRadarData }>(API_ENDPOINTS.AUTH_TRACKING_THREATS),
     refetchInterval: 15000, // Auto-refresh every 15 seconds
   });
 };
 
 export const useLocationClusters = () => {
   return useQuery({
-    queryKey: ["auth-tracking", "locations"],
+    queryKey: queryKeys.authTracking.locations,
     queryFn: () =>
       api.get<any, { data: LocationClusterItem[] }>(
-        "/v1/auth-tracking/locations",
+        API_ENDPOINTS.AUTH_TRACKING_LOCATIONS,
       ),
     refetchInterval: 30000,
   });
@@ -209,10 +210,10 @@ export const useLiveSessions = (params: {
   institutionId?: string;
 }) => {
   return useQuery({
-    queryKey: ["auth-tracking", "sessions", params],
+    queryKey: queryKeys.authTracking.sessions(params),
     queryFn: () =>
       api.get<any, PaginatedResult<LiveSessionItem>>(
-        "/v1/auth-tracking/sessions",
+        API_ENDPOINTS.AUTH_TRACKING_SESSIONS,
         { params },
       ),
     refetchInterval: 15000, // Auto-refresh every 15 seconds
@@ -228,10 +229,10 @@ export const useGlobalLoginHistory = (params: {
   institutionId?: string;
 }) => {
   return useQuery({
-    queryKey: ["auth-tracking", "history", params],
+    queryKey: queryKeys.authTracking.history(params),
     queryFn: () =>
       api.get<any, PaginatedResult<GlobalLoginHistoryItem>>(
-        "/v1/auth-tracking/history",
+        API_ENDPOINTS.AUTH_TRACKING_HISTORY,
         { params },
       ),
   });
@@ -239,11 +240,18 @@ export const useGlobalLoginHistory = (params: {
 
 export const useUserForensics = (userId: string | null) => {
   return useQuery({
-    queryKey: ["auth-tracking", "user-forensics", userId],
-    queryFn: () =>
-      api.get<any, { data: UserForensicsData }>(
-        `/v1/auth-tracking/users/${userId}/forensics`,
-      ),
+    queryKey: queryKeys.authTracking.userForensics(userId),
+    queryFn: () => {
+      // `enabled` already guarantees a truthy id at run time; the guard keeps
+      // the endpoint factory's `string` contract honest without resorting to
+      // a non-null assertion.
+      if (!userId) {
+        throw new Error("A user id is required to load forensics");
+      }
+      return api.get<any, { data: UserForensicsData }>(
+        API_ENDPOINTS.AUTH_TRACKING_USER_FORENSICS(userId),
+      );
+    },
     enabled: Boolean(userId),
   });
 };
@@ -256,9 +264,9 @@ export const useKillSession = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (sessionId: string) =>
-      api.delete(`/v1/auth-tracking/sessions/${sessionId}`),
+      api.delete(API_ENDPOINTS.AUTH_TRACKING_SESSION(sessionId)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth-tracking"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.authTracking.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("Active session terminated immediately");
     },
@@ -272,9 +280,9 @@ export const useKillAllUserSessions = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (userId: string) =>
-      api.delete(`/v1/auth-tracking/sessions/user/${userId}`),
+      api.delete(API_ENDPOINTS.AUTH_TRACKING_USER_SESSIONS(userId)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth-tracking"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.authTracking.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("All device sessions terminated for user");
     },
@@ -289,10 +297,10 @@ export const usePruneExpiredSessions = () => {
   return useMutation({
     mutationFn: () =>
       api.post<{ data: { prunedCount: number; olderThanDays: number } }>(
-        "/v1/auth-tracking/sessions/cleanup",
+        API_ENDPOINTS.AUTH_TRACKING_SESSIONS_CLEANUP,
       ),
     onSuccess: (res: any) => {
-      queryClient.invalidateQueries({ queryKey: ["auth-tracking"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.authTracking.all });
       const count = res.data?.data?.prunedCount ?? 0;
       toast.success(`Pruned ${count} dead/expired sessions from storage`);
     },

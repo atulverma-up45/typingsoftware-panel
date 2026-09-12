@@ -1,6 +1,8 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type ContentType =
   | "PASSAGE"
@@ -132,9 +134,9 @@ export interface UpdateContentStatusInput {
  */
 export const useContentList = (params: ContentListParams = {}) => {
   return useQuery<PaginatedContentResponse>({
-    queryKey: ["content", params],
+    queryKey: queryKeys.content.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/content", { params });
+      const response = await api.get<any, any>(API_ENDPOINTS.CONTENT, { params });
       return response;
     },
   });
@@ -145,9 +147,9 @@ export const useContentList = (params: ContentListParams = {}) => {
  */
 export const useContentStats = (enabled = true) => {
   return useQuery<ContentStats>({
-    queryKey: ["content", "stats"],
+    queryKey: queryKeys.content.stats,
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/content/stats");
+      const response = await api.get<any, any>(API_ENDPOINTS.CONTENT_STATS);
       return response.data;
     },
     enabled,
@@ -160,10 +162,10 @@ export const useContentStats = (enabled = true) => {
  */
 export const useContentItem = (id: string | null | undefined) => {
   return useQuery<ContentItem>({
-    queryKey: ["content", "detail", id],
+    queryKey: queryKeys.content.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Content ID is required");
-      const response = await api.get<any, any>(`/v1/content/${id}`);
+      const response = await api.get<any, any>(API_ENDPOINTS.CONTENT_ITEM(id));
       return response.data;
     },
     enabled: !!id,
@@ -182,12 +184,12 @@ export const useCreateContent = () => {
 
   return useMutation({
     mutationFn: async (data: CreateContentInput) => {
-      const response = await api.post<any, any>("/v1/content", data);
+      const response = await api.post<any, any>(API_ENDPOINTS.CONTENT, data);
       return response.data as ContentItem;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["content"] });
-      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item created successfully");
     },
     onError: (error: any) => {
@@ -212,15 +214,15 @@ export const useUpdateContent = () => {
       id: string;
       data: UpdateContentInput;
     }) => {
-      const response = await api.put<any, any>(`/v1/content/${id}`, data);
+      const response = await api.put<any, any>(API_ENDPOINTS.CONTENT_ITEM(id), data);
       return response.data as ContentItem;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.all });
       queryClient.invalidateQueries({
-        queryKey: ["content", "detail", variables.id],
+        queryKey: queryKeys.content.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content updated successfully");
     },
     onError: (error: any) => {
@@ -246,17 +248,17 @@ export const useUpdateContentStatus = () => {
       data: UpdateContentStatusInput;
     }) => {
       const response = await api.put<any, any>(
-        `/v1/content/${id}/status`,
+        API_ENDPOINTS.CONTENT_STATUS(id),
         data,
       );
       return response.data as ContentItem;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.all });
       queryClient.invalidateQueries({
-        queryKey: ["content", "detail", variables.id],
+        queryKey: queryKeys.content.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success(`Content transitioned to ${variables.data.status}`);
     },
     onError: (error: any) => {
@@ -275,12 +277,12 @@ export const useSoftDeleteContent = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/content/${id}`);
+      const response = await api.delete<any, any>(API_ENDPOINTS.CONTENT_ITEM(id));
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["content"] });
-      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item moved to trash");
     },
     onError: (error: any) => {
@@ -300,14 +302,14 @@ export const useRestoreContent = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.post<any, any>(
-        `/v1/content/${id}/restore`,
+        API_ENDPOINTS.CONTENT_RESTORE(id),
         {},
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["content"] });
-      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item restored successfully");
     },
     onError: (error: any) => {
@@ -327,13 +329,13 @@ export const usePermanentDeleteContent = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete<any, any>(
-        `/v1/content/${id}/permanent`,
+        API_ENDPOINTS.CONTENT_PERMANENT(id),
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["content"] });
-      queryClient.invalidateQueries({ queryKey: ["content", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item permanently purged");
     },
     onError: (error: any) => {

@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type InstitutionStatus = "ACTIVE" | "SUSPENDED" | "DELETED";
 
@@ -161,9 +163,9 @@ export interface ResetBrandingInput {
  */
 export const useInstitutions = (params: InstitutionListParams = {}) => {
   return useQuery<PaginatedInstitutionsResponse>({
-    queryKey: ["institutions", params],
+    queryKey: queryKeys.institutions.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/institutions", { params });
+      const response = await api.get<any, any>(API_ENDPOINTS.INSTITUTIONS, { params });
       return response;
     },
   });
@@ -174,9 +176,9 @@ export const useInstitutions = (params: InstitutionListParams = {}) => {
  */
 export const useGlobalInstitutionStats = (enabled = true) => {
   return useQuery<GlobalInstitutionStats>({
-    queryKey: ["institutions", "global-stats"],
+    queryKey: queryKeys.institutions.globalStats,
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/institutions/stats");
+      const response = await api.get<any, any>(API_ENDPOINTS.INSTITUTION_STATS);
       return response.data;
     },
     enabled,
@@ -189,10 +191,10 @@ export const useGlobalInstitutionStats = (enabled = true) => {
  */
 export const useInstitution = (id: string | null | undefined) => {
   return useQuery<Institution>({
-    queryKey: ["institutions", "detail", id],
+    queryKey: queryKeys.institutions.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Institution ID required");
-      const response = await api.get<any, any>(`/v1/institutions/${id}`);
+      const response = await api.get<any, any>(API_ENDPOINTS.INSTITUTION(id));
       return response.data;
     },
     enabled: !!id,
@@ -204,11 +206,11 @@ export const useInstitution = (id: string | null | undefined) => {
  */
 export const useInstitutionBySlug = (slug: string | null | undefined) => {
   return useQuery<Institution>({
-    queryKey: ["institutions", "by-slug", slug],
+    queryKey: queryKeys.institutions.bySlug(slug),
     queryFn: async () => {
       if (!slug) throw new Error("Slug required");
       const response = await api.get<any, any>(
-        `/v1/institutions/by-slug/${slug}`,
+        API_ENDPOINTS.INSTITUTION_BY_SLUG(slug),
       );
       return response.data;
     },
@@ -221,10 +223,10 @@ export const useInstitutionBySlug = (slug: string | null | undefined) => {
  */
 export const useInstitutionStats = (id: string | null | undefined) => {
   return useQuery<InstitutionStats>({
-    queryKey: ["institutions", "stats", id],
+    queryKey: queryKeys.institutions.stats(id),
     queryFn: async () => {
       if (!id) throw new Error("Institution ID required");
-      const response = await api.get<any, any>(`/v1/institutions/${id}/stats`);
+      const response = await api.get<any, any>(API_ENDPOINTS.INSTITUTION_METRICS(id));
       return response.data;
     },
     enabled: !!id,
@@ -236,9 +238,9 @@ export const useInstitutionStats = (id: string | null | undefined) => {
  */
 export const useCheckSlug = (slug: string, enabled = true) => {
   return useQuery<SlugAvailability>({
-    queryKey: ["institutions", "check-slug", slug],
+    queryKey: queryKeys.institutions.checkSlug(slug),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/institutions/check-slug", {
+      const response = await api.get<any, any>(API_ENDPOINTS.INSTITUTION_CHECK_SLUG, {
         params: { slug },
       });
       return response.data;
@@ -249,17 +251,66 @@ export const useCheckSlug = (slug: string, enabled = true) => {
 };
 
 /**
+ * Lightweight `{ id, name, slug, status }` projection for dropdowns and pickers.
+ * Distinct from `useInstitutions`, which returns the full paginated envelope.
+ */
+export interface InstitutionOption {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+}
+
+/**
+ * Fetch the institution option list for dropdowns.
+ *
+ * Named `useInstitutionOptions` (not `useInstitutions`) because `useInstitutions`
+ * already means "paginated list" in this module — the two hooks return different
+ * shapes, and a shared name made it easy to wire up the wrong one.
+ */
+export const useInstitutionOptions = (enabled = true) => {
+  return useQuery<InstitutionOption[]>({
+    queryKey: queryKeys.institutions.dropdownList,
+    queryFn: async () => {
+      const response = await api.get<any, any>(API_ENDPOINTS.INSTITUTIONS, {
+        params: { limit: 100 },
+      });
+      return response.data || [];
+    },
+    enabled,
+    staleTime: 60000,
+  });
+};
+
+/**
+ * Resolve institutionId -> InstitutionOption in O(1).
+ * Prefer this over `options.find(...)` inside render for large tables.
+ */
+export const useInstitutionMap = (enabled = true) => {
+  const { data: institutions = [], ...rest } = useInstitutionOptions(enabled);
+  const institutionMap = useMemo(() => {
+    const map = new Map<string, InstitutionOption>();
+    for (const inst of institutions) {
+      map.set(inst.id, inst);
+    }
+    return map;
+  }, [institutions]);
+
+  return { institutions, institutionMap, ...rest };
+};
+
+/**
  * Fetch branding for a specific institution
  */
 export const useInstitutionBranding = (
   institutionId: string | null | undefined,
 ) => {
   return useQuery<InstitutionBranding>({
-    queryKey: ["branding", institutionId],
+    queryKey: queryKeys.branding.detail(institutionId),
     queryFn: async () => {
       if (!institutionId) throw new Error("Institution ID required");
       const response = await api.get<any, any>(
-        `/v1/institutions/${institutionId}/branding`,
+        API_ENDPOINTS.INSTITUTION_BRANDING(institutionId),
       );
       return response.data;
     },
@@ -272,9 +323,9 @@ export const useInstitutionBranding = (
  */
 export const useBrandingStats = (enabled = true) => {
   return useQuery<any>({
-    queryKey: ["branding", "stats"],
+    queryKey: queryKeys.branding.stats,
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/branding/stats");
+      const response = await api.get<any, any>(API_ENDPOINTS.BRANDING_STATS);
       return response.data;
     },
     enabled,
@@ -294,19 +345,19 @@ export const useCreateInstitution = () => {
 
   return useMutation({
     mutationFn: async (data: CreateInstitutionInput) => {
-      const response = await api.post<any, any>("/v1/institutions", data);
+      const response = await api.post<any, any>(API_ENDPOINTS.INSTITUTIONS, data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["institutions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.institutions.all });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "global-stats"],
+        queryKey: queryKeys.institutions.globalStats,
       });
       toast.success("Institution provisioned successfully");
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to provision institution";
+        error?.message || error.response?.data?.message || "Failed to provision institution";
       toast.error(message);
     },
   });
@@ -326,19 +377,19 @@ export const useUpdateInstitution = () => {
       id: string;
       data: UpdateInstitutionInput;
     }) => {
-      const response = await api.put<any, any>(`/v1/institutions/${id}`, data);
+      const response = await api.put<any, any>(API_ENDPOINTS.INSTITUTION(id), data);
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["institutions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.institutions.all });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "detail", variables.id],
+        queryKey: queryKeys.institutions.detail(variables.id),
       });
       toast.success("Institution updated successfully");
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to update institution";
+        error?.message || error.response?.data?.message || "Failed to update institution";
       toast.error(message);
     },
   });
@@ -359,24 +410,24 @@ export const useUpdateInstitutionStatus = () => {
       data: UpdateInstitutionStatusInput;
     }) => {
       const response = await api.put<any, any>(
-        `/v1/institutions/${id}/status`,
+        API_ENDPOINTS.INSTITUTION_STATUS(id),
         data,
       );
       return response.data;
     },
     onSuccess: (updatedInst, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["institutions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.institutions.all });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "detail", variables.id],
+        queryKey: queryKeys.institutions.detail(variables.id),
       });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "global-stats"],
+        queryKey: queryKeys.institutions.globalStats,
       });
       toast.success(`Institution marked as ${variables.data.status}`);
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to update institution status";
+        error?.message || error.response?.data?.message || "Failed to update institution status";
       toast.error(message);
     },
   });
@@ -390,19 +441,19 @@ export const useSoftDeleteInstitution = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/institutions/${id}`);
+      const response = await api.delete<any, any>(API_ENDPOINTS.INSTITUTION(id));
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["institutions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.institutions.all });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "global-stats"],
+        queryKey: queryKeys.institutions.globalStats,
       });
       toast.success("Institution moved to trash");
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to delete institution";
+        error?.message || error.response?.data?.message || "Failed to delete institution";
       toast.error(message);
     },
   });
@@ -417,21 +468,21 @@ export const useRestoreInstitution = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.put<any, any>(
-        `/v1/institutions/${id}/restore`,
+        API_ENDPOINTS.INSTITUTION_RESTORE(id),
         {},
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["institutions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.institutions.all });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "global-stats"],
+        queryKey: queryKeys.institutions.globalStats,
       });
       toast.success("Institution restored successfully");
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to restore institution";
+        error?.message || error.response?.data?.message || "Failed to restore institution";
       toast.error(message);
     },
   });
@@ -446,19 +497,20 @@ export const usePermanentDeleteInstitution = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete<any, any>(
-        `/v1/institutions/${id}/permanent`,
+        API_ENDPOINTS.INSTITUTION_PERMANENT(id),
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["institutions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.institutions.all });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "global-stats"],
+        queryKey: queryKeys.institutions.globalStats,
       });
       toast.success("Institution permanently purged");
     },
     onError: (error: any) => {
       const message =
+        error?.message ||
         error.response?.data?.message ||
         "Failed to permanently delete institution";
       toast.error(message);
@@ -481,23 +533,23 @@ export const useUpdateBranding = () => {
       data: UpdateBrandingInput;
     }) => {
       const response = await api.put<any, any>(
-        `/v1/institutions/${institutionId}/branding`,
+        API_ENDPOINTS.INSTITUTION_BRANDING(institutionId),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["branding", variables.institutionId],
+        queryKey: queryKeys.branding.detail(variables.institutionId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "detail", variables.institutionId],
+        queryKey: queryKeys.institutions.detail(variables.institutionId),
       });
       toast.success("Branding configuration saved successfully");
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to save branding";
+        error?.message || error.response?.data?.message || "Failed to save branding";
       toast.error(message);
     },
   });
@@ -518,23 +570,23 @@ export const useResetBranding = () => {
       data: ResetBrandingInput;
     }) => {
       const response = await api.post<any, any>(
-        `/v1/institutions/${institutionId}/branding/reset`,
+        API_ENDPOINTS.INSTITUTION_BRANDING_RESET(institutionId),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["branding", variables.institutionId],
+        queryKey: queryKeys.branding.detail(variables.institutionId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["institutions", "detail", variables.institutionId],
+        queryKey: queryKeys.institutions.detail(variables.institutionId),
       });
       toast.success("Branding reset to default successfully");
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to reset branding";
+        error?.message || error.response?.data?.message || "Failed to reset branding";
       toast.error(message);
     },
   });
@@ -547,7 +599,7 @@ export const useTriggerBrandingBuild = () => {
   return useMutation({
     mutationFn: async (institutionId: string) => {
       const response = await api.post<any, any>(
-        `/v1/institutions/${institutionId}/branding/build`,
+        API_ENDPOINTS.INSTITUTION_BRANDING_BUILD(institutionId),
         {},
       );
       return response.data;
@@ -560,7 +612,7 @@ export const useTriggerBrandingBuild = () => {
     },
     onError: (error: any) => {
       const message =
-        error.response?.data?.message || "Failed to trigger client build";
+        error?.message || error.response?.data?.message || "Failed to trigger client build";
       toast.error(message);
     },
   });

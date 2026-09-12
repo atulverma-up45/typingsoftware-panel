@@ -1,6 +1,8 @@
 import api from "@/lib/api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export type ModuleStatus = "ACTIVE" | "INACTIVE";
 
@@ -98,9 +100,9 @@ export interface SetInstitutionModuleInput {
  */
 export const useModules = (params: ModuleListParams = {}) => {
   return useQuery<PaginatedModulesResponse>({
-    queryKey: ["modules", params],
+    queryKey: queryKeys.modules.list(params),
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/modules", { params });
+      const response = await api.get<any, any>(API_ENDPOINTS.MODULES, { params });
       return response;
     },
   });
@@ -111,9 +113,9 @@ export const useModules = (params: ModuleListParams = {}) => {
  */
 export const useModuleStats = (enabled = true) => {
   return useQuery<ModuleStats>({
-    queryKey: ["modules", "stats"],
+    queryKey: queryKeys.modules.stats,
     queryFn: async () => {
-      const response = await api.get<any, any>("/v1/modules/stats");
+      const response = await api.get<any, any>(API_ENDPOINTS.MODULE_STATS);
       return response.data;
     },
     enabled,
@@ -126,10 +128,10 @@ export const useModuleStats = (enabled = true) => {
  */
 export const useModule = (id: string | null | undefined) => {
   return useQuery<TypingModule>({
-    queryKey: ["modules", "detail", id],
+    queryKey: queryKeys.modules.detail(id),
     queryFn: async () => {
       if (!id) throw new Error("Module ID is required");
-      const response = await api.get<any, any>(`/v1/modules/${id}`);
+      const response = await api.get<any, any>(API_ENDPOINTS.MODULE(id));
       return response.data;
     },
     enabled: !!id,
@@ -143,11 +145,11 @@ export const useInstitutionModules = (
   institutionId: string | null | undefined,
 ) => {
   return useQuery<InstitutionModuleOverride[]>({
-    queryKey: ["institutions", institutionId, "modules"],
+    queryKey: queryKeys.institutions.modules(institutionId),
     queryFn: async () => {
       if (!institutionId) return [];
       const response = await api.get<any, any>(
-        `/v1/institutions/${institutionId}/modules`,
+        API_ENDPOINTS.INSTITUTION_MODULES(institutionId),
       );
       return response.data || [];
     },
@@ -167,12 +169,12 @@ export const useCreateModule = () => {
 
   return useMutation({
     mutationFn: async (data: CreateModuleInput) => {
-      const response = await api.post<any, any>("/v1/modules", data);
+      const response = await api.post<any, any>(API_ENDPOINTS.MODULES, data);
       return response.data as TypingModule;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["modules"] });
-      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Typing module created successfully");
     },
     onError: (error: any) => {
@@ -197,15 +199,15 @@ export const useUpdateModule = () => {
       id: string;
       data: UpdateModuleInput;
     }) => {
-      const response = await api.put<any, any>(`/v1/modules/${id}`, data);
+      const response = await api.put<any, any>(API_ENDPOINTS.MODULE(id), data);
       return response.data as TypingModule;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.all });
       queryClient.invalidateQueries({
-        queryKey: ["modules", "detail", variables.id],
+        queryKey: queryKeys.modules.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module updated successfully");
     },
     onError: (error: any) => {
@@ -231,17 +233,17 @@ export const useUpdateModuleStatus = () => {
       data: UpdateModuleStatusInput;
     }) => {
       const response = await api.put<any, any>(
-        `/v1/modules/${id}/status`,
+        API_ENDPOINTS.MODULE_STATUS(id),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["modules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.all });
       queryClient.invalidateQueries({
-        queryKey: ["modules", "detail", variables.id],
+        queryKey: queryKeys.modules.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success(`Module marked as ${variables.data.status}`);
     },
     onError: (error: any) => {
@@ -260,12 +262,12 @@ export const useSoftDeleteModule = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete<any, any>(`/v1/modules/${id}`);
+      const response = await api.delete<any, any>(API_ENDPOINTS.MODULE(id));
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["modules"] });
-      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module moved to trash");
     },
     onError: (error: any) => {
@@ -284,12 +286,12 @@ export const useRestoreModule = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.put<any, any>(`/v1/modules/${id}/restore`, {});
+      const response = await api.put<any, any>(API_ENDPOINTS.MODULE_RESTORE(id), {});
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["modules"] });
-      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module restored successfully");
     },
     onError: (error: any) => {
@@ -309,13 +311,13 @@ export const usePermanentDeleteModule = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete<any, any>(
-        `/v1/modules/${id}/permanent`,
+        API_ENDPOINTS.MODULE_PERMANENT(id),
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["modules"] });
-      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module permanently purged");
     },
     onError: (error: any) => {
@@ -335,16 +337,16 @@ export const useSetInstitutionModule = () => {
   return useMutation({
     mutationFn: async ({ institutionId, data }: SetInstitutionModuleInput) => {
       const response = await api.post<any, any>(
-        `/v1/institutions/${institutionId}/modules`,
+        API_ENDPOINTS.INSTITUTION_MODULES(institutionId),
         data,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["institutions", variables.institutionId, "modules"],
+        queryKey: queryKeys.institutions.modules(variables.institutionId),
       });
-      queryClient.invalidateQueries({ queryKey: ["modules", "stats"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Institution module configuration saved");
     },
     onError: (error: any) => {
