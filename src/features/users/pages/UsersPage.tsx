@@ -16,9 +16,9 @@ import {
 import {
   useUsers,
   useUserStats,
-  useInstitutionMap,
   type User,
 } from '../api/userApi';
+import { useInstitutionMap } from '@/features/institutions/api/institutionApi';
 import StatCard from '@/components/ui/StatCard';
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import { UserActionsDropdown } from '../components/UserActionsDropdown';

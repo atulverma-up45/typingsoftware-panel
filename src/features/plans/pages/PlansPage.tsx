@@ -42,8 +42,8 @@ import { CreatePlanModal } from '../components/CreatePlanModal';
 import { EditPlanModal } from '../components/EditPlanModal';
 import { PlanDetailModal } from '../components/PlanDetailModal';
 import { PlanActionsDropdown } from '../components/PlanActionsDropdown';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 type PlanTab = 'ACTIVE' | 'ARCHIVED' | 'ALL' | 'TRASH';
 type ViewMode = 'CARDS' | 'TABLE';
@@ -690,38 +690,38 @@ export const PlansPage: React.FC = () => {
       />
 
       {/* Confirmation: Soft Delete / Move to Trash */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!planToDelete}
         title="Move Commercial Plan to Trash?"
         description={`Are you sure you want to move tier "${planToDelete?.name}" to trash? Existing active customer subscriptions will remain unaffected, but this plan will be removed from standard catalogs.`}
-        confirmText="Move to Trash"
+        confirmLabel="Move to Trash"
         variant="warning"
-        isLoading={softDeleteMutation.isPending}
+        isPending={softDeleteMutation.isPending}
         onConfirm={handleConfirmSoftDelete}
         onClose={() => setPlanToDelete(null)}
       />
 
       {/* Confirmation: Restore */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!planToRestore}
         title="Restore Commercial Plan?"
         description={`Do you want to restore tier "${planToRestore?.name}" back to active status?`}
-        confirmText="Restore Plan"
+        confirmLabel="Restore Plan"
         variant="info"
-        isLoading={restoreMutation.isPending}
+        isPending={restoreMutation.isPending}
         onConfirm={handleConfirmRestore}
         onClose={() => setPlanToRestore(null)}
       />
 
       {/* Confirmation: Permanent Purge */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!planToPurge}
         title="Permanently Purge Commercial Plan?"
         description={`WARNING: This action is destructive and irreversible. Tier "${planToPurge?.name}" (${planToPurge?.id}) will be permanently deleted from the database.`}
-        confirmText="Permanently Purge"
+        confirmLabel="Permanently Purge"
         variant="critical"
-        requireConfirmationText="DELETE"
-        isLoading={permanentDeleteMutation.isPending}
+        confirmPhrase="DELETE"
+        isPending={permanentDeleteMutation.isPending}
         onConfirm={handleConfirmPermanentPurge}
         onClose={() => setPlanToPurge(null)}
       />

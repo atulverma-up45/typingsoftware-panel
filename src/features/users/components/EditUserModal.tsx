@@ -5,8 +5,8 @@ import {
   type UserRole,
   useUpdateUser,
   useUpdateUserRole,
-  useInstitutions,
 } from '../api/userApi';
+import { useInstitutionOptions } from '@/features/institutions/api/institutionApi';
 import { usePermissions } from '@/lib/permissions';
 
 interface EditUserModalProps {
@@ -39,7 +39,7 @@ const EditUserModalContent: React.FC<{
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  const { data: institutions = [], isLoading: isLoadingInstitutions } = useInstitutions(
+  const { data: institutions = [], isLoading: isLoadingInstitutions } = useInstitutionOptions(
     isSuperAdmin,
   );
 

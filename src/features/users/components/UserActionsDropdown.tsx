@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  MoreVertical,
   Edit,
   Trash2,
   Shield,
@@ -10,7 +9,6 @@ import {
   Trash,
   MailCheck,
   ShieldAlert,
-  Loader2,
 } from 'lucide-react';
 import type { User } from '../api/userApi';
 import {
@@ -22,7 +20,8 @@ import {
 } from '../api/userApi';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePermissions } from '@/lib/permissions';
-import { ConfirmationModal } from './ConfirmationModal';
+import { ConfirmDialog } from '@/components/ui/Modal';
+import { DropdownMenu, type DropdownMenuEntry } from '@/components/ui/DropdownMenu';
 
 interface UserActionsDropdownProps {
   user: User;
@@ -39,9 +38,6 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
   onViewDetails,
   onChangeStatus,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   // Dialog triggers
   const [isConfirmingSoftDelete, setIsConfirmingSoftDelete] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
@@ -62,133 +58,103 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
   const isPending =
     isUpdatingRole || isSoftDeleting || isRestoring || isPermDeleting || isSendingEmail;
 
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleAction = (action: () => void) => {
-    action();
-    setIsOpen(false);
-  };
-
   const isDeleted = user.deletedAt !== null;
+
+  const entries: DropdownMenuEntry[] = [
+    {
+      id: 'view',
+      label: 'View Details & Sessions',
+      icon: <Eye size={15} />,
+      tone: 'info',
+      onSelect: () => onViewDetails?.(user),
+    },
+  ];
+
+  if (isDeleted) {
+    // Deleted Account Actions (Super Admin only)
+    if (isSuperAdmin) {
+      entries.push(
+        {
+          id: 'restore',
+          label: 'Restore Account',
+          icon: <RotateCcw size={15} />,
+          tone: 'info',
+          onSelect: () => setIsConfirmingRestore(true),
+        },
+        { separator: true },
+        {
+          id: 'purge',
+          label: 'Permanently Delete',
+          icon: <Trash size={15} />,
+          tone: 'critical',
+          onSelect: () => setIsConfirmingPermanentDelete(true),
+        },
+      );
+    }
+  } else {
+    entries.push(
+      {
+        id: 'edit',
+        label: 'Edit Profile Details',
+        icon: <Edit size={15} />,
+        tone: 'blue',
+        onSelect: () => onEdit?.(user),
+      },
+      {
+        id: 'status',
+        label: 'Change Account Status',
+        icon: <ShieldAlert size={15} />,
+        tone: 'warning',
+        onSelect: () => onChangeStatus?.(user),
+      },
+      {
+        id: 'reset-password',
+        label: 'Reset Password',
+        icon: <KeyRound size={15} />,
+        tone: 'warning',
+        onSelect: () => onResetPassword?.(user),
+      },
+      {
+        id: 'send-reset-email',
+        label: 'Dispatch Reset Email',
+        icon: <MailCheck size={15} />,
+        tone: 'success',
+        onSelect: () => setIsConfirmingSendResetEmail(true),
+      },
+    );
+
+    // Promotion is SUPER_ADMIN-only, and an existing super admin cannot be re-promoted.
+    if (isSuperAdmin && user.role !== 'SUPER_ADMIN') {
+      entries.push({
+        id: 'promote',
+        label: 'Promote to Super Admin',
+        icon: <Shield size={15} />,
+        tone: 'purple',
+        onSelect: () => updateRole({ id: user.id, role: 'SUPER_ADMIN' }),
+      });
+    }
+
+    // Nobody may trash their own account.
+    if (!isSelf) {
+      entries.push(
+        { separator: true },
+        {
+          id: 'trash',
+          label: 'Move to Trash',
+          icon: <Trash2 size={15} />,
+          tone: 'danger',
+          onSelect: () => setIsConfirmingSoftDelete(true),
+        },
+      );
+    }
+  }
 
   return (
     <>
-      <div className="relative inline-block text-left" ref={dropdownRef}>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          disabled={isPending}
-          className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors duration-150 disabled:opacity-50"
-          title="User actions"
-        >
-          {isPending ? <Loader2 size={18} className="animate-spin text-primary" /> : <MoreVertical size={18} />}
-        </button>
-
-        {isOpen && (
-          <div className="absolute right-0 mt-1 w-56 rounded-2xl bg-white border border-gray-100 shadow-xl overflow-hidden z-50 transform origin-top-right transition-all duration-150 animate-in fade-in zoom-in-95">
-            <div className="p-1.5 space-y-1">
-              {/* View Details & Sessions */}
-              <button
-                onClick={() => handleAction(() => onViewDetails?.(user))}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors"
-              >
-                <Eye size={15} className="text-indigo-500" /> View Details & Sessions
-              </button>
-
-              {!isDeleted ? (
-                <>
-                  {/* Edit Details */}
-                  <button
-                    onClick={() => handleAction(() => onEdit?.(user))}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors"
-                  >
-                    <Edit size={15} className="text-blue-500" /> Edit Profile Details
-                  </button>
-
-                  {/* Change Status */}
-                  <button
-                    onClick={() => handleAction(() => onChangeStatus?.(user))}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors"
-                  >
-                    <ShieldAlert size={15} className="text-orange-500" /> Change Account Status
-                  </button>
-
-                  {/* Reset Password */}
-                  <button
-                    onClick={() => handleAction(() => onResetPassword?.(user))}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors"
-                  >
-                    <KeyRound size={15} className="text-amber-500" /> Reset Password
-                  </button>
-
-                  {/* Send Reset Email */}
-                  <button
-                    onClick={() => handleAction(() => setIsConfirmingSendResetEmail(true))}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors"
-                  >
-                    <MailCheck size={15} className="text-emerald-500" /> Dispatch Reset Email
-                  </button>
-
-                  {/* Make Super Admin (Super Admin only, and cannot promote existing super admin) */}
-                  {isSuperAdmin && user.role !== 'SUPER_ADMIN' && (
-                    <button
-                      onClick={() =>
-                        handleAction(() => updateRole({ id: user.id, role: 'SUPER_ADMIN' }))
-                      }
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-purple-700 hover:bg-purple-50 rounded-xl transition-colors"
-                    >
-                      <Shield size={15} className="text-purple-500" /> Promote to Super Admin
-                    </button>
-                  )}
-
-                  {/* Soft Delete Account (Cannot delete own account) */}
-                  {!isSelf && (
-                    <>
-                      <div className="h-px bg-gray-100 my-1 mx-2" />
-                      <button
-                        onClick={() => handleAction(() => setIsConfirmingSoftDelete(true))}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
-                      >
-                        <Trash2 size={15} /> Move to Trash
-                      </button>
-                    </>
-                  )}
-                </>
-              ) : (
-                /* Deleted Account Actions (Super Admin only) */
-                isSuperAdmin && (
-                  <>
-                    <button
-                      onClick={() => handleAction(() => setIsConfirmingRestore(true))}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                    >
-                      <RotateCcw size={15} /> Restore Account
-                    </button>
-                    <div className="h-px bg-gray-100 my-1 mx-2" />
-                    <button
-                      onClick={() => handleAction(() => setIsConfirmingPermanentDelete(true))}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                    >
-                      <Trash size={15} /> Permanently Delete
-                    </button>
-                  </>
-                )
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      <DropdownMenu entries={entries} label="User actions" isBusy={isPending} />
 
       {/* Confirmation modal for soft delete */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={isConfirmingSoftDelete}
         onClose={() => setIsConfirmingSoftDelete(false)}
         onConfirm={() => {
@@ -198,13 +164,13 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
         }}
         title="Move Account to Trash"
         description={`Are you sure you want to deactivate "${user.name}"? Their account will be soft-deleted, all sessions will be revoked, and they will not be able to log in.`}
-        confirmText="Move to Trash"
+        confirmLabel="Move to Trash"
         variant="danger"
-        isLoading={isSoftDeleting}
+        isPending={isSoftDeleting}
       />
 
       {/* Confirmation modal for account restore */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={isConfirmingRestore}
         onClose={() => setIsConfirmingRestore(false)}
         onConfirm={() => {
@@ -214,13 +180,13 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
         }}
         title="Restore User Account"
         description={`Restore user "${user.name}" to the active user directory? They will regain access to sign in.`}
-        confirmText="Restore Account"
+        confirmLabel="Restore Account"
         variant="info"
-        isLoading={isRestoring}
+        isPending={isRestoring}
       />
 
       {/* Confirmation modal for permanent delete */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={isConfirmingPermanentDelete}
         onClose={() => setIsConfirmingPermanentDelete(false)}
         onConfirm={() => {
@@ -230,14 +196,14 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
         }}
         title="Permanently Delete Account"
         description={`WARNING: This will permanently delete user "${user.name}" (${user.email}) and all associated credential and session records from the database. This action CANNOT be undone.`}
-        confirmText="Permanently Delete"
+        confirmLabel="Permanently Delete"
         variant="critical"
-        requireConfirmationText="DELETE"
-        isLoading={isPermDeleting}
+        confirmPhrase="DELETE"
+        isPending={isPermDeleting}
       />
 
       {/* Confirmation modal for sending password reset email */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={isConfirmingSendResetEmail}
         onClose={() => setIsConfirmingSendResetEmail(false)}
         onConfirm={() => {
@@ -247,9 +213,9 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
         }}
         title="Send Password Reset Email"
         description={`Dispatch an official password reset link to "${user.email}"? The link will expire in 60 minutes.`}
-        confirmText="Send Email"
+        confirmLabel="Send Email"
         variant="info"
-        isLoading={isSendingEmail}
+        isPending={isSendingEmail}
       />
     </>
   );

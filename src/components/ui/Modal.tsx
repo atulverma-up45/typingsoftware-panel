@@ -1,6 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import {
+  X,
+  AlertOctagon,
+  Trash2,
+  AlertTriangle,
+  RotateCcw,
+  ShieldCheck,
+  Loader2,
+} from 'lucide-react';
 
 /* ------------------------------------------------------------------------- */
 /* Modal — the single modal shell for the entire admin panel.                  */
@@ -24,7 +32,7 @@ export interface ModalProps {
   onClose: () => void;
   /** Optional header block; renders icon chip + title + description. */
   title?: React.ReactNode;
-  description?: string;
+  description?: React.ReactNode;
   /** Optional leading icon rendered inside a rounded accent chip. */
   icon?: React.ReactNode;
   /** Tailwind classes for the icon chip accent (e.g. 'bg-blue-50 text-blue-600 border-blue-100'). */
@@ -145,16 +153,48 @@ export const Modal: React.FC<ModalProps> = ({
 /* ConfirmDialog — standardized destructive/action confirmation.               */
 /* ------------------------------------------------------------------------- */
 
-export type ConfirmVariant = 'danger' | 'primary';
+export type ConfirmVariant =
+  | 'danger'
+  | 'critical'
+  | 'warning'
+  | 'info'
+  | 'primary';
 
-const CONFIRM_ACCENT_CLASSES: Record<ConfirmVariant, string> = {
-  danger: 'bg-rose-50 text-rose-600 border-rose-100',
-  primary: 'bg-primary-100 text-primary border-primary-200',
-};
-
-const CONFIRM_BUTTON_CLASSES: Record<ConfirmVariant, string> = {
-  danger: 'bg-rose-600 hover:bg-rose-700',
-  primary: 'bg-primary hover:bg-primary-600',
+/** Per-variant icon chip, accent and button tone. */
+const CONFIRM_VARIANT_STYLES: Record<
+  ConfirmVariant,
+  { icon: React.ReactNode; accent: string; button: string }
+> = {
+  critical: {
+    icon: <AlertOctagon size={20} />,
+    accent: 'bg-red-50 text-red-600 border-red-100',
+    button:
+      'bg-red-600 hover:bg-red-700 text-white shadow-sm focus:ring-red-500',
+  },
+  danger: {
+    icon: <Trash2 size={20} />,
+    accent: 'bg-rose-50 text-rose-600 border-rose-100',
+    button:
+      'bg-rose-600 hover:bg-rose-700 text-white shadow-sm focus:ring-rose-500',
+  },
+  warning: {
+    icon: <AlertTriangle size={20} />,
+    accent: 'bg-amber-50 text-amber-600 border-amber-100',
+    button:
+      'bg-amber-600 hover:bg-amber-700 text-white shadow-sm focus:ring-amber-500',
+  },
+  info: {
+    icon: <RotateCcw size={20} />,
+    accent: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    button:
+      'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm focus:ring-indigo-500',
+  },
+  primary: {
+    icon: <ShieldCheck size={20} />,
+    accent: 'bg-primary-100 text-primary border-primary-200',
+    button:
+      'bg-primary hover:bg-primary-600 text-white shadow-sm focus:ring-primary-500',
+  },
 };
 
 export interface ConfirmDialogProps {
@@ -162,37 +202,70 @@ export interface ConfirmDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message?: React.ReactNode;
+  /** Explanatory copy rendered under the title in the header. */
+  description?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: ConfirmVariant;
+  /** Overrides the per-variant default icon. */
   icon?: React.ReactNode;
   isPending?: boolean;
+  /**
+   * When set, the user must type this exact text (case-insensitive) before the
+   * confirm button enables. Required for irreversible actions.
+   */
+  confirmPhrase?: string;
 }
 
+/**
+ * The single confirmation dialog for the admin panel.
+ *
+ * Feature code must not hand-roll confirmations or re-declare variant maps.
+ * The typed `confirmPhrase` guard resets on every open, so a phrase typed for
+ * one target can never carry over to the next.
+ */
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   onClose,
   onConfirm,
   title,
-  message,
+  description,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   variant = 'danger',
   icon,
   isPending = false,
+  confirmPhrase,
 }) => {
+  const [typedValue, setTypedValue] = useState('');
+
+  // Reset the typed guard whenever the dialog opens, so a phrase typed for one
+  // target can never carry over to the next. This is React's documented
+  // "adjust state during render" pattern — doing it in an effect would cost a
+  // second commit and can briefly paint the previous target's typed phrase.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setTypedValue('');
+  }
+
+  const styles = CONFIRM_VARIANT_STYLES[variant];
+  const isPhraseMatched =
+    !confirmPhrase ||
+    typedValue.trim().toLowerCase() === confirmPhrase.trim().toLowerCase();
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      size="sm"
+      size="md"
       title={title}
-      icon={icon}
-      accentClassName={CONFIRM_ACCENT_CLASSES[variant]}
+      description={description}
+      icon={icon ?? styles.icon}
+      accentClassName={styles.accent}
       closeOnBackdrop={!isPending}
       closeOnEscape={!isPending}
-      showCloseButton={false}
+      showCloseButton={!isPending}
       footer={
         <>
           <button
@@ -206,15 +279,36 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isPending}
-            className={`px-5 py-2 text-sm font-medium text-white rounded-xl shadow-sm transition-all disabled:opacity-50 ${CONFIRM_BUTTON_CLASSES[variant]}`}
+            disabled={isPending || !isPhraseMatched}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${styles.button}`}
           >
-            {isPending ? 'Working...' : confirmLabel}
+            {isPending && <Loader2 size={16} className="animate-spin" />}
+            {confirmLabel}
           </button>
         </>
       }
     >
-      {message && <div className="p-6 text-sm text-gray-600 leading-relaxed">{message}</div>}
+      {confirmPhrase && (
+        <div className="px-6 pt-1 pb-2">
+          <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
+            <label className="block text-xs font-semibold text-gray-700">
+              To confirm, please type{' '}
+              <span className="font-mono text-red-600 font-bold select-all">
+                "{confirmPhrase}"
+              </span>{' '}
+              below:
+            </label>
+            <input
+              type="text"
+              autoFocus
+              value={typedValue}
+              onChange={(event) => setTypedValue(event.target.value)}
+              placeholder={`Type "${confirmPhrase}" to verify`}
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 font-mono"
+            />
+          </div>
+        </div>
+      )}
     </Modal>
   );
 };

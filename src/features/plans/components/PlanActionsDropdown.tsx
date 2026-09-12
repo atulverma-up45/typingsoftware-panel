@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import {
-  MoreVertical,
   Edit3,
   Archive,
   RotateCcw,
@@ -13,6 +12,10 @@ import {
 import { toast } from 'sonner';
 import type { Plan } from '../api/planApi';
 import { usePermissions } from '@/lib/permissions';
+import {
+  DropdownMenu,
+  type DropdownMenuEntry,
+} from '@/components/ui/DropdownMenu';
 
 interface PlanActionsDropdownProps {
   plan: Plan;
@@ -33,184 +36,115 @@ export const PlanActionsDropdown: React.FC<PlanActionsDropdownProps> = ({
   onRestore,
   isDeletedView = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const { isSuperAdmin } = usePermissions();
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  const isArchived = plan.status === 'ARCHIVED';
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(plan.id);
     toast.success('Plan ID copied to clipboard');
-    setIsOpen(false);
   };
 
-  const isArchived = plan.status === 'ARCHIVED';
+  /** A row that is visible but blocked, with the reason in its tooltip. */
+  const locked = (
+    id: string,
+    label: string,
+    reason: string,
+  ): DropdownMenuEntry => ({
+    id,
+    label,
+    icon: <Lock size={14} className="text-gray-400" />,
+    disabled: true,
+    title: reason,
+  });
 
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-      >
-        <MoreVertical size={16} />
-      </button>
+  const entries: DropdownMenuEntry[] = [
+    {
+      id: 'view',
+      label: 'View Specifications',
+      icon: <Eye size={14} className="text-gray-400" />,
+      onSelect: () => onViewDetails(plan),
+    },
+    {
+      id: 'copy-id',
+      label: 'Copy Plan ID',
+      icon: <Copy size={14} className="text-gray-400" />,
+      onSelect: handleCopyId,
+    },
+  ];
 
-      {isOpen && (
-        <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100">
-          <button
-            type="button"
-            onClick={() => {
-              onViewDetails(plan);
-              setIsOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-          >
-            <Eye size={14} className="text-gray-400" />
-            View Specifications
-          </button>
+  if (isDeletedView) {
+    if (isSuperAdmin) {
+      if (onRestore) {
+        entries.push({
+          id: 'restore',
+          label: 'Restore Plan',
+          icon: <RotateCcw size={14} />,
+          tone: 'success',
+          onSelect: () => onRestore(plan),
+        });
+      }
+      entries.push({
+        id: 'purge',
+        label: 'Permanently Purge',
+        icon: <Trash2 size={14} />,
+        tone: 'danger',
+        onSelect: () => onDelete(plan),
+      });
+    } else {
+      entries.push(
+        locked(
+          'purge-locked',
+          'Purge (Locked)',
+          'Super Admin privileges required to purge commercial tiers.',
+        ),
+      );
+    }
+  } else if (isSuperAdmin) {
+    entries.push(
+      {
+        id: 'edit',
+        label: 'Edit Configuration',
+        icon: <Edit3 size={14} className="text-blue-500" />,
+        onSelect: () => onEdit(plan),
+      },
+      {
+        id: 'toggle-status',
+        label: isArchived ? 'Activate Tier' : 'Archive Tier',
+        icon: isArchived ? (
+          <CheckCircle2 size={14} className="text-emerald-500" />
+        ) : (
+          <Archive size={14} className="text-amber-500" />
+        ),
+        onSelect: () => onToggleStatus(plan),
+      },
+      { separator: true },
+      {
+        id: 'trash',
+        label: 'Move to Trash',
+        icon: <Trash2 size={14} />,
+        tone: 'danger',
+        onSelect: () => onDelete(plan),
+      },
+    );
+  } else {
+    entries.push(
+      locked(
+        'edit-locked',
+        'Edit (Locked)',
+        'Super Admin privileges required to edit commercial tiers.',
+      ),
+      locked(
+        'status-locked',
+        'Status (Locked)',
+        'Super Admin privileges required to archive commercial tiers.',
+      ),
+      locked(
+        'trash-locked',
+        'Trash (Locked)',
+        'Super Admin privileges required to delete commercial tiers.',
+      ),
+    );
+  }
 
-          <button
-            type="button"
-            onClick={handleCopyId}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-          >
-            <Copy size={14} className="text-gray-400" />
-            Copy Plan ID
-          </button>
-
-          {!isDeletedView ? (
-            <>
-              {isSuperAdmin ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onEdit(plan);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-                  >
-                    <Edit3 size={14} className="text-blue-500" />
-                    Edit Configuration
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onToggleStatus(plan);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-                  >
-                    {isArchived ? (
-                      <>
-                        <CheckCircle2 size={14} className="text-emerald-500" />
-                        Activate Tier
-                      </>
-                    ) : (
-                      <>
-                        <Archive size={14} className="text-amber-500" />
-                        Archive Tier
-                      </>
-                    )}
-                  </button>
-
-                  <div className="h-px bg-gray-100 my-1" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onDelete(plan);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
-                  >
-                    <Trash2 size={14} />
-                    Move to Trash
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div
-                    title="Super Admin privileges required to edit commercial tiers."
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    Edit (Locked)
-                  </div>
-                  <div
-                    title="Super Admin privileges required to archive commercial tiers."
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    Status (Locked)
-                  </div>
-                  <div
-                    title="Super Admin privileges required to delete commercial tiers."
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    Trash (Locked)
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {isSuperAdmin ? (
-                <>
-                  {onRestore && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onRestore(plan);
-                        setIsOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left"
-                    >
-                      <RotateCcw size={14} />
-                      Restore Plan
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onDelete(plan);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-medium"
-                  >
-                    <Trash2 size={14} />
-                    Permanently Purge
-                  </button>
-                </>
-              ) : (
-                <div
-                  title="Super Admin privileges required to purge commercial tiers."
-                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none"
-                >
-                  <Lock size={13} className="text-gray-400" />
-                  Purge (Locked)
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return <DropdownMenu entries={entries} label="Plan actions" />;
 };
-

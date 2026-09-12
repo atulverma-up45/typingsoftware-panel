@@ -41,8 +41,8 @@ import { EditModuleModal } from '../components/EditModuleModal';
 import { ModuleDetailModal } from '../components/ModuleDetailModal';
 import { ConfigureTenantModuleModal } from '../components/ConfigureTenantModuleModal';
 import { ModuleActionsDropdown } from '../components/ModuleActionsDropdown';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 type ModuleTab = 'ACTIVE' | 'INACTIVE' | 'ALL' | 'TRASH';
 type ViewMode = 'CARDS' | 'TABLE';
@@ -637,38 +637,38 @@ export const ModulesPage: React.FC = () => {
       />
 
       {/* Confirmation: Soft Delete */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!moduleToDelete}
         title="Move Module to Trash?"
         description={`Are you sure you want to move module "${moduleToDelete?.name}" (${moduleToDelete?.key}) to trash? Any associated typing content will remain intact.`}
-        confirmText="Move to Trash"
+        confirmLabel="Move to Trash"
         variant="warning"
-        isLoading={softDeleteMutation.isPending}
+        isPending={softDeleteMutation.isPending}
         onConfirm={handleConfirmSoftDelete}
         onClose={() => setModuleToDelete(null)}
       />
 
       {/* Confirmation: Restore */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!moduleToRestore}
         title="Restore Typing Module?"
         description={`Do you want to restore module "${moduleToRestore?.name}" back to active status?`}
-        confirmText="Restore Module"
+        confirmLabel="Restore Module"
         variant="info"
-        isLoading={restoreMutation.isPending}
+        isPending={restoreMutation.isPending}
         onConfirm={handleConfirmRestore}
         onClose={() => setModuleToRestore(null)}
       />
 
       {/* Confirmation: Permanent Purge */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!moduleToPurge}
         title="Permanently Purge Module?"
         description={`WARNING: This action is destructive and irreversible. Module "${moduleToPurge?.name}" (${moduleToPurge?.id}) will be permanently deleted from the database.`}
-        confirmText="Permanently Purge"
+        confirmLabel="Permanently Purge"
         variant="critical"
-        requireConfirmationText="DELETE"
-        isLoading={permanentDeleteMutation.isPending}
+        confirmPhrase="DELETE"
+        isPending={permanentDeleteMutation.isPending}
         onConfirm={handleConfirmPermanentPurge}
         onClose={() => setModuleToPurge(null)}
       />

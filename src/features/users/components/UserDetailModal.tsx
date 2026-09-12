@@ -30,11 +30,11 @@ import {
   useUserLoginHistory,
   useRevokeUserSession,
   useRevokeAllUserSessions,
-  useInstitutionMap,
   type UserSession,
 } from '../api/userApi';
-import { ConfirmationModal } from './ConfirmationModal';
+import { useInstitutionMap } from '@/features/institutions/api/institutionApi';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 interface UserDetailModalProps {
   user: User | null;
@@ -494,7 +494,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
       </div>
 
       {/* Confirmation modal for revoking a single session */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={Boolean(sessionToRevoke)}
         onClose={() => setSessionToRevoke(null)}
         onConfirm={() => {
@@ -511,13 +511,13 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
         description={`Are you sure you want to terminate the session on "${
           sessionToRevoke?.browser || 'Browser'
         }" (${sessionToRevoke?.ipAddress || 'IP'})? The user will be immediately logged out on that device.`}
-        confirmText="Revoke Session"
+        confirmLabel="Revoke Session"
         variant="danger"
-        isLoading={isRevokingSession}
+        isPending={isRevokingSession}
       />
 
       {/* Confirmation modal for revoking all sessions */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={isConfirmingRevokeAll}
         onClose={() => setIsConfirmingRevokeAll(false)}
         onConfirm={() => {
@@ -527,9 +527,9 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
         }}
         title="Terminate All Active Sessions"
         description={`Are you sure you want to revoke ALL active sessions for ${user.name}? They will be immediately disconnected across every device and browser.`}
-        confirmText="Terminate All"
+        confirmLabel="Terminate All"
         variant="danger"
-        isLoading={isRevokingAll}
+        isPending={isRevokingAll}
       />
     </>
   );

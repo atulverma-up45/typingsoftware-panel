@@ -1,17 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  MoreVertical,
-  Eye,
-  Edit2,
-  Palette,
-  Power,
-  Trash2,
-  RotateCcw,
-  AlertOctagon,
-  Lock,
-} from 'lucide-react';
+import React from 'react';
+import { Eye, Edit2, Palette, Power, Trash2, RotateCcw, AlertOctagon, Lock } from 'lucide-react';
 import type { Institution } from '../api/institutionApi';
 import { usePermissions } from '@/lib/permissions';
+import { DropdownMenu, type DropdownMenuEntry } from '@/components/ui/DropdownMenu';
 
 interface InstitutionActionsDropdownProps {
   institution: Institution;
@@ -25,6 +16,9 @@ interface InstitutionActionsDropdownProps {
   onPermanentDelete: (inst: Institution) => void;
 }
 
+const SUPPORT_LOCK_REASON =
+  'Support role is view-only. Modifications restricted to administrators.';
+
 export const InstitutionActionsDropdown: React.FC<InstitutionActionsDropdownProps> = ({
   institution,
   isSuperAdmin,
@@ -36,154 +30,95 @@ export const InstitutionActionsDropdown: React.FC<InstitutionActionsDropdownProp
   onRestore,
   onPermanentDelete,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Canonical RBAC source — never derive role gates from the store directly
   const { isSupport } = usePermissions();
 
   const isDeleted = !!institution.deletedAt;
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
+  /** Support is a read-only role: show the action, explain why it is unavailable. */
+  const lockedBySupport = (id: string, label: string, reason?: string): DropdownMenuEntry => ({
+    id,
+    label,
+    icon: <Lock size={13} className="text-gray-400" />,
+    disabled: true,
+    title: reason ?? SUPPORT_LOCK_REASON,
+  });
+
+  const entries: DropdownMenuEntry[] = [
+    {
+      id: 'view',
+      label: 'View Full Dossier',
+      icon: <Eye size={14} className="text-gray-400" />,
+      onSelect: () => onView(institution),
+    },
+  ];
+
+  if (isSupport) {
+    entries.push(
+      lockedBySupport('edit', 'Edit Profile (Locked)'),
+      lockedBySupport(
+        'branding',
+        'Branding (Locked)',
+        'Support role is view-only. Branding modifications restricted to administrators.',
+      ),
+    );
+  } else {
+    entries.push(
+      {
+        id: 'edit',
+        label: 'Edit Profile',
+        icon: <Edit2 size={14} className="text-gray-400" />,
+        onSelect: () => onEdit(institution),
+      },
+      {
+        id: 'branding',
+        label: 'White-Label Branding',
+        icon: <Palette size={14} />,
+        tone: 'purple',
+        onSelect: () => onBranding(institution),
+      },
+    );
+  }
+
+  // Lifecycle transitions (status / trash / restore / purge) are SUPER_ADMIN-only.
+  if (isSuperAdmin) {
+    entries.push({ separator: true });
+    if (isDeleted) {
+      entries.push(
+        {
+          id: 'restore',
+          label: 'Restore Center',
+          icon: <RotateCcw size={14} />,
+          tone: 'info',
+          onSelect: () => onRestore(institution),
+        },
+        {
+          id: 'purge',
+          label: 'Permanently Purge',
+          icon: <AlertOctagon size={14} />,
+          tone: 'critical',
+          onSelect: () => onPermanentDelete(institution),
+        },
+      );
+    } else {
+      entries.push(
+        {
+          id: 'status',
+          label: 'Change Status',
+          icon: <Power size={14} />,
+          tone: 'warning',
+          onSelect: () => onChangeStatus(institution),
+        },
+        {
+          id: 'trash',
+          label: 'Move to Trash',
+          icon: <Trash2 size={14} />,
+          tone: 'danger',
+          onSelect: () => onSoftDelete(institution),
+        },
+      );
     }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
+  }
 
-  return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-        title="Institution Actions"
-      >
-        <MoreVertical size={16} />
-      </button>
-
-      {isOpen && (
-        <div className="origin-top-right absolute right-0 mt-1 w-52 rounded-xl shadow-lg bg-white border border-gray-100 ring-1 ring-black/5 divide-y divide-gray-50 focus:outline-none z-30 animate-in fade-in zoom-in-95 duration-100">
-          <div className="p-1">
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                onView(institution);
-              }}
-              className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-            >
-              <Eye size={14} className="text-gray-400" />
-              <span>View Full Dossier</span>
-            </button>
-            {isSupport ? (
-              <>
-                <div
-                  title="Support role is view-only. Modifications restricted to administrators."
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50 rounded-lg flex items-center gap-2.5"
-                >
-                  <Lock size={13} className="text-gray-400" />
-                  <span>Edit Profile (Locked)</span>
-                </div>
-                <div
-                  title="Support role is view-only. Branding modifications restricted to administrators."
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50 rounded-lg flex items-center gap-2.5"
-                >
-                  <Lock size={13} className="text-gray-400" />
-                  <span>Branding (Locked)</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onEdit(institution);
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                >
-                  <Edit2 size={14} className="text-gray-400" />
-                  <span>Edit Profile</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onBranding(institution);
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium text-violet-700 hover:bg-violet-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                >
-                  <Palette size={14} className="text-violet-500" />
-                  <span>White-Label Branding</span>
-                </button>
-              </>
-            )}
-          </div>
-
-          {isSuperAdmin && (
-            <div className="p-1">
-              {!isDeleted ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      onChangeStatus(institution);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                  >
-                    <Power size={14} className="text-amber-500" />
-                    <span>Change Status</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      onSoftDelete(institution);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                  >
-                    <Trash2 size={14} className="text-rose-500" />
-                    <span>Move to Trash</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      onRestore(institution);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                  >
-                    <RotateCcw size={14} className="text-indigo-500" />
-                    <span>Restore Center</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      onPermanentDelete(institution);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                  >
-                    <AlertOctagon size={14} className="text-red-500" />
-                    <span>Permanently Purge</span>
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return <DropdownMenu entries={entries} label="Institution Actions" />;
 };

@@ -40,7 +40,7 @@ import StatCard from '@/components/ui/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 export default function AuthTrackingPage() {
   const [activeTab, setActiveTab] = useState<'sessions' | 'threats' | 'locations' | 'history'>('sessions');
@@ -1066,7 +1066,7 @@ export default function AuthTrackingPage() {
       )}
 
       {/* Standardized Confirmation Modal: Kill Single Session */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={Boolean(sessionToRevoke)}
         onClose={() => setSessionToRevoke(null)}
         onConfirm={() => {
@@ -1077,13 +1077,13 @@ export default function AuthTrackingPage() {
         }}
         title="Revoke Device Session?"
         description={`Are you sure you want to terminate this active session for ${sessionToRevoke?.userName} (${sessionToRevoke?.userEmail}) on ${sessionToRevoke?.browser || 'Web Browser'} (${sessionToRevoke?.os || 'Client'})? This will immediately log out the user from that device.`}
-        confirmText="Kill Session"
+        confirmLabel="Kill Session"
         variant="danger"
-        isLoading={isKillingSession}
+        isPending={isKillingSession}
       />
 
       {/* Standardized Confirmation Modal: Kill All User Sessions */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={Boolean(userToNuke)}
         onClose={() => setUserToNuke(null)}
         onConfirm={() => {
@@ -1094,9 +1094,9 @@ export default function AuthTrackingPage() {
         }}
         title="Terminate All Device Sessions?"
         description={`This will immediately revoke all active device sessions and tokens across all laptops, phones, and workstations for ${userToNuke?.userName}.`}
-        confirmText="Nuke All Sessions"
+        confirmLabel="Nuke All Sessions"
         variant="critical"
-        isLoading={isKillingAll}
+        isPending={isKillingAll}
       />
     </div>
   );

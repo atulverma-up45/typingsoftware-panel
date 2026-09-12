@@ -1,16 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  MoreVertical,
-  Eye,
-  Edit3,
-  RefreshCw,
-  ShieldAlert,
-  Trash2,
-  RotateCcw,
-  Lock,
-} from 'lucide-react';
+import React from 'react';
+import { Eye, Edit3, RefreshCw, ShieldAlert, Trash2, RotateCcw, Lock } from 'lucide-react';
 import type { Device } from '../api/deviceApi';
 import { usePermissions } from '@/lib/permissions';
+import { DropdownMenu, type DropdownMenuEntry } from '@/components/ui/DropdownMenu';
 
 interface DeviceActionsDropdownProps {
   device: Device;
@@ -23,6 +15,9 @@ interface DeviceActionsDropdownProps {
   isDeleted?: boolean;
 }
 
+const SUPPORT_LOCK_REASON = 'Support role is view-only';
+const PURGE_LOCK_REASON = 'Permanent deletion requires Super Admin privileges.';
+
 export const DeviceActionsDropdown: React.FC<DeviceActionsDropdownProps> = ({
   device,
   onViewDetails,
@@ -33,192 +28,99 @@ export const DeviceActionsDropdown: React.FC<DeviceActionsDropdownProps> = ({
   onRestore,
   isDeleted = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Canonical RBAC source — never derive role gates from the store directly
   const { isSupport, isSuperAdmin } = usePermissions();
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+  /** Support is a read-only role: show the action, explain why it is unavailable. */
+  const lockedBySupport = (id: string, label: string): DropdownMenuEntry => ({
+    id,
+    label,
+    icon: <Lock size={13} className="text-gray-400" />,
+    disabled: true,
+    title: SUPPORT_LOCK_REASON,
+  });
+
+  const entries: DropdownMenuEntry[] = [
+    {
+      id: 'inspect',
+      label: 'Inspect Hardware',
+      icon: <Eye size={14} className="text-gray-500" />,
+      onSelect: () => onViewDetails(device),
+    },
+  ];
+
+  if (isDeleted) {
+    if (isSupport) {
+      entries.push(lockedBySupport('restore', 'Restore (Locked)'));
+    } else {
+      if (onRestore) {
+        entries.push({
+          id: 'restore',
+          label: 'Restore Device',
+          icon: <RotateCcw size={14} />,
+          tone: 'success',
+          onSelect: () => onRestore(device),
+        });
       }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      entries.push({ separator: true });
+      entries.push(
+        isSuperAdmin
+          ? {
+              id: 'purge',
+              label: 'Purge Permanently',
+              icon: <Trash2 size={14} />,
+              tone: 'critical',
+              onSelect: () => onDelete(device),
+            }
+          : {
+              id: 'purge',
+              label: 'Purge (Locked)',
+              icon: <Lock size={13} className="text-gray-400" />,
+              disabled: true,
+              title: PURGE_LOCK_REASON,
+            },
+      );
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  } else if (isSupport) {
+    entries.push(
+      lockedBySupport('edit', 'Edit Label (Locked)'),
+      lockedBySupport('status', 'Status (Locked)'),
+      lockedBySupport('revoke', 'Revoke (Locked)'),
+      lockedBySupport('trash', 'Trash (Locked)'),
+    );
+  } else {
+    entries.push({
+      id: 'edit',
+      label: 'Edit Room / Label',
+      icon: <Edit3 size={14} />,
+      tone: 'primary',
+      onSelect: () => onEdit(device),
+    });
+    entries.push({
+      id: 'status',
+      label: 'Change Status',
+      icon: <RefreshCw size={14} />,
+      tone: 'purple',
+      onSelect: () => onStatusChange(device),
+    });
+    if (device.status !== 'REVOKED') {
+      entries.push({
+        id: 'revoke',
+        label: 'Revoke Access',
+        icon: <ShieldAlert size={14} />,
+        tone: 'warning',
+        onSelect: () => onRevoke(device),
+      });
+    }
+    entries.push({ separator: true });
+    entries.push({
+      id: 'trash',
+      label: 'Move to Trash',
+      icon: <Trash2 size={14} />,
+      tone: 'danger',
+      onSelect: () => onDelete(device),
+    });
+  }
 
-  return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-        title="Workstation actions"
-      >
-        <MoreVertical size={16} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-20 mt-1 w-44 origin-top-right rounded-xl bg-white p-1.5 shadow-lg border border-gray-100 focus:outline-none animate-in fade-in zoom-in-95 duration-150">
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onViewDetails(device);
-            }}
-            className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <Eye size={14} className="text-gray-500" />
-            Inspect Hardware
-          </button>
-
-          {!isDeleted ? (
-            <>
-              {isSupport ? (
-                <>
-                  <div
-                    title="Support role is view-only"
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    Edit Label (Locked)
-                  </div>
-                  <div
-                    title="Support role is view-only"
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    Status (Locked)
-                  </div>
-                  <div
-                    title="Support role is view-only"
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    Revoke (Locked)
-                  </div>
-                  <div
-                    title="Support role is view-only"
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    Trash (Locked)
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      onEdit(device);
-                    }}
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                  >
-                    <Edit3 size={14} className="text-primary" />
-                    Edit Room / Label
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      onStatusChange(device);
-                    }}
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                  >
-                    <RefreshCw size={14} className="text-purple-500" />
-                    Change Status
-                  </button>
-
-                  {device.status !== 'REVOKED' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false);
-                        onRevoke(device);
-                      }}
-                      className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
-                    >
-                      <ShieldAlert size={14} className="text-amber-600" />
-                      Revoke Access
-                    </button>
-                  )}
-
-                  <div className="my-1 border-t border-gray-100" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      onDelete(device);
-                    }}
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 size={14} />
-                    Move to Trash
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {isSupport ? (
-                <div
-                  title="Support role is view-only"
-                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                >
-                  <Lock size={13} className="text-gray-400" />
-                  Restore (Locked)
-                </div>
-              ) : (
-                <>
-                  {onRestore && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false);
-                        onRestore(device);
-                      }}
-                      className="flex items-center w-full gap-2 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-                    >
-                      <RotateCcw size={14} />
-                      Restore Device
-                    </button>
-                  )}
-
-                  <div className="my-1 border-t border-gray-100" />
-
-                  {isSuperAdmin ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false);
-                        onDelete(device);
-                      }}
-                      className="flex items-center w-full gap-2 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={14} />
-                      Purge Permanently
-                    </button>
-                  ) : (
-                    <div
-                      title="Permanent deletion requires Super Admin privileges."
-                      className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50 rounded-lg"
-                    >
-                      <Lock size={13} className="text-gray-400" />
-                      <span>Purge (Locked)</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return <DropdownMenu entries={entries} label="Workstation actions" />;
 };
-

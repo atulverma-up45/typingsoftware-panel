@@ -13,7 +13,8 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { useCreateUser, useInstitutions, type UserRole } from '../api/userApi';
+import { useCreateUser, type UserRole } from '../api/userApi';
+import { useInstitutionOptions } from '@/features/institutions/api/institutionApi';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
 
@@ -48,7 +49,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
   }, [isOpen, onClose]);
 
   // Fetch institutions list for Super Admin dropdown
-  const { data: institutions = [], isLoading: isLoadingInstitutions } = useInstitutions(
+  const { data: institutions = [], isLoading: isLoadingInstitutions } = useInstitutionOptions(
     isSuperAdmin && isOpen,
   );
 

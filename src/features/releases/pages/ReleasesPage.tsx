@@ -46,8 +46,8 @@ import { ReleaseDetailModal } from '../components/ReleaseDetailModal';
 import { ReleaseStatusModal } from '../components/ReleaseStatusModal';
 import { ClientUpdateSimulatorModal } from '../components/ClientUpdateSimulatorModal';
 import { ReleaseActionsDropdown } from '../components/ReleaseActionsDropdown';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 type StatusTab = 'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
 type ViewMode = 'CARDS' | 'TABLE';
@@ -694,15 +694,15 @@ export const ReleasesPage: React.FC = () => {
         onClose={() => setIsSimulatorModalOpen(false)}
       />
 
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!releaseToDelete}
         onClose={() => setReleaseToDelete(null)}
         onConfirm={handleDeleteConfirm}
         title="Delete Software Release"
         description={`Are you sure you want to delete release v${releaseToDelete?.version || ''}? Workstations querying this version will no longer be able to download the installer.`}
-        confirmText="Permanently Delete"
+        confirmLabel="Permanently Delete"
         variant="critical"
-        requireConfirmationText="DELETE"
+        confirmPhrase="DELETE"
       />
     </div>
   );

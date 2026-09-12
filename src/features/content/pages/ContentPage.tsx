@@ -48,8 +48,8 @@ import { EditContentModal } from '../components/EditContentModal';
 import { ContentDetailModal } from '../components/ContentDetailModal';
 import { ContentStatusModal } from '../components/ContentStatusModal';
 import { ContentActionsDropdown } from '../components/ContentActionsDropdown';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 type ContentTab = 'PUBLISHED' | 'DRAFT' | 'ALL' | 'TRASH';
 
@@ -889,38 +889,38 @@ export const ContentPage: React.FC = () => {
       />
 
       {/* Confirmation: Soft Delete */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!itemToDelete}
         title="Move Content to Trash?"
         description={`Are you sure you want to move exercise "${itemToDelete?.title}" to trash? Historical student test scores will be preserved.`}
-        confirmText="Move to Trash"
+        confirmLabel="Move to Trash"
         variant="warning"
-        isLoading={softDeleteMutation.isPending}
+        isPending={softDeleteMutation.isPending}
         onConfirm={handleConfirmSoftDelete}
         onClose={() => setItemToDelete(null)}
       />
 
       {/* Confirmation: Restore */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!itemToRestore}
         title="Restore Content Item?"
         description={`Do you want to restore exercise "${itemToRestore?.title}" back to published catalog?`}
-        confirmText="Restore Content"
+        confirmLabel="Restore Content"
         variant="info"
-        isLoading={restoreMutation.isPending}
+        isPending={restoreMutation.isPending}
         onConfirm={handleConfirmRestore}
         onClose={() => setItemToRestore(null)}
       />
 
       {/* Confirmation: Permanent Purge */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!itemToPurge}
         title="Permanently Purge Content Item?"
         description={`WARNING: This action is permanent and cannot be undone. Content item "${itemToPurge?.title}" (${itemToPurge?.id}) will be permanently deleted from database records.`}
-        confirmText="Permanently Purge"
+        confirmLabel="Permanently Purge"
         variant="critical"
-        requireConfirmationText="DELETE"
-        isLoading={permanentDeleteMutation.isPending}
+        confirmPhrase="DELETE"
+        isPending={permanentDeleteMutation.isPending}
         onConfirm={handleConfirmPermanentPurge}
         onClose={() => setItemToPurge(null)}
       />

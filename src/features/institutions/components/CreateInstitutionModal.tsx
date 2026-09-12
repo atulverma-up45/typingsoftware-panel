@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   GraduationCap,
@@ -50,9 +50,6 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
   // Branding State
   const [applicationName, setApplicationName] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#2563EB');
-  const [secondaryColor, setSecondaryColor] = useState('#1E40AF');
-  const [accentColor, setAccentColor] = useState('#06B6D4');
   const [primaryColor, setPrimaryColor] = useState('#F77F52');
   const [secondaryColor, setSecondaryColor] = useState('#D65E2B');
   const [accentColor, setAccentColor] = useState('#FF8A5C');
@@ -85,7 +82,6 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
       setDisplayName(val);
     }
     if (!applicationName) {
-      setApplicationName(val ? `${val} Typing Master` : '');
       setApplicationName(val ? `${val} Typing Expert` : '');
     }
   };
@@ -120,7 +116,6 @@ export const CreateInstitutionModal: React.FC<CreateInstitutionModalProps> = ({
       address: address.trim() || undefined,
       status,
       branding: {
-        applicationName: applicationName.trim() || `${name.trim()} Typing Master`,
         applicationName: applicationName.trim() || `${name.trim()} Typing Expert`,
         displayName: displayName.trim() || name.trim(),
         primaryColor,

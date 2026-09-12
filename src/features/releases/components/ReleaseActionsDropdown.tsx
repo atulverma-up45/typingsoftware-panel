@@ -1,16 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  MoreVertical,
-  Download,
-  Eye,
-  Edit3,
-  RefreshCw,
-  Send,
-  Trash2,
-  Lock,
-} from 'lucide-react';
+import React from 'react';
+import { Download, Eye, Edit3, RefreshCw, Send, Trash2, Lock } from 'lucide-react';
 import type { Release } from '../api/releaseApi';
 import { usePermissions } from '@/lib/permissions';
+import { DropdownMenu, type DropdownMenuEntry } from '@/components/ui/DropdownMenu';
 
 interface ReleaseActionsDropdownProps {
   release: Release;
@@ -29,144 +21,83 @@ export const ReleaseActionsDropdown: React.FC<ReleaseActionsDropdownProps> = ({
   onPublish,
   onDelete,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Canonical RBAC source — never derive role gates from the store directly
   const { isSuperAdmin } = usePermissions();
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  /** Release management is SUPER_ADMIN-only: show the row, explain the lock. */
+  const locked = (id: string, label: string, reason: string): DropdownMenuEntry => ({
+    id,
+    label,
+    icon: <Lock size={13} className="text-gray-400" />,
+    disabled: true,
+    title: reason,
+  });
 
   const handleDownload = () => {
-    setIsOpen(false);
     const downloadUrl = `/api/uploads/files/${encodeURIComponent(release.fileKey)}`;
     window.open(downloadUrl, '_blank');
   };
 
-  return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-        title="Release actions"
-      >
-        <MoreVertical size={16} />
-      </button>
+  const entries: DropdownMenuEntry[] = [
+    {
+      id: 'download',
+      label: 'Download Installer',
+      icon: <Download size={14} />,
+      tone: 'success',
+      onSelect: handleDownload,
+    },
+    {
+      id: 'inspect',
+      label: 'Inspect Specifications',
+      icon: <Eye size={14} className="text-gray-500" />,
+      onSelect: () => onViewDetails(release),
+    },
+  ];
 
-      {isOpen && (
-        <div className="absolute right-0 z-20 mt-1 w-48 origin-top-right rounded-xl bg-white p-1.5 shadow-lg border border-gray-100 focus:outline-none animate-in fade-in zoom-in-95 duration-150">
-          <button
-            type="button"
-            onClick={handleDownload}
-            className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-          >
-            <Download size={14} className="text-emerald-600" />
-            Download Installer
-          </button>
+  if (!isSuperAdmin) {
+    entries.push(
+      locked('edit', 'Edit Release (Locked)', 'Only Super Admin can edit software releases.'),
+      locked('status', 'Status (Locked)', 'Only Super Admin can modify release lifecycle status.'),
+      locked('delete', 'Delete (Locked)', 'Only Super Admin can delete software builds.'),
+    );
+  } else {
+    entries.push(
+      {
+        id: 'edit',
+        label: 'Edit Release',
+        icon: <Edit3 size={14} />,
+        tone: 'primary',
+        onSelect: () => onEdit(release),
+      },
+      {
+        id: 'status',
+        label: 'Change Status',
+        icon: <RefreshCw size={14} />,
+        tone: 'blue',
+        onSelect: () => onStatusChange(release),
+      },
+    );
+    // Publishing is only meaningful for drafts already in the fleet.
+    if (release.status === 'DRAFT') {
+      entries.push({
+        id: 'publish',
+        label: 'Publish to Fleet',
+        icon: <Send size={14} />,
+        tone: 'success',
+        onSelect: () => onPublish(release.id),
+      });
+    }
+    entries.push(
+      { separator: true },
+      {
+        id: 'delete',
+        label: 'Delete Release',
+        icon: <Trash2 size={14} />,
+        tone: 'danger',
+        onSelect: () => onDelete(release),
+      },
+    );
+  }
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onViewDetails(release);
-            }}
-            className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <Eye size={14} className="text-gray-500" />
-            Inspect Specifications
-          </button>
-
-          {!isSuperAdmin ? (
-            <>
-              <div
-                title="Only Super Admin can edit software releases."
-                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
-              >
-                <Lock size={13} className="text-gray-400" />
-                <span>Edit Release (Locked)</span>
-              </div>
-              <div
-                title="Only Super Admin can modify release lifecycle status."
-                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
-              >
-                <Lock size={13} className="text-gray-400" />
-                <span>Status (Locked)</span>
-              </div>
-              <div
-                title="Only Super Admin can delete software builds."
-                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
-              >
-                <Lock size={13} className="text-gray-400" />
-                <span>Delete (Locked)</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onEdit(release);
-                }}
-                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                <Edit3 size={14} className="text-primary" />
-                Edit Release
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onStatusChange(release);
-                }}
-                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                <RefreshCw size={14} className="text-blue-500" />
-                Change Status
-              </button>
-
-              {release.status === 'DRAFT' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onPublish(release.id);
-                  }}
-                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-                >
-                  <Send size={14} className="text-emerald-600" />
-                  Publish to Fleet
-                </button>
-              )}
-
-              <div className="my-1 border-t border-gray-100" />
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onDelete(release);
-                }}
-                className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-              >
-                <Trash2 size={14} />
-                Delete Release
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return <DropdownMenu entries={entries} label="Release actions" />;
 };
-

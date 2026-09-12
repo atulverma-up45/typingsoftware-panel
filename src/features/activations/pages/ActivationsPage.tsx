@@ -50,11 +50,11 @@ import { DeviceActionsDropdown } from '../components/DeviceActionsDropdown';
 import { DeviceDetailModal } from '../components/DeviceDetailModal';
 import { DeviceStatusModal } from '../components/DeviceStatusModal';
 import { EditDeviceModal } from '../components/EditDeviceModal';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 type ViewMode = 'SEATS' | 'DEVICES';
 type SeatTabType = 'ALL' | 'ACTIVE' | 'RECENT_24H' | 'DEACTIVATED' | 'REVOKED';
@@ -726,7 +726,6 @@ export const ActivationsPage: React.FC = () => {
                         <div onClick={(e) => e.stopPropagation()}>
                           <ActivationActionsDropdown
                             activation={act}
-                            isSuperAdmin={isSuperAdmin}
                             onView={(target) => setDetailActivation(target)}
                             onDeactivate={(target) => setDeactivatingActivation(target)}
                             onReactivate={(target) => setReactivatingActivation(target)}
@@ -945,7 +944,6 @@ export const ActivationsPage: React.FC = () => {
                           <td className="py-3.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
                             <ActivationActionsDropdown
                               activation={act}
-                              isSuperAdmin={isSuperAdmin}
                               onView={(target) => setDetailActivation(target)}
                               onDeactivate={(target) => setDeactivatingActivation(target)}
                               onReactivate={(target) => setReactivatingActivation(target)}
@@ -1658,14 +1656,14 @@ export const ActivationsPage: React.FC = () => {
       />
 
       {/* Revoke Device Confirmation */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!revokeDeviceTarget}
         title="Revoke Workstation Terminal"
         description={`Are you sure you want to revoke and blacklist "${revokeDeviceTarget?.deviceName}" (${revokeDeviceTarget?.deviceId})? This device will be forbidden from checking in or taking student exams.`}
-        confirmText="Revoke Device"
+        confirmLabel="Revoke Device"
         variant="critical"
-        requireConfirmationText="REVOKE"
-        isLoading={revokeDeviceMutation.isPending}
+        confirmPhrase="REVOKE"
+        isPending={revokeDeviceMutation.isPending}
         onClose={() => setRevokeDeviceTarget(null)}
         onConfirm={() => {
           if (revokeDeviceTarget) {
@@ -1678,13 +1676,13 @@ export const ActivationsPage: React.FC = () => {
       />
 
       {/* Soft Delete (Move to Trash) Confirmation */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!trashDeviceTarget}
         title="Move Device to Recycle Bin"
         description={`Move workstation "${trashDeviceTarget?.deviceName}" (${trashDeviceTarget?.deviceId}) to the Recycle Bin? The device can be restored later or permanently purged.`}
-        confirmText="Move to Trash"
+        confirmLabel="Move to Trash"
         variant="danger"
-        isLoading={softDeleteDeviceMutation.isPending}
+        isPending={softDeleteDeviceMutation.isPending}
         onClose={() => setTrashDeviceTarget(null)}
         onConfirm={() => {
           if (trashDeviceTarget) {
@@ -1696,13 +1694,13 @@ export const ActivationsPage: React.FC = () => {
       />
 
       {/* Restore Device Confirmation */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!restoreDeviceTarget}
         title="Restore Workstation from Trash"
         description={`Restore workstation "${restoreDeviceTarget?.deviceName}" back to the active fleet inventory?`}
-        confirmText="Restore Terminal"
+        confirmLabel="Restore Terminal"
         variant="info"
-        isLoading={restoreDeviceMutation.isPending}
+        isPending={restoreDeviceMutation.isPending}
         onClose={() => setRestoreDeviceTarget(null)}
         onConfirm={() => {
           if (restoreDeviceTarget) {
@@ -1714,14 +1712,14 @@ export const ActivationsPage: React.FC = () => {
       />
 
       {/* Permanent Delete Confirmation */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!purgeDeviceTarget}
         title="Permanently Purge Hardware Device"
         description={`CAUTION: This will permanently delete workstation "${purgeDeviceTarget?.deviceName}" (${purgeDeviceTarget?.deviceId}) and its entire hardware history from the database. This action CANNOT be undone.`}
-        confirmText="Purge Permanently"
+        confirmLabel="Purge Permanently"
         variant="critical"
-        requireConfirmationText="DELETE"
-        isLoading={permanentDeleteDeviceMutation.isPending}
+        confirmPhrase="DELETE"
+        isPending={permanentDeleteDeviceMutation.isPending}
         onClose={() => setPurgeDeviceTarget(null)}
         onConfirm={() => {
           if (purgeDeviceTarget) {

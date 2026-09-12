@@ -48,8 +48,8 @@ import { UpdateSubscriptionModal } from '../components/UpdateSubscriptionModal';
 import { SubscriptionStatusModal } from '../components/SubscriptionStatusModal';
 import { SubscriptionDetailModal } from '../components/SubscriptionDetailModal';
 import { SubscriptionActionsDropdown } from '../components/SubscriptionActionsDropdown';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 type SubscriptionTab =
   | 'ALL'
@@ -992,38 +992,38 @@ export const SubscriptionsPage: React.FC = () => {
       />
 
       {/* Confirmation: Soft Delete */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!subscriptionToDelete}
         title="Move Subscription to Trash?"
         description={`Are you sure you want to cancel / move subscription "${subscriptionToDelete?.id}" to trash? Associated client licenses may be impacted.`}
-        confirmText="Move to Trash"
+        confirmLabel="Move to Trash"
         variant="warning"
-        isLoading={softDeleteMutation.isPending}
+        isPending={softDeleteMutation.isPending}
         onConfirm={handleConfirmSoftDelete}
         onClose={() => setSubscriptionToDelete(null)}
       />
 
       {/* Confirmation: Restore */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!subscriptionToRestore}
         title="Restore Subscription Contract?"
         description={`Do you want to restore subscription "${subscriptionToRestore?.id}" back to active status?`}
-        confirmText="Restore Contract"
+        confirmLabel="Restore Contract"
         variant="info"
-        isLoading={restoreMutation.isPending}
+        isPending={restoreMutation.isPending}
         onConfirm={handleConfirmRestore}
         onClose={() => setSubscriptionToRestore(null)}
       />
 
       {/* Confirmation: Permanent Purge */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!subscriptionToPurge}
         title="Permanently Purge Subscription?"
         description={`WARNING: This action is permanent and cannot be undone. Subscription contract "${subscriptionToPurge?.id}" will be purged from database records.`}
-        confirmText="Permanently Purge"
+        confirmLabel="Permanently Purge"
         variant="critical"
-        requireConfirmationText="DELETE"
-        isLoading={permanentDeleteMutation.isPending}
+        confirmPhrase="DELETE"
+        isPending={permanentDeleteMutation.isPending}
         onConfirm={handleConfirmPermanentPurge}
         onClose={() => setSubscriptionToPurge(null)}
       />

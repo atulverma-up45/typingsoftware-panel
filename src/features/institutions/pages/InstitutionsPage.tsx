@@ -45,7 +45,6 @@ import { InstitutionStatusModal } from '../components/InstitutionStatusModal';
 import { BrandingEditorModal } from '../components/BrandingEditorModal';
 import { InstitutionDetailModal } from '../components/InstitutionDetailModal';
 import { InstitutionActionsDropdown } from '../components/InstitutionActionsDropdown';
-import { ConfirmationModal } from '@/features/users/components/ConfirmationModal';
 import { toast } from 'sonner';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
@@ -54,6 +53,7 @@ import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import { LayoutGrid, List } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/Modal';
 
 type TabType = 'ALL' | 'ACTIVE' | 'SUSPENDED' | 'TRASH';
 
@@ -111,7 +111,9 @@ export const InstitutionsPage: React.FC = () => {
   const { data: globalStats, isLoading: isLoadingStats, refetch: refetchStats } = useGlobalInstitutionStats(isSuperAdmin);
 
   const handleRefreshAll = () => {
-    refetchStats();
+    if (isSuperAdmin) {
+      refetchStats();
+    }
     refetchInstitutions();
   };
 
@@ -709,13 +711,13 @@ export const InstitutionsPage: React.FC = () => {
       />
 
       {/* 6. Soft Delete (Move to Trash) Confirmation */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!softDeleteTarget}
         title="Move Institution to Trash?"
         description={`Are you sure you want to move "${softDeleteTarget?.name}" to the recycle bin? Its active authentications will be temporarily disabled, but you can restore it at any time.`}
-        confirmText="Move to Trash"
+        confirmLabel="Move to Trash"
         variant="danger"
-        isLoading={softDeleteMutation.isPending}
+        isPending={softDeleteMutation.isPending}
         onClose={() => setSoftDeleteTarget(null)}
         onConfirm={() => {
           if (!softDeleteTarget) return;
@@ -726,13 +728,13 @@ export const InstitutionsPage: React.FC = () => {
       />
 
       {/* 7. Restore from Trash Confirmation */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!restoreTarget}
         title="Restore Institution from Trash?"
         description={`Restore "${restoreTarget?.name}" back to Active status? The center will immediately regain access to its licenses and tenant configurations.`}
-        confirmText="Restore Institution"
+        confirmLabel="Restore Institution"
         variant="info"
-        isLoading={restoreMutation.isPending}
+        isPending={restoreMutation.isPending}
         onClose={() => setRestoreTarget(null)}
         onConfirm={() => {
           if (!restoreTarget) return;
@@ -743,14 +745,14 @@ export const InstitutionsPage: React.FC = () => {
       />
 
       {/* 8. Permanent Purge Confirmation (with typed slug safety!) */}
-      <ConfirmationModal
+      <ConfirmDialog
         isOpen={!!permanentDeleteTarget}
         title="Permanently Purge Institution?"
         description={`This action is permanent and IRREVERSIBLE. All student records, licenses, device links, and branding assets for "${permanentDeleteTarget?.name}" will be wiped out completely.`}
-        confirmText="Permanently Purge"
+        confirmLabel="Permanently Purge"
         variant="critical"
-        requireConfirmationText={permanentDeleteTarget?.slug}
-        isLoading={permanentDeleteMutation.isPending}
+        confirmPhrase={permanentDeleteTarget?.slug}
+        isPending={permanentDeleteMutation.isPending}
         onClose={() => setPermanentDeleteTarget(null)}
         onConfirm={() => {
           if (!permanentDeleteTarget) return;

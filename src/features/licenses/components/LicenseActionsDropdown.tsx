@@ -1,19 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  MoreVertical,
-  Eye,
-  Copy,
-  Edit2,
-  Power,
-  AlertOctagon,
-  Trash2,
-  RotateCcw,
-  Check,
-  Lock,
-} from 'lucide-react';
+import React from 'react';
+import { Eye, Copy, Edit2, Power, AlertOctagon, Trash2, RotateCcw, Lock } from 'lucide-react';
 import type { License } from '../api/licenseApi';
 import { toast } from 'sonner';
 import { usePermissions } from '@/lib/permissions';
+import { DropdownMenu, type DropdownMenuEntry } from '@/components/ui/DropdownMenu';
 
 interface LicenseActionsDropdownProps {
   license: License;
@@ -27,6 +17,9 @@ interface LicenseActionsDropdownProps {
   onPermanentDelete: (lic: License) => void;
 }
 
+/** Support is a read-only role: show the action, explain why it is unavailable. */
+const LOCK_REASON = 'Support role is view-only';
+
 export const LicenseActionsDropdown: React.FC<LicenseActionsDropdownProps> = ({
   license,
   isSuperAdmin,
@@ -38,212 +31,109 @@ export const LicenseActionsDropdown: React.FC<LicenseActionsDropdownProps> = ({
   onRestore,
   onPermanentDelete,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Canonical RBAC source — never derive role gates from the store directly
   const { isSupport } = usePermissions();
 
   const isDeleted = !!license.deletedAt;
   const isRevoked = license.status === 'REVOKED';
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
+  const locked = (id: string, label: string): DropdownMenuEntry => ({
+    id,
+    label,
+    icon: <Lock size={13} className="text-gray-400" />,
+    disabled: true,
+    title: LOCK_REASON,
+  });
 
   const handleCopyKey = () => {
     navigator.clipboard.writeText(license.licenseKey);
     toast.success('License key copied');
-    setIsOpen(false);
   };
 
-  return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-        title="License Actions"
-      >
-        <MoreVertical size={16} />
-      </button>
+  const entries: DropdownMenuEntry[] = [
+    {
+      id: 'inspect',
+      label: 'Inspect License Dossier',
+      icon: <Eye size={14} className="text-gray-400" />,
+      onSelect: () => onView(license),
+    },
+    {
+      id: 'copy-key',
+      label: 'Copy License Key',
+      icon: <Copy size={14} className="text-gray-400" />,
+      onSelect: handleCopyKey,
+    },
+    isSupport
+      ? locked('edit', 'Edit Capacity (Locked)')
+      : {
+          id: 'edit',
+          label: 'Edit Seat Capacity',
+          icon: <Edit2 size={14} className="text-gray-400" />,
+          onSelect: () => onEdit(license),
+        },
+    { separator: true },
+  ];
 
-      {isOpen && (
-        <div className="origin-top-right absolute right-0 mt-1 w-52 rounded-xl shadow-lg bg-white border border-gray-100 ring-1 ring-black/5 divide-y divide-gray-50 focus:outline-none z-30 animate-in fade-in zoom-in-95 duration-100">
-          <div className="p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onView(license);
-              }}
-              className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-            >
-              <Eye size={14} className="text-gray-400" />
-              <span>Inspect License Dossier</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleCopyKey}
-              className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-            >
-              <Copy size={14} className="text-gray-400" />
-              <span>Copy License Key</span>
-            </button>
-            {isSupport ? (
-              <div
-                title="Support role is view-only"
-                className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
-              >
-                <Lock size={13} className="text-gray-400" />
-                <span>Edit Capacity (Locked)</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onEdit(license);
-                }}
-                className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-              >
-                <Edit2 size={14} className="text-gray-400" />
-                <span>Edit Seat Capacity</span>
-              </button>
-            )}
-          </div>
+  if (isDeleted) {
+    entries.push(
+      isSupport
+        ? locked('restore', 'Restore Key (Locked)')
+        : {
+            id: 'restore',
+            label: 'Restore License',
+            icon: <RotateCcw size={14} />,
+            tone: 'info',
+            onSelect: () => onRestore(license),
+          },
+    );
+    // Permanent purge is irreversible — SUPER_ADMIN only, and never for Support.
+    if (isSuperAdmin && !isSupport) {
+      entries.push({
+        id: 'purge',
+        label: 'Permanently Purge',
+        icon: <AlertOctagon size={14} />,
+        tone: 'critical',
+        onSelect: () => onPermanentDelete(license),
+      });
+    }
+  } else {
+    if (!isRevoked) {
+      if (isSupport) {
+        entries.push(
+          locked('status', 'Status Toggle (Locked)'),
+          locked('revoke', 'Revoke Key (Locked)'),
+        );
+      } else {
+        entries.push(
+          {
+            id: 'status',
+            label: license.status === 'ACTIVE' ? 'Suspend License' : 'Activate License',
+            icon: <Power size={14} />,
+            tone: 'warning',
+            onSelect: () => onChangeStatus(license),
+          },
+          {
+            id: 'revoke',
+            label: 'Revoke License Immediately',
+            icon: <AlertOctagon size={14} />,
+            tone: 'critical',
+            onSelect: () => onRevoke(license),
+          },
+        );
+      }
+    }
+    entries.push(
+      isSupport
+        ? locked('trash', 'Move to Trash (Locked)')
+        : {
+            id: 'trash',
+            label: 'Move to Trash',
+            icon: <Trash2 size={14} />,
+            tone: 'danger',
+            onSelect: () => onSoftDelete(license),
+          },
+    );
+  }
 
-          <div className="p-1">
-            {!isDeleted ? (
-              <>
-                {!isRevoked && (
-                  <>
-                    {isSupport ? (
-                      <>
-                        <div
-                          title="Support role is view-only"
-                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                        >
-                          <Lock size={13} className="text-gray-400" />
-                          <span>Status Toggle (Locked)</span>
-                        </div>
-                        <div
-                          title="Support role is view-only"
-                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                        >
-                          <Lock size={13} className="text-gray-400" />
-                          <span>Revoke Key (Locked)</span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsOpen(false);
-                            onChangeStatus(license);
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                        >
-                          <Power size={14} className="text-amber-500" />
-                          <span>
-                            {license.status === 'ACTIVE' ? 'Suspend License' : 'Activate License'}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsOpen(false);
-                            onRevoke(license);
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                        >
-                          <AlertOctagon size={14} className="text-red-500" />
-                          <span>Revoke License Immediately</span>
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-                {isSupport ? (
-                  <div
-                    title="Support role is view-only"
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    <span>Move to Trash (Locked)</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      onSoftDelete(license);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                  >
-                    <Trash2 size={14} className="text-rose-500" />
-                    <span>Move to Trash</span>
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                {isSupport ? (
-                  <div
-                    title="Support role is view-only"
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-gray-400 rounded-lg flex items-center gap-2.5 opacity-50 cursor-not-allowed select-none pointer-events-none"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    <span>Restore Key (Locked)</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      onRestore(license);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                  >
-                    <RotateCcw size={14} className="text-indigo-500" />
-                    <span>Restore License</span>
-                  </button>
-                )}
-                {isSuperAdmin && !isSupport && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      onPermanentDelete(license);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2.5 transition-colors"
-                  >
-                    <AlertOctagon size={14} className="text-red-500" />
-                    <span>Permanently Purge</span>
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return <DropdownMenu entries={entries} label="License Actions" />;
 };
-

@@ -52,9 +52,6 @@ export const BrandingEditorModal: React.FC<BrandingEditorModalProps> = ({
   // Form states
   const [applicationName, setApplicationName] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#2563EB');
-  const [secondaryColor, setSecondaryColor] = useState('#1E40AF');
-  const [accentColor, setAccentColor] = useState('#06B6D4');
   const [primaryColor, setPrimaryColor] = useState('#F77F52');
   const [secondaryColor, setSecondaryColor] = useState('#D65E2B');
   const [accentColor, setAccentColor] = useState('#FF8A5C');
@@ -72,9 +69,9 @@ export const BrandingEditorModal: React.FC<BrandingEditorModalProps> = ({
     if (branding) {
       setApplicationName(branding.applicationName || '');
       setDisplayName(branding.displayName || '');
-      setPrimaryColor(branding.primaryColor || '#2563EB');
-      setSecondaryColor(branding.secondaryColor || '#1E40AF');
-      setAccentColor(branding.accentColor || '#06B6D4');
+      setPrimaryColor(branding.primaryColor || '#F77F52');
+      setSecondaryColor(branding.secondaryColor || '#D65E2B');
+      setAccentColor(branding.accentColor || '#FF8A5C');
       setTagline(branding.tagline || '');
       setRegistrationNumber(branding.registrationNumber || '');
       setSignatoryName(branding.signatoryName || '');
@@ -84,7 +81,7 @@ export const BrandingEditorModal: React.FC<BrandingEditorModalProps> = ({
       setSupportPhone(branding.supportPhone || '');
       setWebsite(branding.website || '');
     } else if (institution) {
-      setApplicationName(`${institution.name} Typing Master`);
+      setApplicationName(`${institution.name} Typing Expert`);
       setDisplayName(institution.name);
       setSupportEmail(institution.email || '');
       setSupportPhone(institution.phone || '');

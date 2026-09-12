@@ -1,17 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  MoreVertical,
-  Eye,
-  Edit3,
-  FileCheck2,
-  Trash2,
-  RotateCcw,
-  Copy,
-  Lock,
-} from 'lucide-react';
+import React from 'react';
+import { Eye, Edit3, FileCheck2, Trash2, RotateCcw, Copy, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ContentItem } from '../api/contentApi';
 import { usePermissions } from '@/lib/permissions';
+import { DropdownMenu, type DropdownMenuEntry } from '@/components/ui/DropdownMenu';
 
 interface ContentActionsDropdownProps {
   item: ContentItem;
@@ -23,6 +15,9 @@ interface ContentActionsDropdownProps {
   isDeletedView?: boolean;
 }
 
+/** Curriculum passages are centrally managed; non-super-admins get read-only rows. */
+const LOCK_REASON = 'Curriculum passages are centrally managed by Super Admin. Read-only.';
+
 export const ContentActionsDropdown: React.FC<ContentActionsDropdownProps> = ({
   item,
   onViewDetails,
@@ -32,21 +27,8 @@ export const ContentActionsDropdown: React.FC<ContentActionsDropdownProps> = ({
   onRestore,
   isDeletedView = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Canonical RBAC source — never derive role gates from the store directly
   const { isSuperAdmin } = usePermissions();
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
 
   const handleCopyText = () => {
     const text = item.payload?.text || '';
@@ -57,154 +39,89 @@ export const ContentActionsDropdown: React.FC<ContentActionsDropdownProps> = ({
       navigator.clipboard.writeText(item.id);
       toast.success('Content ID copied to clipboard');
     }
-    setIsOpen(false);
   };
 
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-      >
-        <MoreVertical size={16} />
-      </button>
+  /**
+   * Renders a locked row instead of hiding the action, so operators can see
+   * what exists and why they cannot use it. No `pointer-events-none` — that
+   * would suppress the very tooltip explaining the lock.
+   */
+  const locked = (id: string, label: string): DropdownMenuEntry => ({
+    id,
+    label,
+    icon: <Lock size={13} className="text-gray-400" />,
+    disabled: true,
+    title: LOCK_REASON,
+  });
 
-      {isOpen && (
-        <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100">
-          <button
-            type="button"
-            onClick={() => {
-              onViewDetails(item);
-              setIsOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-          >
-            <Eye size={14} className="text-gray-400" />
-            Inspect Passage & Rules
-          </button>
+  const entries: DropdownMenuEntry[] = [
+    {
+      id: 'inspect',
+      label: 'Inspect Passage & Rules',
+      icon: <Eye size={14} className="text-gray-400" />,
+      onSelect: () => onViewDetails(item),
+    },
+    {
+      id: 'copy-text',
+      label: 'Copy Passage Text',
+      icon: <Copy size={14} className="text-gray-400" />,
+      onSelect: handleCopyText,
+    },
+  ];
 
-          <button
-            type="button"
-            onClick={handleCopyText}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-          >
-            <Copy size={14} className="text-gray-400" />
-            Copy Passage Text
-          </button>
+  if (isDeletedView) {
+    if (!isSuperAdmin) {
+      entries.push(locked('restore', 'Restore (Locked)'));
+    } else {
+      if (onRestore) {
+        entries.push({
+          id: 'restore',
+          label: 'Restore Content',
+          icon: <RotateCcw size={14} />,
+          tone: 'success',
+          onSelect: () => onRestore(item),
+        });
+      }
+      entries.push({
+        id: 'purge',
+        label: 'Permanently Purge',
+        icon: <Trash2 size={14} />,
+        tone: 'danger',
+        onSelect: () => onDelete(item),
+      });
+    }
+  } else if (!isSuperAdmin) {
+    entries.push(
+      locked('edit', 'Edit Passage (Locked)'),
+      locked('status', 'Publish State (Locked)'),
+      locked('trash', 'Move to Trash (Locked)'),
+    );
+  } else {
+    entries.push(
+      {
+        id: 'edit',
+        label: 'Edit Passage & Settings',
+        icon: <Edit3 size={14} />,
+        tone: 'blue',
+        onSelect: () => onEdit(item),
+      },
+      {
+        id: 'status',
+        label: 'Change Publication State',
+        icon: <FileCheck2 size={14} />,
+        tone: 'primary',
+        onSelect: () => onChangeStatus(item),
+      },
+      { separator: true },
+      {
+        id: 'trash',
+        label: 'Move to Trash',
+        icon: <Trash2 size={14} />,
+        tone: 'danger',
+        onSelect: () => onDelete(item),
+      },
+    );
+  }
 
-          {!isDeletedView ? (
-            <>
-              {!isSuperAdmin ? (
-                <>
-                  <div
-                    title="Curriculum passages are centrally managed by Super Admin. Read-only."
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    <span>Edit Passage (Locked)</span>
-                  </div>
-                  <div
-                    title="Curriculum passages are centrally managed by Super Admin. Read-only."
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    <span>Publish State (Locked)</span>
-                  </div>
-                  <div
-                    title="Curriculum passages are centrally managed by Super Admin. Read-only."
-                    className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
-                  >
-                    <Lock size={13} className="text-gray-400" />
-                    <span>Move to Trash (Locked)</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onEdit(item);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 text-left"
-                  >
-                    <Edit3 size={14} className="text-blue-500" />
-                    Edit Passage & Settings
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChangeStatus(item);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary hover:bg-primary-100/50 text-left font-semibold"
-                  >
-                    <FileCheck2 size={14} />
-                    Change Publication State
-                  </button>
-
-                  <div className="h-px bg-gray-100 my-1" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onDelete(item);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left"
-                  >
-                    <Trash2 size={14} />
-                    Move to Trash
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {!isSuperAdmin ? (
-                <div
-                  title="Curriculum passages are centrally managed by Super Admin. Read-only."
-                  className="flex items-center w-full gap-2 px-3 py-2 text-xs font-medium text-gray-400 opacity-60 cursor-not-allowed select-none pointer-events-none bg-gray-50/50"
-                >
-                  <Lock size={13} className="text-gray-400" />
-                  <span>Restore (Locked)</span>
-                </div>
-              ) : (
-                <>
-                  {onRestore && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onRestore(item);
-                        setIsOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 text-left font-semibold"
-                    >
-                      <RotateCcw size={14} />
-                      Restore Content
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onDelete(item);
-                      setIsOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left font-bold"
-                  >
-                    <Trash2 size={14} />
-                    Permanently Purge
-                  </button>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return <DropdownMenu entries={entries} label="Content actions" />;
 };
-
