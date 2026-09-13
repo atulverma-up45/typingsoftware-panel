@@ -13,9 +13,34 @@ import {
 /* ------------------------------------------------------------------------- */
 /* Modal — the single modal shell for the entire admin panel.                  */
 /* Owns: portal mounting, backdrop, Escape handling, body scroll lock,         */
-/* a11y (role=dialog, aria-modal, focus on open).                              */
+/* a11y (role=dialog, aria-modal), Tab-wrapping focus trap, focus restore.     */
 /* Feature code should NEVER hand-roll `fixed inset-0 z-50 ...` again.         */
 /* ------------------------------------------------------------------------- */
+
+/** Elements that can receive focus, used to build the focus trap. */
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+/**
+ * Body-scroll locking is shared across every open dialog. Without this, a
+ * confirm dialog opened on top of a form dialog would unlock the page behind
+ * both of them the moment the inner one closed.
+ */
+let openDialogCount = 0;
+let bodyOverflowBeforeFirstDialog = '';
+
+/**
+ * Put this on the control that should receive focus when the dialog opens.
+ * Without it the dialog focuses its first focusable element, which is usually
+ * the close button.
+ */
+export const MODAL_AUTOFOCUS_ATTRIBUTE = 'data-modal-autofocus';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
@@ -68,8 +93,11 @@ export const Modal: React.FC<ModalProps> = ({
   bodyClassName = '',
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
 
-  // Escape-to-close + body scroll lock while open
+  // Escape-to-close (window-level, so it fires even when focus sits on the
+  // backdrop or body), plus a ref-counted body scroll lock shared by every
+  // open dialog, focus moved into the panel on open and restored on close.
   useEffect(() => {
     if (!isOpen) return;
 
@@ -78,19 +106,65 @@ export const Modal: React.FC<ModalProps> = ({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    if (openDialogCount === 0) {
+      bodyOverflowBeforeFirstDialog = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+    openDialogCount += 1;
+
+    // An explicitly marked control wins; otherwise the first focusable
+    // element, then the panel itself so Tab has a starting point even in a
+    // dialog with no inputs at all.
+    const panel = panelRef.current;
+    const focusTarget =
+      panel?.querySelector<HTMLElement>(`[${MODAL_AUTOFOCUS_ATTRIBUTE}]`) ??
+      panel?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ??
+      panel;
+    focusTarget?.focus();
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
+      openDialogCount -= 1;
+      if (openDialogCount === 0) {
+        document.body.style.overflow = bodyOverflowBeforeFirstDialog;
+      }
+      previouslyFocusedElementRef.current?.focus();
     };
   }, [isOpen, onClose, closeOnEscape]);
 
-  // Move focus into the dialog for keyboard/screen-reader users
-  useEffect(() => {
-    if (isOpen) panelRef.current?.focus();
-  }, [isOpen]);
+  // Tab-wrapping focus trap: focus can never leave the dialog. Keyed on the
+  // overlay so it also catches Tab pressed while the backdrop has focus.
+  const handleOverlayKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab') return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const focusableElements = Array.from(
+      panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+    ).filter((element) => element.offsetParent !== null);
+
+    const firstFocusableElement = focusableElements[0];
+    const lastFocusableElement = focusableElements[focusableElements.length - 1];
+    if (!firstFocusableElement || !lastFocusableElement) {
+      event.preventDefault();
+      panel.focus();
+      return;
+    }
+
+    // Wrap around at both ends.
+    if (event.shiftKey && document.activeElement === firstFocusableElement) {
+      event.preventDefault();
+      lastFocusableElement.focus();
+    } else if (!event.shiftKey && document.activeElement === lastFocusableElement) {
+      event.preventDefault();
+      firstFocusableElement.focus();
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -98,6 +172,7 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
       role="presentation"
+      onKeyDown={handleOverlayKeyDown}
       onMouseDown={(event) => {
         if (closeOnBackdrop && event.target === event.currentTarget) onClose();
       }}

@@ -76,10 +76,12 @@ Status colors (emerald/amber/rose/blue/purple) use the Tailwind palette directly
 
 ## 6. Modals & Confirmation
 
-Always build dialogs on `components/ui/Modal` (portal, Escape, scroll lock, a11y, focus) or
-`ConfirmDialog` (danger/primary variants, plus `confirmPhrase` for typed confirmation of
-destructive actions). Do **not** hand-roll
+Always build dialogs on `components/ui/Modal` (portal, Escape, ref-counted scroll lock, a11y,
+**Tab-wrapping focus trap**, focus restore on close) or `ConfirmDialog` (danger/primary variants,
+plus `confirmPhrase` for typed confirmation of destructive actions). Do **not** hand-roll
 `fixed inset-0 z-50 bg-black/40 ...` shells — legacy modals migrate to `<Modal>` as they are touched.
+Focus lands on the control marked `data-modal-autofocus` (exported as `MODAL_AUTOFOCUS_ATTRIBUTE`),
+else the first focusable element — mark the field the user came to fill in.
 Reference implementations: `features/audit/components/AuditCleanupModal.tsx` and
 `features/sync/components/SyncCleanupModal.tsx` (Modal + `footer` + form id — zero manual
 Escape/overlay/scroll-lock code).
