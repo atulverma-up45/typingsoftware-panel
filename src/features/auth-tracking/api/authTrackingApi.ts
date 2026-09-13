@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { ApiSuccessEnvelope } from "@/types/api";
 
 export interface AuthTrackingOverview {
   totalActiveSessions: number;
@@ -292,19 +293,26 @@ export const useKillAllUserSessions = () => {
   });
 };
 
+interface PruneExpiredSessionsResult {
+  prunedCount: number;
+  olderThanDays: number;
+}
+
 export const usePruneExpiredSessions = () => {
   const queryClient = useQueryClient();
   return useMutation({
+    // The axios response interceptor already unwraps to the JSON body, so the
+    // resolved value is the backend envelope itself: { success, data, meta }.
     mutationFn: () =>
-      api.post<{ data: { prunedCount: number; olderThanDays: number } }>(
+      api.post<unknown, ApiSuccessEnvelope<PruneExpiredSessionsResult>>(
         API_ENDPOINTS.AUTH_TRACKING_SESSIONS_CLEANUP,
       ),
-    onSuccess: (res: any) => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.authTracking.all });
-      const count = res.data?.data?.prunedCount ?? 0;
+      const count = response.data?.prunedCount ?? 0;
       toast.success(`Pruned ${count} dead/expired sessions from storage`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to prune expired sessions");
     },
   });
