@@ -37,9 +37,14 @@ export const EditPlanModal: React.FC<EditPlanModalProps> = ({ isOpen, onClose, p
   const [customBranding, setCustomBranding] = useState(true);
   const [offlineGraceDays, setOfflineGraceDays] = useState<number>(14);
 
-  // Sync state when plan changes
-  useEffect(() => {
-    if (plan) {
+  // Populate the form from the selected plan on every open — render-phase state
+  // adjustment (pattern used by ConfirmDialog). Keyed on the plan id, so reopening
+  // for the same plan re-syncs (consistent with sibling modals).
+  const [lastSyncedPlanId, setLastSyncedPlanId] = useState<string | null>(null);
+  const syncedPlanId = isOpen && plan ? plan.id : null;
+  if (syncedPlanId !== lastSyncedPlanId) {
+    setLastSyncedPlanId(syncedPlanId);
+    if (plan && isOpen) {
       setName(plan.name);
       setDescription(plan.description || '');
       setPriceRupees((plan.price / 100).toString());
@@ -48,16 +53,18 @@ export const EditPlanModal: React.FC<EditPlanModalProps> = ({ isOpen, onClose, p
       setMaxActivations(plan.maxActivations);
       setStatus(plan.status);
 
-      const f = plan.features || {};
-      setEnglishTyping(f.englishTyping ?? true);
-      setHindiTyping(f.hindiTyping ?? true);
-      setGovernmentExams(f.governmentExams ?? true);
-      setStudentManagement(f.studentManagement ?? true);
-      setAdvancedReports(f.advancedReports ?? false);
-      setCustomBranding(f.customBranding ?? true);
-      setOfflineGraceDays(typeof f.offlineGraceDays === 'number' ? f.offlineGraceDays : 14);
+      const planFeatures = plan.features || {};
+      setEnglishTyping(planFeatures.englishTyping ?? true);
+      setHindiTyping(planFeatures.hindiTyping ?? true);
+      setGovernmentExams(planFeatures.governmentExams ?? true);
+      setStudentManagement(planFeatures.studentManagement ?? true);
+      setAdvancedReports(planFeatures.advancedReports ?? false);
+      setCustomBranding(planFeatures.customBranding ?? true);
+      setOfflineGraceDays(
+        typeof planFeatures.offlineGraceDays === 'number' ? planFeatures.offlineGraceDays : 14,
+      );
     }
-  }, [plan]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

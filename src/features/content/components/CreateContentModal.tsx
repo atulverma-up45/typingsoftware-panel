@@ -54,12 +54,18 @@ export const CreateContentModal: React.FC<CreateContentModalProps> = ({ isOpen, 
   const [highlightWord, setHighlightWord] = useState(true);
   const [requirePunctuation, setRequirePunctuation] = useState(true);
 
-  // Auto-select first module
-  useEffect(() => {
+  // Auto-select the first module while nothing is picked — render-phase state
+  // adjustment (pattern used by ConfirmDialog). Keyed on the module list and the
+  // current selection so the attempt re-runs exactly when either changes,
+  // matching the previous effect dependencies.
+  const [lastAutoSelectKey, setLastAutoSelectKey] = useState('');
+  const autoSelectKey = `${modules.map((module) => module.id).join(',')}|${moduleId}`;
+  if (autoSelectKey !== lastAutoSelectKey) {
+    setLastAutoSelectKey(autoSelectKey);
     if (modules.length > 0 && !moduleId) {
       setModuleId(modules[0].id);
     }
-  }, [modules, moduleId]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

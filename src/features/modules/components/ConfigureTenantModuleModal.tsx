@@ -35,11 +35,18 @@ export const ConfigureTenantModuleModal: React.FC<ConfigureTenantModuleModalProp
   const [customConfigJson, setCustomConfigJson] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Follow the preselected module — render-phase state adjustment (pattern used
+  // by ConfirmDialog). Keyed on the object identity of the preselection, matching
+  // the previous effect (re-runs whenever the parent passes a different module).
+  const [lastPreselectedModule, setLastPreselectedModule] = useState<
+    TypingModule | null | undefined
+  >(preselectedModule);
+  if (preselectedModule !== lastPreselectedModule) {
+    setLastPreselectedModule(preselectedModule);
     if (preselectedModule) {
       setModuleId(preselectedModule.id);
     }
-  }, [preselectedModule]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

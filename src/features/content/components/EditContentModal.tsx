@@ -28,8 +28,14 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
   const [allowBackspace, setAllowBackspace] = useState(true);
   const [highlightWord, setHighlightWord] = useState(true);
 
-  useEffect(() => {
-    if (item) {
+  // Sync the editable fields from the selected item on every open — render-phase
+  // state adjustment (pattern used by ConfirmDialog). Keyed on the item id, so
+  // reopening for the same item re-syncs (consistent with the sibling modals).
+  const [lastSyncedItemId, setLastSyncedItemId] = useState<string | null>(null);
+  const syncedItemId = isOpen && item ? item.id : null;
+  if (syncedItemId !== lastSyncedItemId) {
+    setLastSyncedItemId(syncedItemId);
+    if (item && isOpen) {
       setTitle(item.title);
       setLanguage(item.language || 'en');
       setDifficulty(item.difficulty);
@@ -41,7 +47,7 @@ export const EditContentModal: React.FC<EditContentModalProps> = ({ isOpen, onCl
       setAllowBackspace(examConfig.allowBackspace ?? true);
       setHighlightWord(examConfig.highlightWord ?? true);
     }
-  }, [item]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

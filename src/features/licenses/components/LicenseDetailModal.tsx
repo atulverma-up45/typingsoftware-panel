@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useLicense } from '../api/licenseApi';
 import type { License } from '../api/licenseApi';
+import { useNowMs } from '@/hooks/useNowMs';
 import { toast } from 'sonner';
 
 interface LicenseDetailModalProps {
@@ -46,6 +47,10 @@ export const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({
   const { data: fullLicense, isLoading } = useLicense(initialLicense?.id);
 
   const license = fullLicense || initialLicense;
+
+  // Render-stable freshness clock for the expiry badge — `Date.now()` must not
+  // be called during render; this hook owns the impurity on an interval.
+  const nowMs = useNowMs();
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -74,7 +79,7 @@ export const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({
   const maxSeats = license.maxActivations || 1;
   const seatPercentage = Math.min(100, Math.round((usedSeats / maxSeats) * 100));
 
-  const isExpired = new Date(license.expiresAt).getTime() < Date.now();
+  const isExpired = new Date(license.expiresAt).getTime() < nowMs;
 
   const getStatusBadge = () => {
     if (license.status === 'REVOKED') {

@@ -36,6 +36,7 @@ import {
 } from '../api/licenseApi';
 import type { License, LicenseStatus } from '../api/licenseApi';
 import StatCard from '@/components/ui/StatCard';
+import { useNowMs } from '@/hooks/useNowMs';
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import { useInstitutions } from '@/features/institutions/api/institutionApi';
 import { GenerateLicenseModal } from '../components/GenerateLicenseModal';
@@ -58,6 +59,11 @@ type TabType = 'ALL' | 'ACTIVE' | 'EXPIRING' | 'SUSPENDED' | 'REVOKED' | 'TRASH'
 
 export const LicensesPage: React.FC = () => {
   const { isSuperAdmin, isSupport } = usePermissions();
+
+  // Render-stable freshness clock for the EXPIRING-tab filter — `Date.now()`
+  // must not be called during render (the value would change between renders
+  // and break memoisation); this hook owns the impurity on an interval.
+  const nowMs = useNowMs();
 
   // Filters & Tab State
   const [activeTab, setActiveTab] = useState<TabType>('ALL');
@@ -198,7 +204,7 @@ export const LicensesPage: React.FC = () => {
   // Filter client-side for "EXPIRING" tab (expiring in next 30 days)
   const licensesList = useMemo(() => {
     if (activeTab === 'EXPIRING') {
-      const now = Date.now();
+      const now = nowMs;
       const in30Days = now + 30 * 24 * 60 * 60 * 1000;
       return rawLicensesList.filter((lic) => {
         const exp = new Date(lic.expiresAt).getTime();
@@ -206,7 +212,7 @@ export const LicensesPage: React.FC = () => {
       });
     }
     return rawLicensesList;
-  }, [rawLicensesList, activeTab]);
+  }, [rawLicensesList, activeTab, nowMs]);
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pb-6">

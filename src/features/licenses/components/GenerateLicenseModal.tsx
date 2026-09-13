@@ -60,21 +60,41 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
   const { data: subscriptionsList, isLoading: isLoadingSubscriptions } =
     useSubscriptionsForInstitution(institutionId);
 
-  // Auto-select first active subscription when list updates
-  useEffect(() => {
+  // Auto-select the first active subscription when the list updates — render-phase
+  // state adjustment (pattern used by ConfirmDialog). Keyed on the list identity,
+  // matching the previous effect: a refetch returns a new list object and re-picks
+  // (React Query structural sharing keeps the identity when data is deep-equal).
+  const [lastSubscriptionsList, setLastSubscriptionsList] = useState<
+    typeof subscriptionsList | undefined
+  >(undefined);
+  if (subscriptionsList !== lastSubscriptionsList) {
+    setLastSubscriptionsList(subscriptionsList);
     if (subscriptionsList && subscriptionsList.length > 0) {
-      const activeSub = subscriptionsList.find((s) => s.status === 'ACTIVE') || subscriptionsList[0];
-      setSubscriptionId(activeSub.id);
-      if (activeSub.plan?.maxDevices) {
-        setMaxActivations(activeSub.plan.maxDevices);
+      const activeSubscription =
+        subscriptionsList.find((subscription) => subscription.status === 'ACTIVE') ||
+        subscriptionsList[0];
+      setSubscriptionId(activeSubscription.id);
+      if (activeSubscription.plan?.maxDevices) {
+        setMaxActivations(activeSubscription.plan.maxDevices);
       }
     } else {
       setSubscriptionId('');
     }
-  }, [subscriptionsList]);
+  }
 
-  // Update institutionId if default changes
-  useEffect(() => {
+  // Keep institutionId aligned with its defaults — render-phase state adjustment
+  // (pattern used by ConfirmDialog). Keyed on the same inputs as the previous
+  // effect (explicit default, actor institution, loaded list, current value) so
+  // the fallback ladder re-runs exactly when any of them changes.
+  const [lastDefaultKey, setLastDefaultKey] = useState('');
+  const defaultKey = [
+    defaultInstitutionId ?? '',
+    currentUser?.institutionId ?? '',
+    institutionsData?.data.map((institution) => institution.id).join(',') ?? '',
+    institutionId,
+  ].join('|');
+  if (defaultKey !== lastDefaultKey) {
+    setLastDefaultKey(defaultKey);
     if (defaultInstitutionId) {
       setInstitutionId(defaultInstitutionId);
     } else if (currentUser?.institutionId) {
@@ -82,9 +102,15 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
     } else if (institutionsData?.data && institutionsData.data.length > 0 && !institutionId) {
       setInstitutionId(institutionsData.data[0].id);
     }
-  }, [defaultInstitutionId, currentUser?.institutionId, institutionsData?.data, institutionId]);
+  }
 
   const createMutation = useCreateLicense();
+
+  const handleModalClose = () => {
+    setGeneratedLicense(null);
+    setIsCopied(false);
+    onClose();
+  };
 
   // Escape key handler
   useEffect(() => {
@@ -100,12 +126,6 @@ export const GenerateLicenseModal: React.FC<GenerateLicenseModalProps> = ({
   }, [isOpen, createMutation.isPending]);
 
   if (!isOpen) return null;
-
-  const handleModalClose = () => {
-    setGeneratedLicense(null);
-    setIsCopied(false);
-    onClose();
-  };
 
   const handleCopyKey = () => {
     if (!generatedLicense) return;

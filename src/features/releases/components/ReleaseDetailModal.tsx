@@ -47,11 +47,13 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab('SPECS');
-    }
-  }, [isOpen]);
+  // Reset to the specs tab on every open — render-phase state adjustment (pattern
+  // used by ConfirmDialog); reopening shows a fresh view of the new release.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setActiveTab('SPECS');
+  }
 
   if (!isOpen || !release) return null;
 

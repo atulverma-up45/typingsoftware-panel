@@ -27,11 +27,16 @@ export const EditDeviceModal: React.FC<EditDeviceModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (device && isOpen) {
-      setDeviceName(device.deviceName);
-    }
-  }, [device, isOpen]);
+  // Sync the editable label from the selected device on every open — render-phase
+  // state adjustment (pattern used by ConfirmDialog). The signature returns to
+  // `null` while closed, so reopening for the same device re-syncs, matching the
+  // previous `[device, isOpen]` effect behaviour.
+  const [lastSyncedDevice, setLastSyncedDevice] = useState<string | null>(null);
+  const syncedDeviceId = isOpen && device ? device.id : null;
+  if (syncedDeviceId !== lastSyncedDevice) {
+    setLastSyncedDevice(syncedDeviceId);
+    if (device && isOpen) setDeviceName(device.deviceName);
+  }
 
   if (!isOpen || !device) return null;
 

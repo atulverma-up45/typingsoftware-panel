@@ -23,6 +23,7 @@ import {
   Download,
 } from 'lucide-react';
 import StatCard from '@/components/ui/StatCard';
+import { useNowMs } from '@/hooks/useNowMs';
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import { useAuthStore } from '@/stores/auth.store';
 import {
@@ -134,16 +135,21 @@ export const ActivationsPage: React.FC = () => {
   const rawActivationsList = activationsData?.data || [];
   const seatMeta = activationsData?.meta || { page: 1, limit: 10, total: 0, totalPages: 1 };
 
+  // Render-stable freshness clock — `Date.now()` must not be called during
+  // render (the value would change between renders and break memoisation);
+  // this hook owns the impurity and refreshes on an interval.
+  const nowMs = useNowMs();
+
   const activationsList = useMemo(() => {
     if (seatTab === 'RECENT_24H') {
-      const past24h = Date.now() - 24 * 60 * 60 * 1000;
+      const past24h = nowMs - 24 * 60 * 60 * 1000;
       return rawActivationsList.filter((act) => {
         const lastSeen = new Date(act.lastSeenAt).getTime();
         return act.status === 'ACTIVE' && lastSeen >= past24h;
       });
     }
     return rawActivationsList;
-  }, [rawActivationsList, seatTab]);
+  }, [rawActivationsList, seatTab, nowMs]);
 
   // ---------------------------------------------------------------------------
   // 2. HARDWARE DEVICE FLEET STATE & LOGIC
@@ -695,7 +701,7 @@ export const ActivationsPage: React.FC = () => {
                 </div>
               ) : (
                 activationsList.map((act) => {
-                  const lastSeenMs = Date.now() - new Date(act.lastSeenAt).getTime();
+                  const lastSeenMs = nowMs - new Date(act.lastSeenAt).getTime();
                   const isOnlineNow = lastSeenMs < 1000 * 60 * 60;
                   const isWithin24h = lastSeenMs < 1000 * 60 * 60 * 24;
 
@@ -834,7 +840,7 @@ export const ActivationsPage: React.FC = () => {
                     </tr>
                   ) : (
                     activationsList.map((act) => {
-                      const lastSeenMs = Date.now() - new Date(act.lastSeenAt).getTime();
+                      const lastSeenMs = nowMs - new Date(act.lastSeenAt).getTime();
                       const isOnlineNow = lastSeenMs < 1000 * 60 * 60;
                       const isWithin24h = lastSeenMs < 1000 * 60 * 60 * 24;
 
@@ -1272,7 +1278,7 @@ export const ActivationsPage: React.FC = () => {
                 </div>
               ) : (
                 devicesList.map((dev) => {
-                  const lastSeenMs = Date.now() - new Date(dev.lastSeenAt).getTime();
+                  const lastSeenMs = nowMs - new Date(dev.lastSeenAt).getTime();
                   const isOnlineNow = lastSeenMs < 1000 * 60 * 60;
                   const isWithin24h = lastSeenMs < 1000 * 60 * 60 * 24;
                   const isSoftDeleted = !!dev.deletedAt;
@@ -1431,7 +1437,7 @@ export const ActivationsPage: React.FC = () => {
                     </tr>
                   ) : (
                     devicesList.map((dev) => {
-                      const lastSeenMs = Date.now() - new Date(dev.lastSeenAt).getTime();
+                      const lastSeenMs = nowMs - new Date(dev.lastSeenAt).getTime();
                       const isOnlineNow = lastSeenMs < 1000 * 60 * 60;
                       const isWithin24h = lastSeenMs < 1000 * 60 * 60 * 24;
                       const isSoftDeleted = !!dev.deletedAt;

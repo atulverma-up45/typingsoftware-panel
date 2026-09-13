@@ -27,22 +27,28 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
   const [offlineGraceDays, setOfflineGraceDays] = useState<number>(14);
   const [expiresAt, setExpiresAt] = useState<string>('');
 
-  useEffect(() => {
-    if (license) {
+  // Populate the form from the selected license on every open — render-phase
+  // state adjustment (pattern used by ConfirmDialog). Keyed on the license id,
+  // so reopening for the same license re-syncs (consistent with sibling modals).
+  const [lastSyncedLicenseId, setLastSyncedLicenseId] = useState<string | null>(null);
+  const syncedLicenseId = isOpen && license ? license.id : null;
+  if (syncedLicenseId !== lastSyncedLicenseId) {
+    setLastSyncedLicenseId(syncedLicenseId);
+    if (license && isOpen) {
       setMaxActivations(license.maxActivations || 5);
       setOfflineGraceDays(license.offlineGraceDays || 14);
       if (license.expiresAt) {
         // Format ISO date to YYYY-MM-DD for date input
-        const d = new Date(license.expiresAt);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
+        const expiryDate = new Date(license.expiresAt);
+        const yyyy = expiryDate.getFullYear();
+        const mm = String(expiryDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(expiryDate.getDate()).padStart(2, '0');
         setExpiresAt(`${yyyy}-${mm}-${dd}`);
       } else {
         setExpiresAt('');
       }
     }
-  }, [license]);
+  }
 
   const updateMutation = useUpdateLicense();
 

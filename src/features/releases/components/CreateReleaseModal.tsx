@@ -69,8 +69,12 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Reset form when opened
-  useEffect(() => {
+  // Reset the form on every open — render-phase state adjustment (pattern used
+  // by ConfirmDialog). Doing this in an effect costs an extra commit and can
+  // briefly paint the previous release's values.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
       setVersion('');
       setPlatform('windows-x64');
@@ -89,7 +93,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
       setUploadProgress(null);
       setIsManualMode(false);
     }
-  }, [isOpen]);
+  }
 
   if (!isOpen) return null;
 

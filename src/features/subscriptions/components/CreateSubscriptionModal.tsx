@@ -54,20 +54,39 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
   const institutions = institutionsData?.data || [];
   const plans = plansData?.data || [];
 
-  // Update durationDays when plan changes
-  const selectedPlan = plans.find((p) => p.id === planId);
-  useEffect(() => {
+  const selectedPlan = plans.find((plan) => plan.id === planId);
+
+  // Update durationDays when the selected plan changes — render-phase state
+  // adjustment (pattern used by ConfirmDialog). Keyed on the plan selection and
+  // the resolved plan object identity, matching the previous effect (a refetch
+  // that returns deep-equal plans keeps the identity and does not reset a user
+  // edit, thanks to React Query structural sharing).
+  const [lastPlanSync, setLastPlanSync] = useState<{ planId: string; plan: typeof selectedPlan } | null>(
+    null,
+  );
+  if (
+    !lastPlanSync ||
+    planId !== lastPlanSync.planId ||
+    selectedPlan !== lastPlanSync.plan
+  ) {
+    setLastPlanSync({ planId, plan: selectedPlan });
     if (selectedPlan && selectedPlan.durationDays) {
       setDurationDays(selectedPlan.durationDays);
     }
-  }, [planId, selectedPlan]);
+  }
 
-  // Sync preselected institution
-  useEffect(() => {
+  // Follow the preselected institution — render-phase state adjustment (pattern
+  // used by ConfirmDialog). Keyed on the preselection value, matching the
+  // previous effect (re-applies whenever the parent passes a new default).
+  const [lastPreselectedInstitutionId, setLastPreselectedInstitutionId] = useState<
+    string | undefined
+  >(undefined);
+  if (preselectedInstitutionId !== lastPreselectedInstitutionId) {
+    setLastPreselectedInstitutionId(preselectedInstitutionId);
     if (preselectedInstitutionId) {
       setInstitutionId(preselectedInstitutionId);
     }
-  }, [preselectedInstitutionId]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

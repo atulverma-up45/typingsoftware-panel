@@ -25,12 +25,19 @@ export const ContentStatusModal: React.FC<ContentStatusModalProps> = ({
   const [status, setStatus] = useState<ContentStatus>('PUBLISHED');
   const [reason, setReason] = useState('');
 
-  useEffect(() => {
-    if (item) {
+  // Sync status + clear the reason from the selected item on every open —
+  // render-phase state adjustment (pattern used by ConfirmDialog). Keyed on the
+  // item id, so reopening for the same item re-syncs (consistent with the
+  // device/status modals in this codebase).
+  const [lastSyncedItemId, setLastSyncedItemId] = useState<string | null>(null);
+  const syncedItemId = isOpen && item ? item.id : null;
+  if (syncedItemId !== lastSyncedItemId) {
+    setLastSyncedItemId(syncedItemId);
+    if (item && isOpen) {
       setStatus(item.status);
       setReason('');
     }
-  }, [item]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

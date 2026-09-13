@@ -38,9 +38,14 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
   const [address, setAddress] = useState('');
   const [status, setStatus] = useState<'ACTIVE' | 'SUSPENDED'>('ACTIVE');
 
-  // Populate form with current institution details
-  useEffect(() => {
-    if (institution) {
+  // Populate the form from the selected institution on every open — render-phase
+  // state adjustment (pattern used by ConfirmDialog). Keyed on the institution id,
+  // so reopening for the same institution re-syncs (consistent with sibling modals).
+  const [lastSyncedInstitutionId, setLastSyncedInstitutionId] = useState<string | null>(null);
+  const syncedInstitutionId = isOpen && institution ? institution.id : null;
+  if (syncedInstitutionId !== lastSyncedInstitutionId) {
+    setLastSyncedInstitutionId(syncedInstitutionId);
+    if (institution && isOpen) {
       setName(institution.name || '');
       setSlug(institution.slug || '');
       setEmail(institution.email || '');
@@ -48,7 +53,7 @@ export const EditInstitutionModal: React.FC<EditInstitutionModalProps> = ({
       setAddress(institution.address || '');
       setStatus(institution.status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE');
     }
-  }, [institution]);
+  }
 
   // Debounced slug availability check â€” only meaningful when the slug differs
   // from the one already saved on the institution.

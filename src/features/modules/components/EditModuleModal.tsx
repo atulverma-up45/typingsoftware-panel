@@ -24,15 +24,21 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({ isOpen, onClos
   const [configJson, setConfigJson] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (module) {
+  // Populate the form from the selected module on every open — render-phase state
+  // adjustment (pattern used by ConfirmDialog). Keyed on the module id, so
+  // reopening for the same module re-syncs (consistent with sibling modals).
+  const [lastSyncedModuleId, setLastSyncedModuleId] = useState<string | null>(null);
+  const syncedModuleId = isOpen && module ? module.id : null;
+  if (syncedModuleId !== lastSyncedModuleId) {
+    setLastSyncedModuleId(syncedModuleId);
+    if (module && isOpen) {
       setName(module.name);
       setDescription(module.description || '');
       setStatus(module.status);
       setConfigJson(JSON.stringify(module.configuration || {}, null, 2));
       setJsonError(null);
     }
-  }, [module]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

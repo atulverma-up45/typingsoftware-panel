@@ -43,12 +43,20 @@ export function ResponsiveDataView<T>({
 }: ResponsiveDataViewProps<T>) {
   const [internalViewMode, setInternalViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  // Automatically adapt to mobile screens when the view mode is not controlled
+  // Automatically adapt to mobile screens when the view mode is not controlled —
+  // render-phase state adjustment (pattern used by ConfirmDialog). Keyed on the
+  // same inputs as the previous effect, so it re-syncs on mount, on viewport
+  // change, and when a controlled mode is released back to uncontrolled.
   const isMobileViewport = !useMediaQuery(MEDIA_QUERY.MD);
-  useEffect(() => {
-    if (controlledViewMode !== undefined) return;
-    setInternalViewMode(isMobileViewport ? 'CARDS' : 'TABLE');
-  }, [controlledViewMode, isMobileViewport]);
+  const [lastModeSource, setLastModeSource] = useState<string | null>(null);
+  const modeSource =
+    controlledViewMode === undefined ? `auto:${isMobileViewport}` : 'controlled';
+  if (modeSource !== lastModeSource) {
+    setLastModeSource(modeSource);
+    if (controlledViewMode === undefined) {
+      setInternalViewMode(isMobileViewport ? 'CARDS' : 'TABLE');
+    }
+  }
 
   const effectiveViewMode = controlledViewMode ?? internalViewMode;
   const effectiveMobileCardClass =

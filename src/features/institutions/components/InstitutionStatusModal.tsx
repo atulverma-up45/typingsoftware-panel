@@ -17,13 +17,19 @@ export const InstitutionStatusModal: React.FC<InstitutionStatusModalProps> = ({
   const [targetStatus, setTargetStatus] = useState<'ACTIVE' | 'SUSPENDED'>('ACTIVE');
   const [reason, setReason] = useState('');
 
-  useEffect(() => {
-    if (institution) {
-      // Default to toggling opposite
+  // Default the target to the opposite of the current status on every open —
+  // render-phase state adjustment (pattern used by ConfirmDialog). Keyed on the
+  // institution id, so reopening for the same institution re-defaults (consistent
+  // with sibling modals).
+  const [lastSyncedInstitutionId, setLastSyncedInstitutionId] = useState<string | null>(null);
+  const syncedInstitutionId = isOpen && institution ? institution.id : null;
+  if (syncedInstitutionId !== lastSyncedInstitutionId) {
+    setLastSyncedInstitutionId(syncedInstitutionId);
+    if (institution && isOpen) {
       setTargetStatus(institution.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE');
       setReason('');
     }
-  }, [institution]);
+  }
 
   const updateStatusMutation = useUpdateInstitutionStatus();
 

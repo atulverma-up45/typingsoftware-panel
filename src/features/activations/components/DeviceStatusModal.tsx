@@ -35,12 +35,19 @@ export const DeviceStatusModal: React.FC<DeviceStatusModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
+  // Sync status + clear the reason from the selected device on every open —
+  // render-phase state adjustment (pattern used by ConfirmDialog). The signature
+  // returns to `null` while closed, so reopening for the same device re-syncs,
+  // matching the previous `[device, isOpen]` effect behaviour.
+  const [lastSyncedDevice, setLastSyncedDevice] = useState<string | null>(null);
+  const syncedDeviceId = isOpen && device ? device.id : null;
+  if (syncedDeviceId !== lastSyncedDevice) {
+    setLastSyncedDevice(syncedDeviceId);
     if (device && isOpen) {
       setStatus(device.status);
       setReason('');
     }
-  }, [device, isOpen]);
+  }
 
   if (!isOpen || !device) return null;
 

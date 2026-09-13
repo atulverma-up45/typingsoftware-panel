@@ -64,8 +64,14 @@ export const BrandingEditorModal: React.FC<BrandingEditorModalProps> = ({
   const [supportPhone, setSupportPhone] = useState('');
   const [website, setWebsite] = useState('');
 
-  // Populate when data arrives
-  useEffect(() => {
+  // Populate when data arrives — render-phase state adjustment (pattern used by
+  // ConfirmDialog). Keyed on the identity of the resolved branding (or the
+  // institution fallback), so a refetch that returns deep-equal data (React
+  // Query structural sharing) does not reset a form the user is editing.
+  const [lastPopulateSource, setLastPopulateSource] = useState<object | null>(null);
+  const populateSource: object | null = branding ?? institution ?? null;
+  if (populateSource !== lastPopulateSource) {
+    setLastPopulateSource(populateSource);
     if (branding) {
       setApplicationName(branding.applicationName || '');
       setDisplayName(branding.displayName || '');
@@ -86,7 +92,7 @@ export const BrandingEditorModal: React.FC<BrandingEditorModalProps> = ({
       setSupportEmail(institution.email || '');
       setSupportPhone(institution.phone || '');
     }
-  }, [branding, institution]);
+  }
 
   const updateBrandingMutation = useUpdateBranding();
   const resetBrandingMutation = useResetBranding();

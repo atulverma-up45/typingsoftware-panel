@@ -16,11 +16,14 @@ export const RevokeLicenseModal: React.FC<RevokeLicenseModalProps> = ({
 }) => {
   const [reason, setReason] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      setReason('');
-    }
-  }, [isOpen]);
+  // Reset the reason on every open — render-phase state adjustment (pattern used
+  // by ConfirmDialog). Doing this in an effect costs an extra commit and can
+  // briefly paint the previous target's reason.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setReason('');
+  }
 
   const revokeMutation = useRevokeLicense();
 

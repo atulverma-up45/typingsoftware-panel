@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useActivation } from '../api/activationApi';
 import type { Activation } from '../api/activationApi';
+import { useNowMs } from '@/hooks/useNowMs';
 import { toast } from 'sonner';
 
 interface ActivationDetailModalProps {
@@ -44,6 +45,10 @@ export const ActivationDetailModal: React.FC<ActivationDetailModalProps> = ({
   const { data: fullActivation, isLoading } = useActivation(initialActivation?.id);
   const activation = fullActivation || initialActivation;
 
+  // Render-stable freshness clock for the last-seen badge — `Date.now()` must
+  // not be called during render; this hook owns the impurity on an interval.
+  const nowMs = useNowMs();
+
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(label);
@@ -66,7 +71,7 @@ export const ActivationDetailModal: React.FC<ActivationDetailModalProps> = ({
 
   if (!isOpen || !activation) return null;
 
-  const lastSeenMs = Date.now() - new Date(activation.lastSeenAt).getTime();
+  const lastSeenMs = nowMs - new Date(activation.lastSeenAt).getTime();
   const isOnlineNow = lastSeenMs < 1000 * 60 * 60; // within 1 hour
   const isRecent = lastSeenMs < 1000 * 60 * 60 * 24; // within 24 hours
 

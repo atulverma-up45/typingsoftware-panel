@@ -26,13 +26,19 @@ export const UpdateSubscriptionModal: React.FC<UpdateSubscriptionModalProps> = (
   const [expiresAtDate, setExpiresAtDate] = useState<string>('');
   const [autoRenew, setAutoRenew] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (subscription) {
+  // Populate the form from the selected subscription on every open — render-phase
+  // state adjustment (pattern used by ConfirmDialog). Keyed on the subscription
+  // id, so reopening for the same subscription re-syncs (consistent with siblings).
+  const [lastSyncedSubscriptionId, setLastSyncedSubscriptionId] = useState<string | null>(null);
+  const syncedSubscriptionId = isOpen && subscription ? subscription.id : null;
+  if (syncedSubscriptionId !== lastSyncedSubscriptionId) {
+    setLastSyncedSubscriptionId(syncedSubscriptionId);
+    if (subscription && isOpen) {
       setStatus(subscription.status);
       setExpiresAtDate(new Date(subscription.expiresAt).toISOString().split('T')[0]);
       setAutoRenew(subscription.autoRenew);
     }
-  }, [subscription]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

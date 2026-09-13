@@ -47,11 +47,13 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab('SUMMARY');
-    }
-  }, [isOpen]);
+  // Reset to the summary tab on every open — render-phase state adjustment
+  // (pattern used by ConfirmDialog); reopening shows a fresh view of the new log.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setActiveTab('SUMMARY');
+  }
 
   if (!isOpen || !auditLog) return null;
 

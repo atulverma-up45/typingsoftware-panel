@@ -55,7 +55,13 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
+  // Populate the form from the selected release on every open — render-phase
+  // state adjustment (pattern used by ConfirmDialog). Keyed on the release id, so
+  // reopening for the same release re-syncs (consistent with sibling modals).
+  const [lastSyncedReleaseId, setLastSyncedReleaseId] = useState<string | null>(null);
+  const syncedReleaseId = isOpen && release ? release.id : null;
+  if (syncedReleaseId !== lastSyncedReleaseId) {
+    setLastSyncedReleaseId(syncedReleaseId);
     if (release && isOpen) {
       setPlatform(release.platform);
       setChannel(release.channel);
@@ -66,7 +72,7 @@ export const EditReleaseModal: React.FC<EditReleaseModalProps> = ({
       setInstitutionId(release.institutionId || '');
       setIsTenantSpecific(!!release.institutionId);
     }
-  }, [release, isOpen]);
+  }
 
   if (!isOpen || !release) return null;
 

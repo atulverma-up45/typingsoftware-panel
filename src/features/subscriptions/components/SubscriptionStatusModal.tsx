@@ -27,12 +27,18 @@ export const SubscriptionStatusModal: React.FC<SubscriptionStatusModalProps> = (
   const [status, setStatus] = useState<SubscriptionStatus>('ACTIVE');
   const [reason, setReason] = useState('');
 
-  useEffect(() => {
-    if (subscription) {
+  // Sync the current status + clear the reason on every open — render-phase state
+  // adjustment (pattern used by ConfirmDialog). Keyed on the subscription id, so
+  // reopening for the same subscription re-syncs (consistent with sibling modals).
+  const [lastSyncedSubscriptionId, setLastSyncedSubscriptionId] = useState<string | null>(null);
+  const syncedSubscriptionId = isOpen && subscription ? subscription.id : null;
+  if (syncedSubscriptionId !== lastSyncedSubscriptionId) {
+    setLastSyncedSubscriptionId(syncedSubscriptionId);
+    if (subscription && isOpen) {
       setStatus(subscription.status);
       setReason('');
     }
-  }, [subscription]);
+  }
 
   // Keyboard Escape listener
   useEffect(() => {

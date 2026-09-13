@@ -38,12 +38,18 @@ export const ReleaseStatusModal: React.FC<ReleaseStatusModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
+  // Sync the current status + clear the reason on every open — render-phase state
+  // adjustment (pattern used by ConfirmDialog). Keyed on the release id, so
+  // reopening for the same release re-syncs (consistent with sibling modals).
+  const [lastSyncedReleaseId, setLastSyncedReleaseId] = useState<string | null>(null);
+  const syncedReleaseId = isOpen && release ? release.id : null;
+  if (syncedReleaseId !== lastSyncedReleaseId) {
+    setLastSyncedReleaseId(syncedReleaseId);
     if (release && isOpen) {
       setStatus(release.status);
       setReason('');
     }
-  }, [release, isOpen]);
+  }
 
   if (!isOpen || !release) return null;
 

@@ -17,8 +17,14 @@ export const LicenseStatusModal: React.FC<LicenseStatusModalProps> = ({
   const [targetStatus, setTargetStatus] = useState<'ACTIVE' | 'SUSPENDED' | 'REVOKED'>('ACTIVE');
   const [reason, setReason] = useState('');
 
-  useEffect(() => {
-    if (license) {
+  // Default the target to the flip-side status on every open — render-phase state
+  // adjustment (pattern used by ConfirmDialog). Keyed on the license id, so
+  // reopening for the same license re-defaults (consistent with sibling modals).
+  const [lastSyncedLicenseId, setLastSyncedLicenseId] = useState<string | null>(null);
+  const syncedLicenseId = isOpen && license ? license.id : null;
+  if (syncedLicenseId !== lastSyncedLicenseId) {
+    setLastSyncedLicenseId(syncedLicenseId);
+    if (license && isOpen) {
       setTargetStatus(
         license.status === 'ACTIVE'
           ? 'SUSPENDED'
@@ -28,7 +34,7 @@ export const LicenseStatusModal: React.FC<LicenseStatusModalProps> = ({
       );
       setReason('');
     }
-  }, [license]);
+  }
 
   const updateStatusMutation = useUpdateLicenseStatus();
 

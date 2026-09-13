@@ -138,12 +138,24 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  // Reset the query and selection on every open — render-phase state adjustment
+  // (pattern used by ConfirmDialog); reopening clears the previous search.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
       setQuery('');
       setSelectedIndex(0);
     }
+  }
+
+  // Focus the input shortly after the dialog mounts (side effect — stays in an
+  // effect; the timeout is cleared on close so a closing dialog never steals
+  // focus back).
+  useEffect(() => {
+    if (!isOpen) return;
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(focusTimer);
   }, [isOpen]);
 
   // Keyboard shortcut listener (Cmd+K / Ctrl+K and Escape)
