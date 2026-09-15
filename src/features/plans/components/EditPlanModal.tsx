@@ -376,7 +376,7 @@ export const EditPlanModal: React.FC<EditPlanModalProps> = ({ isOpen, onClose, p
             <button
               type="submit"
               disabled={updatePlanMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {updatePlanMutation.isPending ? 'Saving Changes...' : 'Save Tier Changes'}
             </button>

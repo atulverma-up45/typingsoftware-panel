@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { queryKeys } from "@/lib/queryKeys";
 import type { ApiEnvelope, PaginatedResponse } from "@/types/api";
 import type { UserStatus, UserRole } from "@/types/auth";
+import { handleMutationError } from "@/lib/api/error";
 
 export type { PaginatedResponse, UserStatus, UserRole };
 
@@ -169,8 +170,8 @@ export const useCreateUser = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User provisioned successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create user");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to create user");
     },
   });
 };
@@ -185,8 +186,8 @@ export const useUpdateUser = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
       toast.success("User updated successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update user");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update user");
     },
   });
 };
@@ -202,8 +203,8 @@ export const useUpdateUserStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.sessions(id) });
       toast.success(`User status updated to ${status}`);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update user status");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update user status");
     },
   });
 };
@@ -226,8 +227,8 @@ export const useUpdateUserRole = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.sessions(id) });
       toast.success("User role updated successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update user role");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update user role");
     },
   });
 };
@@ -245,8 +246,8 @@ export const useResetUserPassword = () => {
         "User password reset successfully. Active sessions revoked.",
       );
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to reset password");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to reset password");
     },
   });
 };
@@ -257,8 +258,8 @@ export const useSendResetPasswordEmail = () => {
     onSuccess: () => {
       toast.success("Password reset link sent to user email address");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to send reset email");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to send reset email");
     },
   });
 };
@@ -280,8 +281,8 @@ export const useRevokeUserSession = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("Session revoked successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to revoke session");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to revoke session");
     },
   });
 };
@@ -297,8 +298,8 @@ export const useRevokeAllUserSessions = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("All active sessions terminated successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to revoke all sessions");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to revoke all sessions");
     },
   });
 };
@@ -311,8 +312,8 @@ export const useSoftDeleteUser = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User deleted and moved to trash");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to delete user");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to delete user");
     },
   });
 };
@@ -325,8 +326,8 @@ export const useRestoreUser = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User account restored successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to restore user");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore user");
     },
   });
 };
@@ -339,8 +340,8 @@ export const usePermanentDeleteUser = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("User permanently deleted from database");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to permanently delete user");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently delete user");
     },
   });
 };

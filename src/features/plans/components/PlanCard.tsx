@@ -205,7 +205,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 <button
                   type="button"
                   onClick={() => onEdit(plan)}
-                  className="flex items-center gap-1 text-xs font-medium text-primary bg-primary-100 hover:bg-[#ffe2d6] px-2.5 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1 text-xs font-medium text-primary bg-primary-100 hover:bg-primary-200 px-2.5 py-1.5 rounded-lg transition-colors"
                   title="Edit plan"
                 >
                   <Edit3 size={13} />

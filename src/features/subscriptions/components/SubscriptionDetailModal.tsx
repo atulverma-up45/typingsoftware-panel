@@ -395,7 +395,7 @@ export const SubscriptionDetailModal: React.FC<SubscriptionDetailModalProps> = (
                 onClose();
                 onRenew(subscription);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-primary bg-primary-100 hover:bg-primary-200 rounded-xl transition-colors"
             >
               <RotateCw size={13} />
               Renew Contract

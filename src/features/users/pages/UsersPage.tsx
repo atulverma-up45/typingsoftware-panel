@@ -2,15 +2,8 @@ import React, { useState } from 'react';
 import {
   Users,
   Shield,
-  UserX,
-  UserCheck,
   Plus,
-  Building,
-  CheckCircle2,
   RefreshCw,
-  Laptop,
-  Smartphone,
-  Trash2,
   Download,
 } from 'lucide-react';
 import {
@@ -19,29 +12,27 @@ import {
   type User,
 } from '../api/userApi';
 import { useInstitutionMap } from '@/features/institutions/api/institutionApi';
-import StatCard from '@/components/ui/StatCard';
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
-import { UserActionsDropdown } from '../components/UserActionsDropdown';
-import { CreateUserModal } from '../components/CreateUserModal';
-import { EditUserModal } from '../components/EditUserModal';
-import { ResetPasswordModal } from '../components/ResetPasswordModal';
-import { UserDetailModal } from '../components/UserDetailModal';
-import { StatusChangeModal } from '../components/StatusChangeModal';
 import { useAuthStore } from '@/stores/auth.store';
 import { usePermissions } from '@/lib/permissions';
 import { toast } from 'sonner';
+import { exportCsv } from '@/lib/exportCsv';
 
 // Reusable Responsive UI Module Library
 import PageHeader from '@/components/ui/PageHeader';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
 import ResponsiveDataView from '@/components/ui/ResponsiveDataView';
-import StatusBadge from '@/components/ui/StatusBadge';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 
-export default function UsersPage() {
+// Extracted User Feature Components
+import { UserStatsCards } from '../components/UserStatsCards';
+import { UserCard } from '../components/UserCard';
+import { UserTableView } from '../components/UserTableView';
+import { UserModalsCoordinator } from '../components/UserModalsCoordinator';
+
+export const UsersPage: React.FC = () => {
   const currentUser = useAuthStore((state) => state.user);
-  // Canonical RBAC source — never derive role gates from the store directly
   const { isSuperAdmin, canMutateUsers } = usePermissions();
 
   // Filters & Tabs State
@@ -55,7 +46,6 @@ export default function UsersPage() {
   const [institutionFilter, setInstitutionFilter] = useState('');
   const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
 
-  // Reset to the first page whenever the committed (debounced) search changes
   useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Modals state
@@ -112,47 +102,33 @@ export default function UsersPage() {
       toast.error('No user records available to export');
       return;
     }
-    const headers = [
-      'User ID',
-      'Name',
-      'Email',
-      'Role',
-      'Status',
-      'Institution',
-      'Active Sessions',
-      'Last Active Device',
-      'Last IP',
-      'Last Location',
-      'Registered At',
-    ];
-    const rows = usersList.map((u) => [
-      `"${u.id}"`,
-      `"${u.name.replace(/"/g, '""')}"`,
-      `"${u.email}"`,
-      `"${u.role}"`,
-      `"${u.status}"`,
-      `"${(u.institutionId && institutionMap.get(u.institutionId)?.name) || u.institutionId || 'Global Platform'}"`,
-      `"${u.activeSessionsCount || 0}"`,
-      `"${u.lastLogin ? `${u.lastLogin.browser || 'Browser'} (${u.lastLogin.os || 'OS'})` : 'Never'}"`,
-      `"${u.lastLogin?.ipAddress || ''}"`,
-      `"${[u.lastLogin?.city, u.lastLogin?.country].filter(Boolean).join(', ')}"`,
-      `"${new Date(u.createdAt).toISOString()}"`,
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
+    exportCsv(
       `user-directory-export-${new Date().toISOString().split('T')[0]}.csv`,
+      [
+        { header: 'User ID', accessor: 'id' },
+        { header: 'Name', accessor: 'name' },
+        { header: 'Email', accessor: 'email' },
+        { header: 'Role', accessor: 'role' },
+        { header: 'Status', accessor: 'status' },
+        {
+          header: 'Institution',
+          accessor: (u) => (u.institutionId && institutionMap.get(u.institutionId)?.name) || u.institutionId || 'Global Platform',
+        },
+        { header: 'Active Sessions', accessor: (u) => u.activeSessionsCount || 0 },
+        {
+          header: 'Last Active Device',
+          accessor: (u) => (u.lastLogin ? `${u.lastLogin.browser || 'Browser'} (${u.lastLogin.os || 'OS'})` : 'Never'),
+        },
+        { header: 'Last IP', accessor: (u) => u.lastLogin?.ipAddress || '' },
+        {
+          header: 'Last Location',
+          accessor: (u) => [u.lastLogin?.city, u.lastLogin?.country].filter(Boolean).join(', '),
+        },
+        { header: 'Registered At', accessor: (u) => new Date(u.createdAt).toISOString() },
+      ],
+      usersList,
     );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('User directory exported to CSV successfully');
+    toast.success('User directory exported to CSV');
   };
 
   const handleRefreshAll = () => {
@@ -166,41 +142,17 @@ export default function UsersPage() {
     setStatusFilter('');
   };
 
-  const handleClearFilters = () => {
-    setSearch('');
-    setRoleFilter('');
-    setStatusFilter('');
-    setInstitutionFilter('');
-    setActiveTab('all');
-    setPage(1);
-  };
-
-  const hasActiveFilters =
-    Boolean(search) ||
-    Boolean(roleFilter) ||
-    Boolean(statusFilter) ||
-    Boolean(institutionFilter) ||
-    activeTab !== 'all';
-
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-6">
+    <div className="space-y-6">
       {/* Top Header */}
       <PageHeader
-        title="User Directory"
+        title="User & Account Directory"
         subtitle={
           isSuperAdmin
-            ? 'Multi-tenant administration. Manage platform staff, institute administrators, and account credentials.'
-            : 'Managing team members and instructors assigned to your educational institution.'
+            ? 'Manage system-wide administrator and school operator identities across tenants'
+            : 'Manage administrators and instructors assigned to your institution'
         }
-        icon={<Users size={20} />}
-        badge={
-          !isSuperAdmin ? (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-primary border border-orange-200 flex items-center gap-1.5">
-              <Building size={13} />
-              Institute Scoped
-            </span>
-          ) : undefined
-        }
+        icon={<Users className="text-primary" size={24} />}
         actions={
           <>
             <button
@@ -218,7 +170,6 @@ export default function UsersPage() {
             >
               <RefreshCw size={16} className={isFetchingUsers ? 'animate-spin text-primary' : ''} />
             </button>
-            {/* User provisioning accepts SUPER_ADMIN + ADMIN (POST /users) */}
             {canMutateUsers && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
@@ -253,55 +204,20 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Top Stat Cards (Standardized StatCard Component) */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
-        <StatCard
-          title="Total Users"
-          value={statsData?.data?.total ?? 0}
-          type="orange"
-          icon={<Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="All directory accounts"
-          onClick={() => handleTabChange('all')}
-          active={activeTab === 'all' && !roleFilter && !statusFilter}
-        />
-        <StatCard
-          title="Active Accounts"
-          value={statsData?.data?.active ?? 0}
-          type="blue"
-          icon={<UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="Verified & active staff"
-          onClick={() => handleTabChange('active')}
-          active={activeTab === 'active'}
-        />
-        <StatCard
-          title="Suspended / Banned"
-          value={(statsData?.data?.suspended ?? 0) + (statsData?.data?.banned ?? 0)}
-          type="coral"
-          icon={<UserX className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="Restricted or locked"
-          onClick={() => handleTabChange('suspended')}
-          active={activeTab === 'suspended'}
-        />
-        <StatCard
-          title={isSuperAdmin ? 'Administrators' : 'Staff Members'}
-          value={
-            (statsData?.data?.admins ?? 0) +
-            (isSuperAdmin ? statsData?.data?.superAdmins ?? 0 : 0)
-          }
-          type="cyan"
-          icon={<Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="Privileged accounts"
-          onClick={() => {
-            setRoleFilter(roleFilter === 'ADMIN' ? '' : 'ADMIN');
-            setPage(1);
-          }}
-          active={roleFilter === 'ADMIN'}
-        />
-      </div>
+      {/* Top Stat Cards */}
+      <UserStatsCards
+        statsData={statsData}
+        isLoadingStats={isLoadingStats}
+        activeTab={activeTab}
+        roleFilter={roleFilter}
+        statusFilter={statusFilter}
+        isSuperAdmin={isSuperAdmin}
+        onTabChange={handleTabChange}
+        onToggleAdminFilter={() => {
+          setRoleFilter(roleFilter === 'ADMIN' ? '' : 'ADMIN');
+          setPage(1);
+        }}
+      />
 
       {/* Main Container */}
       <div className="rounded-2xl sm:rounded-3xl bg-white border border-gray-100 shadow-xs overflow-hidden">
@@ -313,56 +229,63 @@ export default function UsersPage() {
               className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
                 activeTab === 'all'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-800'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
               }`}
             >
-              All Directory
+              <span>All Accounts</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-gray-100 text-gray-600">
+                {statsData?.data?.total ?? 0}
+              </span>
             </button>
             <button
               onClick={() => handleTabChange('active')}
               className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
                 activeTab === 'active'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-800'
+                  ? 'border-emerald-500 text-emerald-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-500" /> Active
+              <span>Active</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100">
+                {statsData?.data?.active ?? 0}
+              </span>
             </button>
             <button
               onClick={() => handleTabChange('suspended')}
               className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
                 activeTab === 'suspended'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-800'
+                  ? 'border-coral-500 text-coral-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-amber-500" /> Suspended
+              <span>Suspended</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-coral-50 text-coral-600 border border-coral-100">
+                {(statsData?.data?.suspended ?? 0) + (statsData?.data?.banned ?? 0)}
+              </span>
             </button>
-            {isSuperAdmin && (
-              <button
-                onClick={() => handleTabChange('trash')}
-                className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
-                  activeTab === 'trash'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-800'
-                }`}
-              >
-                <Trash2 size={13} /> Trash
-              </button>
-            )}
-          </div>
-
-          <div className="pb-3 text-xs text-gray-400 font-medium hidden sm:block">
-            {totalUsers} {totalUsers === 1 ? 'user registered' : 'users registered'}
+            <button
+              onClick={() => handleTabChange('trash')}
+              className={`pb-3 px-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-1.5 ${
+                activeTab === 'trash'
+                  ? 'border-gray-500 text-gray-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <span>Recycle Bin</span>
+              {activeTab === 'trash' && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-gray-100 text-gray-600">
+                  {meta.total}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Filter Toolbar Component */}
+        {/* Multifaceted Filter Toolbar */}
         <FilterToolbar
           searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search by name or email... (Press / to focus)"
-          hasActiveFilters={hasActiveFilters}
+          onSearchChange={(v) => setSearch(v)}
+          searchPlaceholder="Search by name, email, or user ID... (Press / to focus)"
           activeChips={[
             ...(roleFilter
               ? [
@@ -404,11 +327,18 @@ export default function UsersPage() {
                 ]
               : []),
           ]}
-          onClearFilters={handleClearFilters}
+          hasActiveFilters={Boolean(roleFilter || statusFilter || institutionFilter || search)}
+          onClearFilters={() => {
+            setRoleFilter('');
+            setStatusFilter('');
+            setInstitutionFilter('');
+            setSearch('');
+            setPage(1);
+          }}
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={(mode) => setViewMode(mode)}
           totalResults={totalUsers}
-          totalLabel="Users in directory"
+          totalLabel="Users"
           filterElements={
             <>
               {/* Role Filter */}
@@ -421,12 +351,13 @@ export default function UsersPage() {
                 title="Filter by Role"
               >
                 <option value="">All Roles</option>
-                {isSuperAdmin && <option value="SUPER_ADMIN">Super Admin</option>}
-                <option value="ADMIN">Admin</option>
-                <option value="SUPPORT">Support</option>
+                {isSuperAdmin && <option value="SUPER_ADMIN">SUPER ADMIN</option>}
+                <option value="ADMIN">INSTITUTE ADMIN</option>
+                <option value="INSTRUCTOR">INSTRUCTOR</option>
+                <option value="STUDENT">STUDENT</option>
               </FilterSelect>
 
-              {/* Status Filter (on All tab) */}
+              {/* Status Filter */}
               {activeTab === 'all' && (
                 <FilterSelect
                   value={statusFilter}
@@ -437,10 +368,10 @@ export default function UsersPage() {
                   title="Filter by Status"
                 >
                   <option value="">All Statuses</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="SUSPENDED">Suspended</option>
-                  <option value="BANNED">Banned</option>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="SUSPENDED">SUSPENDED</option>
+                  <option value="BANNED">BANNED</option>
                 </FilterSelect>
               )}
 
@@ -452,10 +383,9 @@ export default function UsersPage() {
                     setInstitutionFilter(e.target.value);
                     setPage(1);
                   }}
-                  className="max-w-[200px] truncate"
-                  title="Filter by Institution"
+                  title="Filter by Institution Tenant"
                 >
-                  <option value="">All Institutions</option>
+                  <option value="">All Institutions (Global)</option>
                   {institutions.map((inst) => (
                     <option key={inst.id} value={inst.id}>
                       {inst.name}
@@ -467,362 +397,65 @@ export default function UsersPage() {
           }
         />
 
-        {/* Responsive Data View: Desktop Table OR Mobile Cards */}
-        <ResponsiveDataView<User>
+        {/* Responsive Data View: Card Layout vs Desktop Table */}
+        <ResponsiveDataView
           items={usersList}
           isLoading={isLoadingUsers}
           isError={isErrorUsers}
-          errorMessage={(usersError as Error)?.message}
-          onRetry={refetchUsers}
+          errorMessage={usersError?.message || 'Failed to query user database'}
+          onRetry={handleRefreshAll}
           viewMode={viewMode}
-          keyExtractor={(u) => u.id}
-          cardGridClassName="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 p-3.5 sm:p-4"
+          keyExtractor={(user) => user.id}
           emptyState={
             <EmptyState
-              icon={<Users size={28} />}
-              title="No users found"
+              title={
+                debouncedSearch
+                  ? `No accounts matched "${debouncedSearch}"`
+                  : activeTab === 'trash'
+                    ? 'Recycle bin is empty'
+                    : 'No users provisioned in this category'
+              }
               description={
-                hasActiveFilters
-                  ? 'No user accounts match your active search and filter criteria.'
-                  : 'No accounts have been registered under this scope yet.'
+                debouncedSearch
+                  ? 'Try broadening your search term or clearing active status filters.'
+                  : 'Create staff accounts or enroll administrators to manage courses.'
               }
               action={
-                hasActiveFilters ? (
-                  <button
-                    onClick={handleClearFilters}
-                    className="px-3.5 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-700 transition-colors"
-                  >
-                    Clear all filters
-                  </button>
-                ) : canMutateUsers ? (
+                canMutateUsers && activeTab !== 'trash' ? (
                   <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-600 text-xs font-medium text-white shadow-2xs transition-colors flex items-center gap-1.5"
+                    className="px-4 py-2 bg-primary hover:bg-primary-600 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
                   >
-                    <Plus size={15} /> Provision first user
+                    Provision First Account
                   </button>
-                ) : (
-                  <span className="text-xs text-gray-400">
-                    User provisioning is restricted to administrators.
-                  </span>
-                )
+                ) : undefined
               }
             />
           }
-          // Mobile Card Representation (Zero horizontal scrolling!)
-          renderCard={(user) => {
-            const isDeleted = user.deletedAt !== null;
-            const isSelf = currentUser?.id === user.id;
-
-            return (
-              <div
-                key={user.id}
-                className={`bg-white rounded-2xl border border-gray-100 p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between gap-3 ${
-                  isDeleted ? 'opacity-65 bg-gray-50/40' : ''
-                }`}
-              >
-                {/* Card Header: Avatar, Name, Actions */}
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {user.image ? (
-                      <div className="relative shrink-0">
-                        <img
-                          src={user.image}
-                          alt={user.name}
-                          className="w-10 h-10 rounded-xl object-cover border border-gray-100 shadow-2xs"
-                        />
-                        {user.activeSessionsCount && user.activeSessionsCount > 0 ? (
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-                        ) : null}
-                      </div>
-                    ) : (
-                      <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-300 to-primary-400 flex items-center justify-center text-white font-bold text-sm shadow-2xs">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        {user.activeSessionsCount && user.activeSessionsCount > 0 ? (
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-                        ) : null}
-                      </div>
-                    )}
-
-                    <div className="min-w-0">
-                      <div className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-                        <span
-                          className="cursor-pointer hover:text-primary transition-colors truncate"
-                          onClick={() => setSelectedUserForDetails(user)}
-                        >
-                          {user.name}
-                        </span>
-                        {user.emailVerified && (
-                          <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        )}
-                        {isSelf && (
-                          <span className="px-1.5 py-0.2 rounded bg-orange-50 text-primary text-[10px] font-bold border border-orange-200 shrink-0">
-                            YOU
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Quick Action Dropdown */}
-                  <div className="shrink-0">
-                    <UserActionsDropdown
-                      user={user}
-                      onEdit={(u) => setSelectedUserForEdit(u)}
-                      onResetPassword={(u) => setSelectedUserForPassword(u)}
-                      onViewDetails={(u) => setSelectedUserForDetails(u)}
-                      onChangeStatus={(u) => setSelectedUserForStatus(u)}
-                    />
-                  </div>
-                </div>
-
-                {/* Badges Row: Role & Status */}
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-50 text-xs">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-                      user.role === 'SUPER_ADMIN'
-                        ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : user.role === 'ADMIN'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    }`}
-                  >
-                    {user.role.replace('_', ' ')}
-                  </span>
-
-                  {isDeleted ? (
-                    <StatusBadge status="DELETED" size="sm" />
-                  ) : (
-                    <StatusBadge
-                      status={user.status}
-                      size="sm"
-                      onClick={() => setSelectedUserForStatus(user)}
-                    />
-                  )}
-
-                  {isSuperAdmin && user.institutionId && (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 max-w-[150px] truncate ml-auto">
-                      <Building size={11} className="shrink-0 text-indigo-500" />
-                      <span className="truncate">
-                        {institutionMap.get(user.institutionId)?.name || user.institutionId.substring(0, 8)}
-                      </span>
-                    </span>
-                  )}
-                </div>
-
-                {/* Device & Location Info */}
-                {user.lastLogin && (
-                  <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-100 bg-gray-50/50 -mx-4 -mb-4 p-2.5 rounded-b-2xl">
-                    <div className="flex items-center gap-1.5 truncate">
-                      {user.lastLogin.deviceType === 'mobile' ? (
-                        <Smartphone size={12} className="text-gray-400" />
-                      ) : (
-                        <Laptop size={12} className="text-gray-400" />
-                      )}
-                      <span className="truncate">{user.lastLogin.browser || 'Browser'}</span>
-                    </div>
-                    <span className="font-mono text-[10px] text-gray-400 shrink-0">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          }}
-          // Desktop Table View (Sticky header & structured columns)
+          renderCard={(user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              currentUserId={currentUser?.id}
+              isSuperAdmin={isSuperAdmin}
+              institutionMap={institutionMap}
+              onEdit={(u) => setSelectedUserForEdit(u)}
+              onResetPassword={(u) => setSelectedUserForPassword(u)}
+              onViewDetails={(u) => setSelectedUserForDetails(u)}
+              onChangeStatus={(u) => setSelectedUserForStatus(u)}
+            />
+          )}
           renderTable={(items) => (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/70 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">
-                  <th className="px-6 py-3.5">User</th>
-                  <th className="px-6 py-3.5">Role</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5">Last Active Device</th>
-                  {isSuperAdmin && <th className="px-6 py-3.5">Institution</th>}
-                  <th className="px-6 py-3.5">Registered</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
-                {items.map((user) => {
-                  const isDeleted = user.deletedAt !== null;
-                  const isSelf = currentUser?.id === user.id;
-
-                  return (
-                    <tr
-                      key={user.id}
-                      className={`group hover:bg-gray-50/60 transition-colors ${
-                        isDeleted ? 'opacity-60 bg-gray-50/30' : ''
-                      }`}
-                    >
-                      {/* Name & Email */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {user.image ? (
-                            <div className="relative shrink-0">
-                              <img
-                                src={user.image}
-                                alt={user.name}
-                                className="w-10 h-10 rounded-xl object-cover shadow-2xs border border-gray-100"
-                              />
-                              {user.activeSessionsCount && user.activeSessionsCount > 0 ? (
-                                <span
-                                  className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                                  title="Online Now"
-                                />
-                              ) : null}
-                            </div>
-                          ) : (
-                            <div className="relative shrink-0">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-300 to-primary-400 flex items-center justify-center text-white font-bold text-sm shadow-2xs">
-                                {user.name.charAt(0).toUpperCase()}
-                              </div>
-                              {user.activeSessionsCount && user.activeSessionsCount > 0 ? (
-                                <span
-                                  className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                                  title="Online Now"
-                                />
-                              ) : null}
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-semibold text-gray-900 flex items-center gap-1.5">
-                              <span
-                                className="cursor-pointer hover:text-primary transition-colors"
-                                onClick={() => setSelectedUserForDetails(user)}
-                              >
-                                {user.name}
-                              </span>
-                              {user.emailVerified && (
-                                <CheckCircle2 size={14} className="text-emerald-500" />
-                              )}
-                              {isSelf && (
-                                <span className="px-1.5 py-0.2 rounded-md bg-orange-50 text-primary text-[10px] font-bold border border-orange-200">
-                                  YOU
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">{user.email}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Role Badge */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                            user.role === 'SUPER_ADMIN'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200'
-                              : user.role === 'ADMIN'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}
-                        >
-                          {user.role.replace('_', ' ')}
-                        </span>
-                      </td>
-
-                      {/* Status Badge */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {isDeleted ? (
-                          <StatusBadge status="DELETED" />
-                        ) : (
-                          <StatusBadge
-                            status={user.status}
-                            onClick={() => setSelectedUserForStatus(user)}
-                            title="Click to modify user status"
-                          />
-                        )}
-                      </td>
-
-                      {/* Last Active Device */}
-                      <td className="px-6 py-4">
-                        {user.lastLogin ? (
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs text-gray-800 font-medium">
-                              {user.lastLogin.deviceType === 'mobile' ? (
-                                <Smartphone size={13} className="text-gray-400" />
-                              ) : (
-                                <Laptop size={13} className="text-gray-400" />
-                              )}
-                              <span>{user.lastLogin.browser || 'Web Client'}</span>
-                              {user.lastLogin.os && (
-                                <span className="text-gray-400 font-normal">
-                                  ({user.lastLogin.os})
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                              <span className="font-mono text-gray-500">
-                                {user.lastLogin.ipAddress || '—'}
-                              </span>
-                              {(user.lastLogin.city || user.lastLogin.country) && (
-                                <>
-                                  <span>•</span>
-                                  <span>
-                                    {[user.lastLogin.city, user.lastLogin.country]
-                                      .filter(Boolean)
-                                      .join(', ')}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">Never signed in</span>
-                        )}
-                      </td>
-
-                      {/* Institution (Super Admin only) */}
-                      {isSuperAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {user.institutionId ? (
-                            institutionMap.get(user.institutionId) ? (
-                              <span
-                                className="inline-flex items-center gap-1.5 font-medium text-xs text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 max-w-[180px] truncate"
-                                title={`ID: ${user.institutionId}`}
-                              >
-                                <Building size={12} className="shrink-0 text-indigo-500" />
-                                <span className="truncate">{institutionMap.get(user.institutionId)!.name}</span>
-                              </span>
-                            ) : (
-                              <span className="font-mono text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
-                                {user.institutionId.substring(0, 12)}...
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-xs text-gray-400 italic">Global Platform</span>
-                          )}
-                        </td>
-                      )}
-
-                      {/* Registered Date */}
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                        {new Date(user.createdAt).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <UserActionsDropdown
-                          user={user}
-                          onEdit={(u) => setSelectedUserForEdit(u)}
-                          onResetPassword={(u) => setSelectedUserForPassword(u)}
-                          onViewDetails={(u) => setSelectedUserForDetails(u)}
-                          onChangeStatus={(u) => setSelectedUserForStatus(u)}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <UserTableView
+              users={items}
+              currentUserId={currentUser?.id}
+              isSuperAdmin={isSuperAdmin}
+              institutionMap={institutionMap}
+              onEdit={(u) => setSelectedUserForEdit(u)}
+              onResetPassword={(u) => setSelectedUserForPassword(u)}
+              onViewDetails={(u) => setSelectedUserForDetails(u)}
+              onChangeStatus={(u) => setSelectedUserForStatus(u)}
+            />
           )}
         />
 
@@ -842,37 +475,23 @@ export default function UsersPage() {
       </div>
 
       {/* Modals */}
-      <CreateUserModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
-
-      <EditUserModal
-        user={selectedUserForEdit}
-        isOpen={Boolean(selectedUserForEdit)}
-        onClose={() => setSelectedUserForEdit(null)}
-      />
-
-      <ResetPasswordModal
-        user={selectedUserForPassword}
-        isOpen={Boolean(selectedUserForPassword)}
-        onClose={() => setSelectedUserForPassword(null)}
-      />
-
-      <UserDetailModal
-        user={selectedUserForDetails}
-        isOpen={Boolean(selectedUserForDetails)}
-        onClose={() => setSelectedUserForDetails(null)}
-        onEdit={(u) => setSelectedUserForEdit(u)}
-        onResetPassword={(u) => setSelectedUserForPassword(u)}
-        onChangeStatus={(u) => setSelectedUserForStatus(u)}
-      />
-
-      <StatusChangeModal
-        user={selectedUserForStatus}
-        isOpen={Boolean(selectedUserForStatus)}
-        onClose={() => setSelectedUserForStatus(null)}
+      <UserModalsCoordinator
+        isCreateModalOpen={isCreateModalOpen}
+        selectedUserForEdit={selectedUserForEdit}
+        selectedUserForPassword={selectedUserForPassword}
+        selectedUserForDetails={selectedUserForDetails}
+        selectedUserForStatus={selectedUserForStatus}
+        onCloseCreate={() => setIsCreateModalOpen(false)}
+        onCloseEdit={() => setSelectedUserForEdit(null)}
+        onClosePassword={() => setSelectedUserForPassword(null)}
+        onCloseDetails={() => setSelectedUserForDetails(null)}
+        onCloseStatus={() => setSelectedUserForStatus(null)}
+        onSelectEdit={(u) => setSelectedUserForEdit(u)}
+        onSelectPassword={(u) => setSelectedUserForPassword(u)}
+        onSelectStatus={(u) => setSelectedUserForStatus(u)}
       />
     </div>
   );
-}
+};
+
+export default UsersPage;

@@ -400,7 +400,7 @@ export const CreatePlanModal: React.FC<CreatePlanModalProps> = ({ isOpen, onClos
             <button
               type="submit"
               disabled={createPlanMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {createPlanMutation.isPending ? 'Creating Plan...' : 'Create Commercial Tier'}
             </button>

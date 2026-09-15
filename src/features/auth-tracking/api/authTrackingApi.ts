@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import type { ApiSuccessEnvelope } from "@/types/api";
+import type { ApiSuccessEnvelope, PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export interface AuthTrackingOverview {
   totalActiveSessions: number;
@@ -157,14 +158,7 @@ export interface LocationClusterItem {
   uniqueUsersCount: number;
 }
 
-export interface PaginatedResult<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
+export type PaginatedResult<T> = PaginatedResponse<T>;
 
 // ---------------------------------------------------------------------------
 // Query Hooks
@@ -271,8 +265,8 @@ export const useKillSession = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("Active session terminated immediately");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to terminate session");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to terminate session");
     },
   });
 };
@@ -287,8 +281,8 @@ export const useKillAllUserSessions = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success("All device sessions terminated for user");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to terminate user sessions");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to terminate user sessions");
     },
   });
 };
@@ -312,8 +306,8 @@ export const usePruneExpiredSessions = () => {
       const count = response.data?.prunedCount ?? 0;
       toast.success(`Pruned ${count} dead/expired sessions from storage`);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to prune expired sessions");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to prune expired sessions");
     },
   });
 };

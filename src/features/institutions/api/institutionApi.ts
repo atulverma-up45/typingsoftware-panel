@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type InstitutionStatus = "ACTIVE" | "SUSPENDED" | "DELETED";
 
@@ -67,16 +69,7 @@ export interface SlugAvailability {
   available: boolean;
 }
 
-export interface PaginatedInstitutionsResponse {
-  data: Institution[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedInstitutionsResponse = PaginatedResponse<Institution>;
 
 export interface InstitutionListParams {
   page?: number;
@@ -355,10 +348,8 @@ export const useCreateInstitution = () => {
       });
       toast.success("Institution provisioned successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to provision institution";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to provision institution");
     },
   });
 };
@@ -387,10 +378,8 @@ export const useUpdateInstitution = () => {
       });
       toast.success("Institution updated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to update institution";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update institution");
     },
   });
 };
@@ -425,10 +414,8 @@ export const useUpdateInstitutionStatus = () => {
       });
       toast.success(`Institution marked as ${variables.data.status}`);
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to update institution status";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update institution status");
     },
   });
 };
@@ -451,10 +438,8 @@ export const useSoftDeleteInstitution = () => {
       });
       toast.success("Institution moved to trash");
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to delete institution";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to delete institution");
     },
   });
 };
@@ -480,10 +465,8 @@ export const useRestoreInstitution = () => {
       });
       toast.success("Institution restored successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to restore institution";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore institution");
     },
   });
 };
@@ -508,12 +491,8 @@ export const usePermanentDeleteInstitution = () => {
       });
       toast.success("Institution permanently purged");
     },
-    onError: (error: any) => {
-      const message =
-        error?.message ||
-        error.response?.data?.message ||
-        "Failed to permanently delete institution";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently delete institution");
     },
   });
 };
@@ -547,10 +526,8 @@ export const useUpdateBranding = () => {
       });
       toast.success("Branding configuration saved successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to save branding";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to save branding");
     },
   });
 };
@@ -584,10 +561,8 @@ export const useResetBranding = () => {
       });
       toast.success("Branding reset to default successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to reset branding";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to reset branding");
     },
   });
 };
@@ -610,10 +585,8 @@ export const useTriggerBrandingBuild = () => {
           "White-label client build triggered successfully",
       );
     },
-    onError: (error: any) => {
-      const message =
-        error?.message || error.response?.data?.message || "Failed to trigger client build";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to trigger client build");
     },
   });
 };

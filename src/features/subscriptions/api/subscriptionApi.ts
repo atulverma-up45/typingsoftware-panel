@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import type { Plan } from "@/features/plans/api/planApi";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type SubscriptionStatus =
   "TRIAL" | "ACTIVE" | "PAST_DUE" | "EXPIRED" | "CANCELLED" | "SUSPENDED";
@@ -65,16 +67,7 @@ export interface SubscriptionStats {
   expiringWithin30Days: number;
 }
 
-export interface PaginatedSubscriptionsResponse {
-  data: Subscription[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedSubscriptionsResponse = PaginatedResponse<Subscription>;
 
 export interface SubscriptionListParams {
   page?: number;
@@ -189,10 +182,8 @@ export const useCreateSubscription = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Subscription contract provisioned successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to provision subscription";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to provision subscription");
     },
   });
 };
@@ -227,10 +218,8 @@ export const useRenewSubscription = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Subscription contract renewed successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to renew subscription";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to renew subscription");
     },
   });
 };
@@ -260,10 +249,8 @@ export const useUpdateSubscription = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription updated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update subscription";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update subscription");
     },
   });
 };
@@ -296,10 +283,8 @@ export const useUpdateSubscriptionStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success(`Subscription transitioned to ${variables.data.status}`);
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update subscription status";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update subscription status");
     },
   });
 };
@@ -320,10 +305,8 @@ export const useSoftDeleteSubscription = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription moved to trash / cancelled");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to delete subscription";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to delete subscription");
     },
   });
 };
@@ -347,10 +330,8 @@ export const useRestoreSubscription = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription restored successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to restore subscription";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore subscription");
     },
   });
 };
@@ -373,11 +354,8 @@ export const usePermanentDeleteSubscription = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.statsRoot });
       toast.success("Subscription permanently purged");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message ||
-        "Failed to permanently purge subscription";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently purge subscription");
     },
   });
 };

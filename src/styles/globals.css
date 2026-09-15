@@ -17,13 +17,15 @@
   --color-primary-tint-border: #fed7c7;
 
   --color-primary: var(--color-primary-base);
+  --color-primary-hover: var(--color-primary-hover-base);
   --color-primary-light: var(--color-primary-light-base);
   --color-primary-dark: var(--color-primary-dark-base);
 }
 
 :root {
-  /* Primary Color: Orange theme matching dashboard */
+  /* Primary Color: Consistent orange brand matching dashboard */
   --color-primary-base: #f77f52;
+  --color-primary-hover-base: #e56b3b;
   --color-primary-light-base: #f89a74;
   --color-primary-dark-base: #d65e2b;
 
@@ -37,6 +39,12 @@
     color: var(--foreground);
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Accessible focus rings across all interactive elements for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-base);
+    outline-offset: 2px;
   }
 }
 

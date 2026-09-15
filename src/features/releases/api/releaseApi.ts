@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { queryKeys } from "@/lib/queryKeys";
 import type { ApiSuccessEnvelope, PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type ReleasePlatform = "windows-x64" | "windows-arm64" | "windows-x86";
 export type ReleaseChannel = "stable" | "beta";
@@ -195,8 +196,8 @@ export const useCreateRelease = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.releases.all });
       toast.success("Software release created successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create release");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to create release");
     },
   });
 };
@@ -223,8 +224,8 @@ export const useUpdateRelease = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.releases.detail(variables.id) });
       toast.success("Release updated successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update release");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update release");
     },
   });
 };
@@ -251,8 +252,8 @@ export const useUpdateReleaseStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.releases.detail(variables.id) });
       toast.success("Release status updated");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update release status");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update release status");
     },
   });
 };
@@ -272,8 +273,8 @@ export const usePublishRelease = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.releases.detail(id) });
       toast.success("Release published to production");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to publish release");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to publish release");
     },
   });
 };
@@ -292,8 +293,8 @@ export const useDeleteRelease = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.releases.all });
       toast.success("Release removed successfully");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to delete release");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to delete release");
     },
   });
 };
@@ -329,8 +330,8 @@ export const useUploadBinary = () => {
 
       return response.data;
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to upload binary file");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to upload binary file");
     },
   });
 };

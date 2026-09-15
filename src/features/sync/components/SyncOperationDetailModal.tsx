@@ -3,7 +3,6 @@ import {
   X,
   RefreshCw,
   Laptop,
-  Key,
   ShieldCheck,
   Calendar,
   Building2,
@@ -11,7 +10,6 @@ import {
   Check,
   Code2,
   Lock,
-  Layers,
   Activity,
   Sliders,
 } from 'lucide-react';

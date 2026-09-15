@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type DeviceStatus = "ACTIVE" | "REVOKED" | "SUSPECT";
 
@@ -39,16 +41,7 @@ export interface DeviceStats {
   revokedDevices: number;
 }
 
-export interface PaginatedDevicesResponse {
-  data: Device[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedDevicesResponse = PaginatedResponse<Device>;
 
 export interface DeviceListParams {
   page?: number;
@@ -136,10 +129,8 @@ export const useUpdateDevice = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       toast.success("Workstation label updated");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update device";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update device");
     },
   });
 };
@@ -164,10 +155,8 @@ export const useUpdateDeviceStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       toast.success("Workstation status updated");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update device status";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update device status");
     },
   });
 };
@@ -191,10 +180,8 @@ export const useRevokeDevice = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activations.all });
       toast.success("Workstation revoked and blacklisted");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to revoke device";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to revoke device");
     },
   });
 };
@@ -211,10 +198,8 @@ export const useSoftDeleteDevice = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
       toast.success("Workstation moved to Recycle Bin");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to delete device";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to delete device");
     },
   });
 };
@@ -231,10 +216,8 @@ export const useRestoreDevice = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
       toast.success("Workstation restored from Recycle Bin");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to restore device";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore device");
     },
   });
 };
@@ -251,10 +234,8 @@ export const usePermanentDeleteDevice = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.devices.all });
       toast.success("Workstation permanently deleted");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to permanently delete device";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently delete device");
     },
   });
 };

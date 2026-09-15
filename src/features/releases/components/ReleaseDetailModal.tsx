@@ -188,7 +188,7 @@ export const ReleaseDetailModal: React.FC<ReleaseDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-hover shadow-xs transition-colors"
                 >
                   <Download size={13} />
                   Download File

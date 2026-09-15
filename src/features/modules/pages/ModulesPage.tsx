@@ -26,6 +26,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import StatusBadge from '@/components/ui/StatusBadge';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
+import { exportCsv } from '@/lib/exportCsv';
 import {
   useModules,
   useModuleStats,
@@ -130,40 +131,20 @@ export const ModulesPage: React.FC = () => {
       toast.error('No typing modules available to export');
       return;
     }
-    const headers = [
-      'Module ID',
-      'Key Identifier',
-      'Module Name',
-      'Description',
-      'Engine Version',
-      'Status',
-      'Created At',
-      'Updated At',
-    ];
-    const rows = modules.map((mod) => [
-      `"${mod.id}"`,
-      `"${mod.key}"`,
-      `"${mod.name}"`,
-      `"${(mod.description || '').replace(/"/g, '""')}"`,
-      `"${mod.version}"`,
-      `"${mod.status}"`,
-      `"${new Date(mod.createdAt).toISOString()}"`,
-      `"${new Date(mod.updatedAt).toISOString()}"`,
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
+    exportCsv(
       `typing-modules-export-${new Date().toISOString().split('T')[0]}.csv`,
+      [
+        { header: 'Module ID', accessor: 'id' },
+        { header: 'Key Identifier', accessor: 'key' },
+        { header: 'Module Name', accessor: 'name' },
+        { header: 'Description', accessor: (mod) => mod.description || '' },
+        { header: 'Engine Version', accessor: 'version' },
+        { header: 'Status', accessor: 'status' },
+        { header: 'Created At', accessor: (mod) => new Date(mod.createdAt).toISOString() },
+        { header: 'Updated At', accessor: (mod) => new Date(mod.updatedAt).toISOString() },
+      ],
+      modules,
     );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
     toast.success('Typing modules exported to CSV');
   };
 
@@ -248,7 +229,7 @@ export const ModulesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors shadow-sm hover:shadow"
               >
                 <Plus size={16} strokeWidth={2.5} />
                 Register Module
@@ -454,7 +435,7 @@ export const ModulesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors shadow-sm"
               >
                 <Plus size={15} strokeWidth={2.5} />
                 Register First Typing Module

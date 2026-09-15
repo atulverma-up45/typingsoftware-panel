@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type ContentType =
   | "PASSAGE"
@@ -69,16 +71,7 @@ export interface ContentStats {
   archivedItems: number;
 }
 
-export interface PaginatedContentResponse {
-  data: ContentItem[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedContentResponse = PaginatedResponse<ContentItem>;
 
 export interface ContentListParams {
   page?: number;
@@ -192,10 +185,8 @@ export const useCreateContent = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item created successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to create content item";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to create content item");
     },
   });
 };
@@ -225,10 +216,8 @@ export const useUpdateContent = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content updated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update content item";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update content item");
     },
   });
 };
@@ -261,10 +250,8 @@ export const useUpdateContentStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success(`Content transitioned to ${variables.data.status}`);
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update content status";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update content status");
     },
   });
 };
@@ -285,10 +272,8 @@ export const useSoftDeleteContent = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item moved to trash");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to delete content";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to delete content");
     },
   });
 };
@@ -312,10 +297,8 @@ export const useRestoreContent = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item restored successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to restore content";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore content");
     },
   });
 };
@@ -338,10 +321,8 @@ export const usePermanentDeleteContent = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.content.stats });
       toast.success("Content item permanently purged");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to permanently delete content";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently delete content");
     },
   });
 };

@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type LicenseStatus = "ACTIVE" | "EXPIRED" | "REVOKED" | "SUSPENDED";
 
@@ -85,16 +87,7 @@ export interface LicenseStats {
   totalWorkstationSeatCapacity: number;
 }
 
-export interface PaginatedLicensesResponse {
-  data: License[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedLicensesResponse = PaginatedResponse<License>;
 
 export interface LicenseListParams {
   page?: number;
@@ -220,10 +213,8 @@ export const useCreateLicense = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("License key generated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to generate license key";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to generate license key");
     },
   });
 };
@@ -253,10 +244,8 @@ export const useUpdateLicense = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License updated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update license";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update license");
     },
   });
 };
@@ -289,10 +278,8 @@ export const useUpdateLicenseStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success(`License marked as ${variables.data.status}`);
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update license status";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update license status");
     },
   });
 };
@@ -325,10 +312,8 @@ export const useRevokeLicense = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License revoked successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to revoke license";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to revoke license");
     },
   });
 };
@@ -349,10 +334,8 @@ export const useSoftDeleteLicense = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License moved to trash");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to delete license";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to delete license");
     },
   });
 };
@@ -376,10 +359,8 @@ export const useRestoreLicense = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License restored successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to restore license";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore license");
     },
   });
 };
@@ -402,10 +383,8 @@ export const usePermanentDeleteLicense = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.licenses.statsRoot });
       toast.success("License permanently purged");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to permanently delete license";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently delete license");
     },
   });
 };

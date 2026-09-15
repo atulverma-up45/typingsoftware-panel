@@ -164,7 +164,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
                 <button
                   type="button"
                   onClick={() => onEdit(module)}
-                  className="h-[36px] px-3 flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl border border-primary/20 transition-colors shadow-2xs"
+                  className="h-[36px] px-3 flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-100 hover:bg-primary-200 rounded-xl border border-primary/20 transition-colors shadow-2xs"
                   title="Edit module"
                 >
                   <Edit3 size={13} />

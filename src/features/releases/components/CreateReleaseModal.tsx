@@ -554,7 +554,7 @@ export const CreateReleaseModal: React.FC<CreateReleaseModalProps> = ({ isOpen, 
             <button
               type="submit"
               disabled={createReleaseMutation.isPending || isCalculatingHash || uploadProgress !== null}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] rounded-xl shadow-sm transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-colors disabled:opacity-50"
             >
               {createReleaseMutation.isPending ? (
                 <>

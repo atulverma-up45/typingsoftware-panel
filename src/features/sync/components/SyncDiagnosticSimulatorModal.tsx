@@ -3,7 +3,6 @@ import {
   X,
   Play,
   CheckCircle2,
-  AlertTriangle,
   RefreshCw,
   Layers,
   FileText,
@@ -13,8 +12,6 @@ import {
   Check,
   Code2,
   Loader2,
-  Plus,
-  Trash2,
 } from 'lucide-react';
 import { useSyncSimulator } from '../api/syncApi';
 import type { SyncRequestInput, SyncResponse, OutboxItem } from '../api/syncApi';
@@ -97,7 +94,7 @@ export const SyncDiagnosticSimulatorModal: React.FC<SyncDiagnosticSimulatorModal
       const response = await syncSimulatorMutation.mutateAsync(payload);
       setSyncResult(response);
       toast.success('Sync simulation executed successfully');
-    } catch (err) {
+    } catch {
       // Error handled by mutation onError
     }
   };

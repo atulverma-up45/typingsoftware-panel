@@ -2,24 +2,13 @@ import React, { useState, useMemo } from 'react';
 import {
   DollarSign,
   Plus,
-  Search,
   RefreshCw,
   Building2,
   Layers,
-  Calendar,
-  Key,
-  Laptop,
   CheckCircle2,
-  AlertTriangle,
   Clock,
-  Ban,
-  Trash2,
-  RotateCcw,
-  RotateCw,
   ArrowUpDown,
-  Filter,
   AlertOctagon,
-  Sparkles,
   Download,
   AlertCircle,
   Lock,
@@ -28,9 +17,8 @@ import StatCard from '@/components/ui/StatCard';
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
-import StatusBadge from '@/components/ui/StatusBadge';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
-import { useAuthStore } from '@/stores/auth.store';
+import { exportCsv } from '@/lib/exportCsv';
 import { usePermissions } from '@/lib/permissions';
 import {
   useSubscriptions,
@@ -47,9 +35,9 @@ import { RenewSubscriptionModal } from '../components/RenewSubscriptionModal';
 import { UpdateSubscriptionModal } from '../components/UpdateSubscriptionModal';
 import { SubscriptionStatusModal } from '../components/SubscriptionStatusModal';
 import { SubscriptionDetailModal } from '../components/SubscriptionDetailModal';
-import { SubscriptionActionsDropdown } from '../components/SubscriptionActionsDropdown';
+import { SubscriptionTableView } from '../components/SubscriptionTableView';
+import { SubscriptionConfirmModals } from '../components/SubscriptionConfirmModals';
 import { toast } from 'sonner';
-import { ConfirmDialog } from '@/components/ui/Modal';
 
 type SubscriptionTab =
   | 'ALL'
@@ -158,44 +146,30 @@ export const SubscriptionsPage: React.FC = () => {
       toast.error('No subscriptions available to export');
       return;
     }
-    const headers = [
-      'Subscription ID',
-      'Institution',
-      'Plan Name',
-      'Status',
-      'Starts At',
-      'Expires At',
-      'Auto Renew',
-      'Created At',
-    ];
-    const rows = subscriptions.map((sub) => [
-      `"${sub.id}"`,
-      `"${sub.institution?.name || institutions.find((i) => i.id === sub.institutionId)?.name || sub.institutionId}"`,
-      `"${sub.plan?.name || plans.find((p) => p.id === sub.planId)?.name || sub.planId}"`,
-      `"${sub.status}"`,
-      `"${new Date(sub.startsAt).toISOString()}"`,
-      `"${new Date(sub.expiresAt).toISOString()}"`,
-      `"${sub.autoRenew ? 'YES' : 'NO'}"`,
-      `"${new Date(sub.createdAt).toISOString()}"`,
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
+    exportCsv(
       `subscriptions-export-${new Date().toISOString().split('T')[0]}.csv`,
+      [
+        { header: 'Subscription ID', accessor: 'id' },
+        {
+          header: 'Institution',
+          accessor: (sub) =>
+            sub.institution?.name || institutions.find((i) => i.id === sub.institutionId)?.name || sub.institutionId,
+        },
+        {
+          header: 'Plan Name',
+          accessor: (sub) => sub.plan?.name || plans.find((p) => p.id === sub.planId)?.name || sub.planId,
+        },
+        { header: 'Status', accessor: 'status' },
+        { header: 'Starts At', accessor: (sub) => new Date(sub.startsAt).toISOString() },
+        { header: 'Expires At', accessor: (sub) => new Date(sub.expiresAt).toISOString() },
+        { header: 'Auto Renew', accessor: (sub) => (sub.autoRenew ? 'YES' : 'NO') },
+        { header: 'Created At', accessor: (sub) => new Date(sub.createdAt).toISOString() },
+      ],
+      subscriptions,
     );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
     toast.success('Subscriptions exported to CSV');
   };
 
-  // Handlers
   const handleConfirmSoftDelete = async () => {
     if (!subscriptionToDelete) return;
     try {
@@ -240,7 +214,7 @@ export const SubscriptionsPage: React.FC = () => {
             <button
               type="button"
               onClick={handleExportCsv}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs cursor-pointer"
               title="Export subscriptions list to CSV"
             >
               <Download size={14} className="text-gray-500" />
@@ -251,7 +225,7 @@ export const SubscriptionsPage: React.FC = () => {
               type="button"
               onClick={handleRefreshAll}
               disabled={isFetchingSubscriptions}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs cursor-pointer"
               title="Refresh Subscriptions & Statistics"
             >
               <RefreshCw size={14} className={isFetchingSubscriptions ? 'animate-spin text-primary' : ''} />
@@ -270,7 +244,7 @@ export const SubscriptionsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors shadow-sm hover:shadow cursor-pointer"
               >
                 <Plus size={16} strokeWidth={2.5} />
                 Provision Subscription
@@ -349,7 +323,7 @@ export const SubscriptionsPage: React.FC = () => {
           <button
             type="button"
             onClick={handleRefreshAll}
-            className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
+            className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <RefreshCw size={12} />
             Retry
@@ -380,9 +354,9 @@ export const SubscriptionsPage: React.FC = () => {
                 setActiveTab(tab.id as SubscriptionTab);
                 setPage(1);
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-primary-100 text-primary shadow-2xs'
+                  ? 'bg-primary-100 text-primary shadow-2xs font-semibold'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
               }`}
             >
@@ -453,7 +427,6 @@ export const SubscriptionsPage: React.FC = () => {
         onViewModeChange={setViewMode}
         filterElements={
           <>
-            {/* Institution Filter (Super Admin) */}
             {isSuperAdmin && (
               <FilterSelect
                 icon={<Building2 size={13} />}
@@ -473,7 +446,6 @@ export const SubscriptionsPage: React.FC = () => {
               </FilterSelect>
             )}
 
-            {/* Plan Tier Filter */}
             <FilterSelect
               icon={<Layers size={13} />}
               value={selectedPlanId}
@@ -491,12 +463,11 @@ export const SubscriptionsPage: React.FC = () => {
               ))}
             </FilterSelect>
 
-            {/* Sort Selector */}
             <div className="flex items-center gap-1.5 w-full sm:w-auto">
               <FilterSelect
                 icon={<ArrowUpDown size={13} />}
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as 'createdAt' | 'expiresAt' | 'startsAt' | 'status')}
                 title="Sort by Column"
               >
                 <option value="createdAt">Created Date</option>
@@ -507,7 +478,7 @@ export const SubscriptionsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="h-[38px] px-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 font-bold text-xs shrink-0 shadow-2xs transition-colors"
+                className="h-[38px] px-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 font-bold text-xs shrink-0 shadow-2xs transition-colors cursor-pointer"
                 title={`Sort ${sortOrder.toUpperCase()}`}
               >
                 {sortOrder.toUpperCase()}
@@ -517,7 +488,7 @@ export const SubscriptionsPage: React.FC = () => {
         }
       />
 
-      {/* Subscriptions Table */}
+      {/* Subscriptions Table / Cards rendering */}
       {isLoadingSubscriptions ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -542,7 +513,7 @@ export const SubscriptionsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors shadow-sm cursor-pointer"
               >
                 <Plus size={15} strokeWidth={2.5} />
                 Provision First Subscription
@@ -553,396 +524,25 @@ export const SubscriptionsPage: React.FC = () => {
               </p>
             ))}
         </div>
-      ) : viewMode === 'CARDS' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
-            {subscriptions.map((sub) => {
-              const expiryDate = new Date(sub.expiresAt);
-              const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-              const isExpired = diffDays <= 0;
-              const isExpiringSoon = diffDays > 0 && diffDays <= 30;
-
-              const licenses = sub.licenses || [];
-              const totalCapacity = licenses.reduce((sum, lic) => sum + (lic.maxActivations || 0), 0);
-              const totalActive = licenses.reduce(
-                (sum, lic) =>
-                  sum +
-                  ((lic.activations || []).filter((a: any) => a.status === 'ACTIVE').length || 0),
-                0
-              );
-
-              return (
-                <div key={sub.id} className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-orange-50 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
-                          {sub.institution?.name?.slice(0, 2).toUpperCase() || 'IN'}
-                        </div>
-                        <div className="min-w-0">
-                          <span className="font-bold text-gray-900 text-sm block truncate">
-                            {sub.institution?.name || sub.institutionId}
-                          </span>
-                          <span className="text-[11px] text-gray-400 font-mono block truncate">
-                            {sub.id}
-                          </span>
-                        </div>
-                      </div>
-                      <StatusBadge status={sub.deletedAt ? 'TRASH' : sub.status} size="sm" />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50/70 p-2.5 rounded-xl border border-gray-100 mb-2">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Tier</span>
-                        <span className="font-semibold text-gray-800">{sub.plan?.name || sub.planId}</span>
-                        <span className="text-[10px] text-gray-500 block">
-                          ₹{((sub.plan?.price || 0) / 100).toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Seat Usage</span>
-                        <div className="flex items-center gap-1 font-semibold text-gray-800">
-                          <Laptop size={12} className="text-primary" />
-                          <span>{totalActive} / {totalCapacity || sub.plan?.maxActivations || 5} PCs</span>
-                        </div>
-                        <span className="text-[10px] text-gray-400 block">
-                          {licenses.length} {licenses.length === 1 ? 'License' : 'Licenses'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs pt-0.5">
-                      <div className="flex items-center gap-1.5 text-gray-600">
-                        <Calendar size={13} className="text-gray-400" />
-                        <span>
-                          Expires {expiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
-                        </span>
-                      </div>
-                      <div>
-                        {isExpired ? (
-                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                            Expired
-                          </span>
-                        ) : isExpiringSoon ? (
-                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                            {diffDays}d left
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                            {diffDays}d left
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100/80">
-                    {!sub.deletedAt && (isExpiringSoon || isExpired) && (
-                      <button
-                        type="button"
-                        onClick={() => setRenewingSubscription(sub)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl border border-primary/30 transition-colors shadow-2xs"
-                      >
-                        <RotateCw size={12} />
-                        Renew
-                      </button>
-                    )}
-                    <SubscriptionActionsDropdown
-                      subscription={sub}
-                      onViewDetails={(s) => setInspectingSubscription(s)}
-                      onRenew={(s) => setRenewingSubscription(s)}
-                      onEdit={(s) => setEditingSubscription(s)}
-                      onChangeStatus={(s) => setStatusSubscription(s)}
-                      onDelete={(s) => {
-                        if (activeTab === 'TRASH') {
-                          setSubscriptionToPurge(s);
-                        } else {
-                          setSubscriptionToDelete(s);
-                        }
-                      }}
-                      onRestore={activeTab === 'TRASH' ? (s) => setSubscriptionToRestore(s) : undefined}
-                      isDeletedView={activeTab === 'TRASH'}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-          {/* Mobile Card View (< md screens) */}
-          <div className="md:hidden divide-y divide-gray-100">
-            {subscriptions.map((sub) => {
-              const expiryDate = new Date(sub.expiresAt);
-              const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-              const isExpired = diffDays <= 0;
-              const isExpiringSoon = diffDays > 0 && diffDays <= 30;
-
-              const licenses = sub.licenses || [];
-              const totalCapacity = licenses.reduce((sum, lic) => sum + (lic.maxActivations || 0), 0);
-              const totalActive = licenses.reduce(
-                (sum, lic) =>
-                  sum +
-                  ((lic.activations || []).filter((a: any) => a.status === 'ACTIVE').length || 0),
-                0
-              );
-
-              return (
-                <div key={sub.id} className="p-4 space-y-3 hover:bg-gray-50/50 transition-colors">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-orange-50 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
-                        {sub.institution?.name?.slice(0, 2).toUpperCase() || 'IN'}
-                      </div>
-                      <div className="min-w-0">
-                        <span className="font-bold text-gray-900 text-sm block truncate">
-                          {sub.institution?.name || sub.institutionId}
-                        </span>
-                        <span className="text-[11px] text-gray-400 font-mono block truncate">
-                          {sub.id}
-                        </span>
-                      </div>
-                    </div>
-                    <StatusBadge status={sub.deletedAt ? 'TRASH' : sub.status} size="sm" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-gray-400 block">Tier</span>
-                      <span className="font-semibold text-gray-800">{sub.plan?.name || sub.planId}</span>
-                      <span className="text-[10px] text-gray-500 block">
-                        ₹{((sub.plan?.price || 0) / 100).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-gray-400 block">Seat Usage</span>
-                      <div className="flex items-center gap-1 font-semibold text-gray-800">
-                        <Laptop size={12} className="text-primary" />
-                        <span>{totalActive} / {totalCapacity || sub.plan?.maxActivations || 5} PCs</span>
-                      </div>
-                      <span className="text-[10px] text-gray-400 block">
-                        {licenses.length} {licenses.length === 1 ? 'License' : 'Licenses'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs pt-0.5">
-                    <div className="flex items-center gap-1.5 text-gray-600">
-                      <Calendar size={13} className="text-gray-400" />
-                      <span>
-                        Expires {expiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
-                      </span>
-                    </div>
-                    <div>
-                      {isExpired ? (
-                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                          Expired
-                        </span>
-                      ) : isExpiringSoon ? (
-                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                          {diffDays}d left
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                          {diffDays}d left
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100/80">
-                    {!sub.deletedAt && (isExpiringSoon || isExpired) && (
-                      <button
-                        type="button"
-                        onClick={() => setRenewingSubscription(sub)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-xl border border-primary/30 transition-colors shadow-2xs"
-                      >
-                        <RotateCw size={12} />
-                        Renew
-                      </button>
-                    )}
-                    <SubscriptionActionsDropdown
-                      subscription={sub}
-                      onViewDetails={(s) => setInspectingSubscription(s)}
-                      onRenew={(s) => setRenewingSubscription(s)}
-                      onEdit={(s) => setEditingSubscription(s)}
-                      onChangeStatus={(s) => setStatusSubscription(s)}
-                      onDelete={(s) => {
-                        if (activeTab === 'TRASH') {
-                          setSubscriptionToPurge(s);
-                        } else {
-                          setSubscriptionToDelete(s);
-                        }
-                      }}
-                      onRestore={activeTab === 'TRASH' ? (s) => setSubscriptionToRestore(s) : undefined}
-                      isDeletedView={activeTab === 'TRASH'}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Desktop Table (md+ screens) */}
-          <div className="hidden md:block overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="py-3 px-4">Customer Institution</th>
-                  <th className="py-3 px-4">Commercial Tier</th>
-                  <th className="py-3 px-4">Contract Period</th>
-                  <th className="py-3 px-4">Seat Allocation</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-xs">
-                {subscriptions.map((sub) => {
-                  const expiryDate = new Date(sub.expiresAt);
-                  const startDate = new Date(sub.startsAt);
-                  const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                  const isExpired = diffDays <= 0;
-                  const isExpiringSoon = diffDays > 0 && diffDays <= 30;
-
-                  const licenses = sub.licenses || [];
-                  const totalCapacity = licenses.reduce((sum, lic) => sum + (lic.maxActivations || 0), 0);
-                  const totalActive = licenses.reduce(
-                    (sum, lic) =>
-                      sum +
-                      ((lic.activations || []).filter((a: any) => a.status === 'ACTIVE').length || 0),
-                    0
-                  );
-
-                  return (
-                    <tr key={sub.id} className="hover:bg-gray-50/70 transition-colors">
-                      {/* Customer Column */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-orange-50 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-orange-100">
-                            {sub.institution?.name?.slice(0, 2).toUpperCase() || 'IN'}
-                          </div>
-                          <div>
-                            <span className="font-bold text-gray-900 block">
-                              {sub.institution?.name || sub.institutionId}
-                            </span>
-                            <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                              <span>/{sub.institution?.slug || 'tenant'}</span>
-                              <span>•</span>
-                              <span className="font-mono">{sub.id}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Tier Column */}
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-gray-900 block">{sub.plan?.name || sub.planId}</span>
-                        <span className="text-[11px] text-gray-500 block">
-                          ₹{((sub.plan?.price || 0) / 100).toLocaleString('en-IN')} / {sub.plan?.durationDays || 365}d
-                        </span>
-                      </td>
-
-                      {/* Period Column */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar size={13} className="text-gray-400 shrink-0" />
-                          <span className="text-gray-800">
-                            {startDate.toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: '2-digit',
-                            })}{' '}
-                            -{' '}
-                            {expiryDate.toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                        <div className="mt-1">
-                          {isExpired ? (
-                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                              Expired {Math.abs(diffDays)}d ago
-                            </span>
-                          ) : isExpiringSoon ? (
-                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                              Expiring in {diffDays}d
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                              {diffDays} days left
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Seat Allocation Column */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-700">
-                          <Laptop size={14} className="text-primary" />
-                          <span>
-                            <strong>{totalActive}</strong> / {totalCapacity || sub.plan?.maxActivations || 5} PCs
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-gray-400 block mt-0.5">
-                          {licenses.length} {licenses.length === 1 ? 'License' : 'Licenses'} Issued
-                        </span>
-                      </td>
-
-                      {/* Status Column */}
-                      <td className="py-3.5 px-4">
-                        <StatusBadge
-                          status={sub.deletedAt ? 'TRASH' : sub.status}
-                          size="sm"
-                        />
-                        {sub.autoRenew && !sub.deletedAt && (
-                          <span className="text-[10px] text-gray-400 block mt-0.5">
-                            Auto-Renew On
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Actions Column */}
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Quick Renew Shortcut for expiring or expired contracts */}
-                          {!sub.deletedAt && (isExpiringSoon || isExpired) && (
-                            <button
-                              type="button"
-                              onClick={() => setRenewingSubscription(sub)}
-                              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-primary bg-primary-100 hover:bg-[#ffe2d6] rounded-lg border border-primary/30 transition-colors shadow-2xs"
-                              title="Quick Renew Contract"
-                            >
-                              <RotateCw size={12} />
-                              Renew
-                            </button>
-                          )}
-
-                          <SubscriptionActionsDropdown
-                            subscription={sub}
-                            onViewDetails={(s) => setInspectingSubscription(s)}
-                            onRenew={(s) => setRenewingSubscription(s)}
-                            onEdit={(s) => setEditingSubscription(s)}
-                            onChangeStatus={(s) => setStatusSubscription(s)}
-                            onDelete={(s) => {
-                              if (activeTab === 'TRASH') {
-                                setSubscriptionToPurge(s);
-                              } else {
-                                setSubscriptionToDelete(s);
-                              }
-                            }}
-                            onRestore={activeTab === 'TRASH' ? (s) => setSubscriptionToRestore(s) : undefined}
-                            isDeletedView={activeTab === 'TRASH'}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      ) : (
+        <SubscriptionTableView
+          subscriptions={subscriptions}
+          now={now}
+          activeTab={activeTab}
+          viewMode={viewMode}
+          onViewDetails={(s) => setInspectingSubscription(s)}
+          onRenew={(s) => setRenewingSubscription(s)}
+          onEdit={(s) => setEditingSubscription(s)}
+          onChangeStatus={(s) => setStatusSubscription(s)}
+          onDelete={(s) => {
+            if (activeTab === 'TRASH') {
+              setSubscriptionToPurge(s);
+            } else {
+              setSubscriptionToDelete(s);
+            }
+          }}
+          onRestore={activeTab === 'TRASH' ? (s) => setSubscriptionToRestore(s) : undefined}
+        />
       )}
 
       {/* Pagination Footer */}
@@ -991,41 +591,21 @@ export const SubscriptionsPage: React.FC = () => {
         onRenew={(s) => setRenewingSubscription(s)}
       />
 
-      {/* Confirmation: Soft Delete */}
-      <ConfirmDialog
-        isOpen={!!subscriptionToDelete}
-        title="Move Subscription to Trash?"
-        description={`Are you sure you want to cancel / move subscription "${subscriptionToDelete?.id}" to trash? Associated client licenses may be impacted.`}
-        confirmLabel="Move to Trash"
-        variant="warning"
-        isPending={softDeleteMutation.isPending}
-        onConfirm={handleConfirmSoftDelete}
-        onClose={() => setSubscriptionToDelete(null)}
-      />
+      <SubscriptionConfirmModals
+        subscriptionToDelete={subscriptionToDelete}
+        onCloseDelete={() => setSubscriptionToDelete(null)}
+        onConfirmDelete={handleConfirmSoftDelete}
+        isDeleting={softDeleteMutation.isPending}
 
-      {/* Confirmation: Restore */}
-      <ConfirmDialog
-        isOpen={!!subscriptionToRestore}
-        title="Restore Subscription Contract?"
-        description={`Do you want to restore subscription "${subscriptionToRestore?.id}" back to active status?`}
-        confirmLabel="Restore Contract"
-        variant="info"
-        isPending={restoreMutation.isPending}
-        onConfirm={handleConfirmRestore}
-        onClose={() => setSubscriptionToRestore(null)}
-      />
+        subscriptionToRestore={subscriptionToRestore}
+        onCloseRestore={() => setSubscriptionToRestore(null)}
+        onConfirmRestore={handleConfirmRestore}
+        isRestoring={restoreMutation.isPending}
 
-      {/* Confirmation: Permanent Purge */}
-      <ConfirmDialog
-        isOpen={!!subscriptionToPurge}
-        title="Permanently Purge Subscription?"
-        description={`WARNING: This action is permanent and cannot be undone. Subscription contract "${subscriptionToPurge?.id}" will be purged from database records.`}
-        confirmLabel="Permanently Purge"
-        variant="critical"
-        confirmPhrase="DELETE"
-        isPending={permanentDeleteMutation.isPending}
-        onConfirm={handleConfirmPermanentPurge}
-        onClose={() => setSubscriptionToPurge(null)}
+        subscriptionToPurge={subscriptionToPurge}
+        onClosePurge={() => setSubscriptionToPurge(null)}
+        onConfirmPurge={handleConfirmPermanentPurge}
+        isPurging={permanentDeleteMutation.isPending}
       />
     </div>
   );

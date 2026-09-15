@@ -211,7 +211,7 @@ export const CreateModuleModal: React.FC<CreateModuleModalProps> = ({ isOpen, on
             <button
               type="submit"
               disabled={createModuleMutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {createModuleMutation.isPending ? 'Registering...' : 'Register Module'}
             </button>

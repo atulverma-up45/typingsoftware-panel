@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type ModuleStatus = "ACTIVE" | "INACTIVE";
 
@@ -40,16 +42,7 @@ export interface ModuleStats {
   totalInstitutionOverrides: number;
 }
 
-export interface PaginatedModulesResponse {
-  data: TypingModule[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedModulesResponse = PaginatedResponse<TypingModule>;
 
 export interface ModuleListParams {
   page?: number;
@@ -177,10 +170,8 @@ export const useCreateModule = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Typing module created successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to create typing module";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to create typing module");
     },
   });
 };
@@ -210,10 +201,8 @@ export const useUpdateModule = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module updated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update module";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update module");
     },
   });
 };
@@ -246,10 +235,8 @@ export const useUpdateModuleStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success(`Module marked as ${variables.data.status}`);
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update module status";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update module status");
     },
   });
 };
@@ -270,10 +257,8 @@ export const useSoftDeleteModule = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module moved to trash");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to archive module";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to archive module");
     },
   });
 };
@@ -294,10 +279,8 @@ export const useRestoreModule = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module restored successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to restore module";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore module");
     },
   });
 };
@@ -320,10 +303,8 @@ export const usePermanentDeleteModule = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Module permanently purged");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to permanently delete module";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently delete module");
     },
   });
 };
@@ -349,11 +330,8 @@ export const useSetInstitutionModule = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.stats });
       toast.success("Institution module configuration saved");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message ||
-        "Failed to configure institution module";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to configure institution module");
     },
   });
 };

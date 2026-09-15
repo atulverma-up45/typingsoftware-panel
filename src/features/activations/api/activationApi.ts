@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type ActivationStatus = "ACTIVE" | "DEACTIVATED" | "REVOKED";
 
@@ -49,16 +51,7 @@ export interface ActivationStats {
   activeInLast24Hours: number;
 }
 
-export interface PaginatedActivationsResponse {
-  data: Activation[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedActivationsResponse = PaginatedResponse<Activation>;
 
 export interface ActivationListParams {
   page?: number;
@@ -166,11 +159,8 @@ export const useDeactivateActivation = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Workstation seat deactivated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message ||
-        "Failed to deactivate workstation seat";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to deactivate workstation seat");
     },
   });
 };
@@ -205,11 +195,8 @@ export const useReactivateActivation = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Workstation seat reactivated successfully");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message ||
-        "Failed to reactivate workstation seat";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to reactivate workstation seat");
     },
   });
 };
@@ -244,11 +231,8 @@ export const useRevokeActivation = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success("Workstation terminal permanently revoked");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message ||
-        "Failed to revoke workstation terminal";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to revoke workstation terminal");
     },
   });
 };

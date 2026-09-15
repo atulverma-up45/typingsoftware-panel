@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { queryKeys } from "@/lib/queryKeys";
 import type { ApiSuccessEnvelope, PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type AuditEntityType =
   | "USER"
@@ -146,8 +147,8 @@ export const useCleanupAuditLogs = () => {
         `Successfully pruned ${data.deletedCount} regulatory audit records`,
       );
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to prune audit logs");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to prune audit logs");
     },
   });
 };

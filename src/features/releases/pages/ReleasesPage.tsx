@@ -1,32 +1,19 @@
 import React, { useState } from 'react';
 import {
   Package,
-  CheckCircle2,
-  FileEdit,
-  Archive,
-  Layers,
-  Search,
   Plus,
-  LayoutGrid,
-  List,
-  Filter,
   RefreshCw,
   Cpu,
-  Laptop,
   Download,
-  AlertTriangle,
-  HardDrive,
-  Copy,
-  Check,
   AlertCircle,
   Lock,
 } from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
-import StatCard from '@/components/ui/StatCard';
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
+import { exportCsv } from '@/lib/exportCsv';
 import {
   useReleases,
   useReleaseStats,
@@ -40,21 +27,16 @@ import type {
   ReleaseStatus,
 } from '../api/releaseApi';
 import { ReleaseCard } from '../components/ReleaseCard';
-import { CreateReleaseModal } from '../components/CreateReleaseModal';
-import { EditReleaseModal } from '../components/EditReleaseModal';
-import { ReleaseDetailModal } from '../components/ReleaseDetailModal';
-import { ReleaseStatusModal } from '../components/ReleaseStatusModal';
-import { ClientUpdateSimulatorModal } from '../components/ClientUpdateSimulatorModal';
-import { ReleaseActionsDropdown } from '../components/ReleaseActionsDropdown';
+import { ReleaseStatsCards, type ReleaseStatusTab } from '../components/ReleaseStatsCards';
+import { ReleaseTableView } from '../components/ReleaseTableView';
+import { ReleaseModalsCoordinator } from '../components/ReleaseModalsCoordinator';
 import { toast } from 'sonner';
-import { ConfirmDialog } from '@/components/ui/Modal';
 
-type StatusTab = 'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
 type ViewMode = 'CARDS' | 'TABLE';
 
 export const ReleasesPage: React.FC = () => {
   const { isSuperAdmin } = usePermissions();
-  const [activeTab, setActiveTab] = useState<StatusTab>('ALL');
+  const [activeTab, setActiveTab] = useState<ReleaseStatusTab>('ALL');
   const [viewMode, setViewMode] = useState<ViewMode>('CARDS');
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebouncedValue(searchTerm, SEARCH_DEBOUNCE_MS);
@@ -74,7 +56,6 @@ export const ReleasesPage: React.FC = () => {
   const [releaseToDelete, setReleaseToDelete] = useState<Release | null>(null);
   const [copiedHashId, setCopiedHashId] = useState<string | null>(null);
 
-  // Reset to the first page whenever the committed (debounced) search changes
   useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Queries & Mutations
@@ -96,8 +77,7 @@ export const ReleasesPage: React.FC = () => {
     error,
     refetch,
   } = useReleases(queryParams);
-  // Release analytics are SUPER_ADMIN-only on the API — gate the request so
-  // ADMIN/SUPPORT don't fire a guaranteed 403 (they fall back to zeroed KPIs).
+
   const { data: statsData, isLoading: isLoadingStats, refetch: refetchStats } = useReleaseStats(isSuperAdmin);
 
   const handleRefreshAll = () => {
@@ -124,86 +104,56 @@ export const ReleasesPage: React.FC = () => {
       toast.error('No releases available to export');
       return;
     }
-    const headers = [
-      'Release ID',
-      'Version',
-      'Platform',
-      'Channel',
-      'Mandatory',
-      'Min Supported Version',
-      'File Size (Bytes)',
-      'SHA-256 Checksum',
-      'Status',
-      'Created At',
-    ];
-    const rows = releases.map((rel) => [
-      `"${rel.id}"`,
-      `"${rel.version}"`,
-      `"${rel.platform}"`,
-      `"${rel.channel}"`,
-      `"${rel.mandatory ? 'YES' : 'NO'}"`,
-      `"${rel.minSupportedVersion}"`,
-      `"${rel.fileSize}"`,
-      `"${rel.checksum}"`,
-      `"${rel.status}"`,
-      `"${new Date(rel.createdAt).toISOString()}"`,
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
+    exportCsv(
       `software-releases-export-${new Date().toISOString().split('T')[0]}.csv`,
+      [
+        { header: 'Release ID', accessor: 'id' },
+        { header: 'Version', accessor: 'version' },
+        { header: 'Platform', accessor: 'platform' },
+        { header: 'Channel', accessor: 'channel' },
+        { header: 'Mandatory', accessor: (rel) => (rel.mandatory ? 'YES' : 'NO') },
+        { header: 'Min Supported Version', accessor: 'minSupportedVersion' },
+        { header: 'File Size (Bytes)', accessor: 'fileSize' },
+        { header: 'SHA-256 Checksum', accessor: 'checksum' },
+        { header: 'Status', accessor: 'status' },
+        { header: 'Created At', accessor: (rel) => new Date(rel.createdAt).toISOString() },
+        { header: 'Published At', accessor: (rel) => (rel.publishedAt ? new Date(rel.publishedAt).toISOString() : '') },
+      ],
+      releases,
     );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
     toast.success('Software releases exported to CSV');
-  };
-
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleCopyHash = (id: string, hash: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(hash);
     setCopiedHashId(id);
-    toast.success('SHA-256 checksum copied');
+    toast.success('SHA-256 checksum copied to clipboard');
     setTimeout(() => setCopiedHashId(null), 2000);
   };
 
   const handleDeleteConfirm = () => {
-    if (!releaseToDelete) return;
-    deleteMutation.mutate(releaseToDelete.id, {
-      onSuccess: () => {
-        setReleaseToDelete(null);
-      },
-    });
+    if (releaseToDelete) {
+      deleteMutation.mutate(releaseToDelete.id, {
+        onSuccess: () => setReleaseToDelete(null),
+      });
+    }
   };
 
   return (
     <div className="space-y-6">
       {/* Top Header */}
       <PageHeader
-        title="Software Releases & Updates"
-        subtitle="Manage desktop software distribution binaries, auto-updater rules, and version channels"
+        title="Electron App Releases & OTAs"
+        subtitle="Manage desktop binary builds, update channels, SHA-512 signatures, and rollout policies"
         icon={<Package className="text-primary" size={24} />}
         actions={
           <>
             <button
               type="button"
               onClick={handleExportCsv}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-              title="Export software releases to CSV"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              title="Export releases to CSV"
             >
               <Download size={14} className="text-gray-500" />
               Export CSV
@@ -211,101 +161,54 @@ export const ReleasesPage: React.FC = () => {
 
             <button
               type="button"
-              onClick={handleRefreshAll}
-              disabled={isLoading}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
-              title="Refresh Releases & Statistics"
+              onClick={() => setIsSimulatorModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
             >
-              <RefreshCw size={14} className={isLoading ? 'animate-spin text-primary' : ''} />
-              Refresh
+              <Cpu size={14} className="text-gray-500" />
+              OTA Simulator
             </button>
 
             <button
               type="button"
-              onClick={() => setIsSimulatorModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors shadow-2xs"
+              onClick={handleRefreshAll}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors border border-gray-200 bg-white shadow-2xs"
+              title="Refresh"
             >
-              <Laptop size={15} />
-              Test Client Auto-Updater
+              <RefreshCw size={16} />
             </button>
 
             {isSuperAdmin ? (
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-xs transition-colors"
               >
                 <Plus size={16} strokeWidth={2.5} />
-                New Software Release
+                Deploy New Release
               </button>
             ) : (
               <div
-                title="Super Admin privileges required to publish new software builds."
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 bg-gray-100 cursor-not-allowed select-none pointer-events-none opacity-60"
+                title="Release publishing is restricted to Super Admin."
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed select-none pointer-events-none opacity-60"
               >
                 <Lock size={15} />
-                <span>New Release (Super Admin)</span>
+                <span>Deploy Release (Super Admin)</span>
               </div>
             )}
           </>
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Releases"
-          value={stats.totalReleases}
-          type="blue"
-          icon={<Package size={24} className="text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="Across all channels & arch"
-          onClick={() => {
-            setActiveTab('ALL');
-            setPage(1);
-          }}
-          active={activeTab === 'ALL'}
-        />
-        <StatCard
-          title="Production Live"
-          value={stats.publishedReleases}
-          type="emerald"
-          icon={<CheckCircle2 size={24} className="text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="Actively serving workstations"
-          onClick={() => {
-            setActiveTab('PUBLISHED');
-            setPage(1);
-          }}
-          active={activeTab === 'PUBLISHED'}
-        />
-        <StatCard
-          title="Draft Packages"
-          value={stats.draftReleases}
-          type="orange"
-          icon={<FileEdit size={24} className="text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="Pending staging rollout"
-          onClick={() => {
-            setActiveTab('DRAFT');
-            setPage(1);
-          }}
-          active={activeTab === 'DRAFT'}
-        />
-        <StatCard
-          title="Archived Versions"
-          value={stats.archivedReleases}
-          type="coral"
-          icon={<Archive size={24} className="text-white" />}
-          isLoading={isLoadingStats}
-          subtitle="Deprecated binaries"
-          onClick={() => {
-            setActiveTab('ARCHIVED');
-            setPage(1);
-          }}
-          active={activeTab === 'ARCHIVED'}
-        />
-      </div>
+      {/* Metric Cards */}
+      <ReleaseStatsCards
+        stats={stats}
+        isLoadingStats={isLoadingStats}
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setPage(1);
+        }}
+      />
 
       {/* Error Alert Banner with Retry */}
       {isError && (
@@ -330,7 +233,7 @@ export const ReleasesPage: React.FC = () => {
 
       {/* Status Tabs */}
       <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 rounded-xl w-fit overflow-x-auto custom-scrollbar">
-        {(['ALL', 'PUBLISHED', 'DRAFT', 'ARCHIVED'] as StatusTab[]).map((tab) => (
+        {(['ALL', 'PUBLISHED', 'DRAFT', 'ARCHIVED'] as ReleaseStatusTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -363,10 +266,7 @@ export const ReleasesPage: React.FC = () => {
                   id: 'channel',
                   label: 'Channel',
                   value: selectedChannel.toUpperCase(),
-                  onRemove: () => {
-                    setSelectedChannel('ALL');
-                    setPage(1);
-                  },
+                  onRemove: () => setSelectedChannel('ALL'),
                 },
               ]
             : []),
@@ -376,25 +276,47 @@ export const ReleasesPage: React.FC = () => {
                   id: 'platform',
                   label: 'Platform',
                   value: selectedPlatform,
-                  onRemove: () => {
-                    setSelectedPlatform('ALL');
-                    setPage(1);
-                  },
+                  onRemove: () => setSelectedPlatform('ALL'),
+                },
+              ]
+            : []),
+          ...(sortBy !== 'createdAt'
+            ? [
+                {
+                  id: 'sort',
+                  label: 'Sort By',
+                  value: sortBy,
+                  onRemove: () => setSortBy('createdAt'),
+                },
+              ]
+            : []),
+          ...(sortOrder !== 'desc'
+            ? [
+                {
+                  id: 'order',
+                  label: 'Order',
+                  value: sortOrder.toUpperCase(),
+                  onRemove: () => setSortOrder('desc'),
                 },
               ]
             : []),
         ]}
         hasActiveFilters={Boolean(
-          selectedChannel !== 'ALL' || selectedPlatform !== 'ALL' || searchTerm || sortBy !== 'createdAt'
+          searchTerm ||
+            selectedChannel !== 'ALL' ||
+            selectedPlatform !== 'ALL' ||
+            sortBy !== 'createdAt' ||
+            sortOrder !== 'desc'
         )}
         onClearFilters={() => {
+          setSearchTerm('');
           setSelectedChannel('ALL');
           setSelectedPlatform('ALL');
-          setSearchTerm('');
           setSortBy('createdAt');
+          setSortOrder('desc');
           setPage(1);
         }}
-        totalResults={meta?.total}
+        totalResults={releases.length}
         totalLabel="Releases"
         filterElements={
           <>
@@ -408,8 +330,8 @@ export const ReleasesPage: React.FC = () => {
               title="Filter by Release Channel"
             >
               <option value="ALL">All Channels</option>
-              <option value="stable">Stable Only</option>
-              <option value="beta">Beta Only</option>
+              <option value="stable">Stable</option>
+              <option value="beta">Beta</option>
             </FilterSelect>
 
             {/* Platform Filter */}
@@ -475,7 +397,7 @@ export const ReleasesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#ff7a45] shadow-xs transition-colors"
+                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-hover shadow-xs transition-colors"
               >
                 <Plus size={15} strokeWidth={2.5} />
                 Publish First Release
@@ -517,137 +439,16 @@ export const ReleasesPage: React.FC = () => {
               />
             ))}
           </div>
-          <div className="hidden md:block bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="py-3 px-4">Version & Platform</th>
-                  <th className="py-3 px-4">Channel</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Size & Checksum</th>
-                  <th className="py-3 px-4">Upgrade Policy</th>
-                  <th className="py-3 px-4">Published Date</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-xs">
-                {releases.map((rel) => (
-                  <tr key={rel.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary flex items-center justify-center shrink-0">
-                          <Package size={16} />
-                        </div>
-                        <div>
-                          <div className="font-bold text-gray-900">v{rel.version}</div>
-                          <div className="text-[11px] text-gray-500 font-mono">{rel.platform}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          rel.channel === 'stable'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}
-                      >
-                        {rel.channel.toUpperCase()}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                          rel.status === 'PUBLISHED'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : rel.status === 'DRAFT'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {rel.status}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="space-y-0.5">
-                        <div className="font-semibold text-gray-800">
-                          {formatBytes(rel.fileSize)}
-                        </div>
-                        <div className="flex items-center gap-1 font-mono text-[10px] text-gray-400">
-                          <span>{rel.checksum.slice(0, 10)}...</span>
-                          <button
-                            type="button"
-                            onClick={(e) => handleCopyHash(rel.id, rel.checksum, e)}
-                            className="text-gray-400 hover:text-primary"
-                            title="Copy SHA-256"
-                          >
-                            {copiedHashId === rel.id ? (
-                              <Check size={11} className="text-emerald-600" />
-                            ) : (
-                              <Copy size={11} />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      {rel.mandatory ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
-                          <AlertTriangle size={10} />
-                          Mandatory
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 text-[11px]">Optional</span>
-                      )}
-                      <div className="text-[10px] text-gray-400">Min: v{rel.minSupportedVersion}</div>
-                    </td>
-
-                    <td className="py-3 px-4 text-gray-500">
-                      {rel.publishedAt ? (
-                        <div>
-                          <span className="font-medium text-gray-800">
-                            {new Date(rel.publishedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="italic text-gray-400">Not published</span>
-                      )}
-                    </td>
-
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const downloadUrl = `/api/uploads/files/${encodeURIComponent(rel.fileKey)}`;
-                            window.open(downloadUrl, '_blank');
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                          title="Download binary"
-                        >
-                          <Download size={14} />
-                        </button>
-                        <ReleaseActionsDropdown
-                          release={rel}
-                          onViewDetails={(r) => setInspectingRelease(r)}
-                          onEdit={(r) => setEditingRelease(r)}
-                          onStatusChange={(r) => setStatusRelease(r)}
-                          onPublish={(id) => publishMutation.mutate(id)}
-                          onDelete={(r) => setReleaseToDelete(r)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <ReleaseTableView
+            releases={releases}
+            copiedHashId={copiedHashId}
+            onCopyHash={handleCopyHash}
+            onViewDetails={(r) => setInspectingRelease(r)}
+            onEdit={(r) => setEditingRelease(r)}
+            onStatusChange={(r) => setStatusRelease(r)}
+            onPublish={(id) => publishMutation.mutate(id)}
+            onDelete={(r) => setReleaseToDelete(r)}
+          />
         </div>
       )}
 
@@ -666,46 +467,23 @@ export const ReleasesPage: React.FC = () => {
       />
 
       {/* Modals */}
-      <CreateReleaseModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
-
-      <EditReleaseModal
-        isOpen={!!editingRelease}
-        onClose={() => setEditingRelease(null)}
-        release={editingRelease}
-      />
-
-      <ReleaseDetailModal
-        isOpen={!!inspectingRelease}
-        onClose={() => setInspectingRelease(null)}
-        release={inspectingRelease}
-      />
-
-      <ReleaseStatusModal
-        isOpen={!!statusRelease}
-        onClose={() => setStatusRelease(null)}
-        release={statusRelease}
-      />
-
-      <ClientUpdateSimulatorModal
-        isOpen={isSimulatorModalOpen}
-        onClose={() => setIsSimulatorModalOpen(false)}
-      />
-
-      <ConfirmDialog
-        isOpen={!!releaseToDelete}
-        onClose={() => setReleaseToDelete(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Software Release"
-        description={`Are you sure you want to delete release v${releaseToDelete?.version || ''}? Workstations querying this version will no longer be able to download the installer.`}
-        confirmLabel="Permanently Delete"
-        variant="critical"
-        confirmPhrase="DELETE"
+      <ReleaseModalsCoordinator
+        isCreateModalOpen={isCreateModalOpen}
+        isSimulatorModalOpen={isSimulatorModalOpen}
+        editingRelease={editingRelease}
+        inspectingRelease={inspectingRelease}
+        statusRelease={statusRelease}
+        releaseToDelete={releaseToDelete}
+        onCloseCreate={() => setIsCreateModalOpen(false)}
+        onCloseSimulator={() => setIsSimulatorModalOpen(false)}
+        onCloseEdit={() => setEditingRelease(null)}
+        onCloseDetails={() => setInspectingRelease(null)}
+        onCloseStatus={() => setStatusRelease(null)}
+        onCloseDelete={() => setReleaseToDelete(null)}
+        onConfirmDelete={handleDeleteConfirm}
       />
     </div>
   );
 };
-export default ReleasesPage;
 
+export default ReleasesPage;

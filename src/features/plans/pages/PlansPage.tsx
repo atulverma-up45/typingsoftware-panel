@@ -2,35 +2,21 @@ import React, { useState, useMemo } from 'react';
 import {
   Layers,
   Plus,
-  Search,
   RefreshCw,
-  LayoutGrid,
-  List,
-  CheckCircle2,
-  Archive,
-  Trash2,
-  RotateCcw,
-  IndianRupee,
-  Laptop,
-  Clock,
   ArrowUpDown,
-  Sparkles,
-  Filter,
   Download,
   AlertTriangle,
   Lock,
 } from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
-import StatCard from '@/components/ui/StatCard';
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useOnDepChange } from '@/hooks/useDebouncedValue';
 import PageHeader from '@/components/ui/PageHeader';
 import Pagination from '@/components/ui/Pagination';
-import StatusBadge from '@/components/ui/StatusBadge';
 import FilterToolbar, { FilterSelect } from '@/components/ui/FilterToolbar';
+import { exportCsv } from '@/lib/exportCsv';
 import {
   usePlans,
   usePlanStats,
-  useCreatePlan,
   useUpdatePlanStatus,
   useSoftDeletePlan,
   useRestorePlan,
@@ -41,11 +27,11 @@ import { PlanCard } from '../components/PlanCard';
 import { CreatePlanModal } from '../components/CreatePlanModal';
 import { EditPlanModal } from '../components/EditPlanModal';
 import { PlanDetailModal } from '../components/PlanDetailModal';
-import { PlanActionsDropdown } from '../components/PlanActionsDropdown';
+import { PlanStatsCards, type PlanTab } from '../components/PlanStatsCards';
+import { PlanTableView } from '../components/PlanTableView';
+import { PlanConfirmModals } from '../components/PlanConfirmModals';
 import { toast } from 'sonner';
-import { ConfirmDialog } from '@/components/ui/Modal';
 
-type PlanTab = 'ACTIVE' | 'ARCHIVED' | 'ALL' | 'TRASH';
 type ViewMode = 'CARDS' | 'TABLE';
 
 export const PlansPage: React.FC = () => {
@@ -64,12 +50,10 @@ export const PlansPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [inspectingPlan, setInspectingPlan] = useState<Plan | null>(null);
-  const [planToArchive, setPlanToArchive] = useState<Plan | null>(null);
   const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
   const [planToRestore, setPlanToRestore] = useState<Plan | null>(null);
   const [planToPurge, setPlanToPurge] = useState<Plan | null>(null);
 
-  // Reset to the first page whenever the committed (debounced) search changes
   useOnDepChange(debouncedSearch, () => setPage(1));
 
   // Query Params
@@ -134,63 +118,29 @@ export const PlansPage: React.FC = () => {
       return;
     }
 
-    const headers = [
-      'Plan ID',
-      'Name',
-      'Price (INR)',
-      'Duration (Days)',
-      'Max Activations',
-      'Status',
-      'English Typing',
-      'Hindi Typing',
-      'Govt Exams',
-      'Student Mgmt',
-      'Advanced Reports',
-      'Custom Branding',
-      'Offline Grace Days',
-      'Created At',
-    ];
-
-    const rows = plans.map((p) => {
-      const f = p.features || {};
-      return [
-        p.id,
-        `"${(p.name || '').replace(/"/g, '""')}"`,
-        (p.price / 100).toFixed(2),
-        p.durationDays,
-        p.maxActivations,
-        p.deletedAt ? 'TRASH' : p.status,
-        f.englishTyping ? 'Yes' : 'No',
-        f.hindiTyping ? 'Yes' : 'No',
-        f.governmentExams ? 'Yes' : 'No',
-        f.studentManagement ? 'Yes' : 'No',
-        f.advancedReports ? 'Yes' : 'No',
-        f.customBranding ? 'Yes' : 'No',
-        f.offlineGraceDays ?? 0,
-        p.createdAt,
-      ].join(',');
-    });
-
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `commercial-plans-${activeTab.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success(`Exported ${plans.length} commercial plans to CSV`);
+    exportCsv(
+      `commercial-plans-${activeTab.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`,
+      [
+        { header: 'Plan ID', accessor: 'id' },
+        { header: 'Plan Name', accessor: 'name' },
+        { header: 'Price (INR)', accessor: (p) => (p.price / 100).toFixed(2) },
+        { header: 'Duration (Days)', accessor: 'durationDays' },
+        { header: 'Station Seats', accessor: 'maxActivations' },
+        { header: 'Status', accessor: 'status' },
+        { header: 'English Typing', accessor: (p) => (p.features?.englishTyping ? 'YES' : 'NO') },
+        { header: 'Hindi Typing', accessor: (p) => (p.features?.hindiTyping ? 'YES' : 'NO') },
+        { header: 'Govt Exams', accessor: (p) => (p.features?.governmentExams ? 'YES' : 'NO') },
+        { header: 'Custom Branding', accessor: (p) => (p.features?.customBranding ? 'YES' : 'NO') },
+        { header: 'Created Date', accessor: (p) => new Date(p.createdAt).toISOString() },
+      ],
+      plans,
+    );
+    toast.success('Commercial plans exported to CSV');
   };
 
-  // Handlers
   const handleToggleStatus = (plan: Plan) => {
-    const newStatus: PlanStatus = plan.status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE';
-    updateStatusMutation.mutate({
-      id: plan.id,
-      data: { status: newStatus },
-    });
+    const nextStatus: PlanStatus = plan.status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE';
+    updateStatusMutation.mutate({ id: plan.id, data: { status: nextStatus } });
   };
 
   const handleConfirmSoftDelete = async () => {
@@ -199,7 +149,7 @@ export const PlansPage: React.FC = () => {
       await softDeleteMutation.mutateAsync(planToDelete.id);
       setPlanToDelete(null);
     } catch {
-      // Error handled by hook
+      // Handled by hook
     }
   };
 
@@ -209,7 +159,7 @@ export const PlansPage: React.FC = () => {
       await restoreMutation.mutateAsync(planToRestore.id);
       setPlanToRestore(null);
     } catch {
-      // Error handled by hook
+      // Handled by hook
     }
   };
 
@@ -219,7 +169,7 @@ export const PlansPage: React.FC = () => {
       await permanentDeleteMutation.mutateAsync(planToPurge.id);
       setPlanToPurge(null);
     } catch {
-      // Error handled by hook
+      // Handled by hook
     }
   };
 
@@ -227,8 +177,8 @@ export const PlansPage: React.FC = () => {
     <div className="space-y-6">
       {/* Top Header */}
       <PageHeader
-        title="Commercial Plans & Tiers"
-        subtitle="Manage commercial subscription packaging, pricing models, workstation seat caps, and software feature sets"
+        title="Commercial Plan Catalog"
+        subtitle="Manage billing tiers, station limits, bilingual syllabus allowances, and subscription pricing"
         icon={<Layers className="text-primary" size={24} />}
         actions={
           <>
@@ -236,8 +186,9 @@ export const PlansPage: React.FC = () => {
               type="button"
               onClick={handleExportCsv}
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              title="Export pricing tiers to CSV"
             >
-              <Download size={14} />
+              <Download size={14} className="text-gray-500" />
               Export CSV
             </button>
 
@@ -246,6 +197,7 @@ export const PlansPage: React.FC = () => {
               onClick={handleRefreshAll}
               disabled={isFetchingPlans}
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors shadow-2xs"
+              title="Refresh Plan Catalog"
             >
               <RefreshCw size={14} className={isFetchingPlans ? 'animate-spin text-primary' : ''} />
               Refresh
@@ -255,14 +207,14 @@ export const PlansPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm hover:shadow"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors shadow-sm hover:shadow"
               >
                 <Plus size={16} strokeWidth={2.5} />
-                Create Commercial Tier
+                Create Plan Tier
               </button>
             ) : (
               <div
-                title="Super Admin privileges required to define commercial plan packages."
+                title="Plan pricing tiers are configured exclusively by Super Admin."
                 className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed select-none pointer-events-none opacity-60"
               >
                 <Lock size={15} />
@@ -294,133 +246,78 @@ export const PlansPage: React.FC = () => {
       )}
 
       {/* KPI Metric Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard
-          title="Total Tiers"
-          value={planStats?.totalPlans || 0}
-          type="purple"
-          isLoading={isLoadingStats}
-          icon={<Layers size={24} className="text-white" />}
-          subtitle="All created catalog plans"
-          onClick={() => {
-            setActiveTab('ALL');
-            setPage(1);
-          }}
-          active={activeTab === 'ALL'}
-        />
+      <PlanStatsCards
+        planStats={planStats}
+        isLoadingStats={isLoadingStats}
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setPage(1);
+        }}
+      />
 
-        <StatCard
-          title="Active Catalog"
-          value={planStats?.activePlans || 0}
-          type="emerald"
-          isLoading={isLoadingStats}
-          icon={<CheckCircle2 size={24} className="text-white" />}
-          subtitle="Assignable commercial tiers"
-          onClick={() => {
-            setActiveTab('ACTIVE');
-            setPage(1);
-          }}
-          active={activeTab === 'ACTIVE'}
-        />
-
-        <StatCard
-          title="Archived Tiers"
-          value={planStats?.archivedPlans || 0}
-          type="coral"
-          isLoading={isLoadingStats}
-          icon={<Archive size={24} className="text-white" />}
-          subtitle="Deprecated / legacy tiers"
-          onClick={() => {
-            setActiveTab('ARCHIVED');
-            setPage(1);
-          }}
-          active={activeTab === 'ARCHIVED'}
-        />
-
-        <StatCard
-          title="Avg Plan Price"
-          value={
-            isLoadingStats
-              ? '...'
-              : `₹${((planStats?.averagePrice || 0) / 100).toLocaleString('en-IN', {
-                  maximumFractionDigits: 0,
-                })}`
-          }
-          type="orange"
-          isLoading={isLoadingStats}
-          icon={<IndianRupee size={24} className="text-white" />}
-          subtitle="Mean catalog pricing"
-        />
-
-        <StatCard
-          title="Avg Workstations"
-          value={
-            isLoadingStats
-              ? '...'
-              : planStats?.averageMaxActivations
-              ? Math.round(planStats.averageMaxActivations)
-              : 0
-          }
-          type="blue"
-          isLoading={isLoadingStats}
-          icon={<Laptop size={24} className="text-white" />}
-          subtitle="Seats quota per plan"
-        />
+      {/* Tabs */}
+      <div className="border-b border-gray-200/80">
+        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-3">
+          {[
+            { id: 'ACTIVE', label: 'Active Catalog', count: planStats?.activePlans },
+            { id: 'ARCHIVED', label: 'Archived / Deprecated', count: planStats?.archivedPlans },
+            { id: 'ALL', label: 'All Tiers', count: planStats?.totalPlans },
+            { id: 'TRASH', label: 'Recycle Bin' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.id as PlanTab);
+                setPage(1);
+              }}
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+                activeTab === tab.id
+                  ? 'bg-primary-100 text-primary shadow-2xs'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              <span>{tab.label}</span>
+              {typeof tab.count === 'number' && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    activeTab === tab.id ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar border-b border-gray-200/80 pb-3">
-        {[
-          { id: 'ACTIVE', label: 'Active Tiers', count: planStats?.activePlans },
-          { id: 'ARCHIVED', label: 'Archived', count: planStats?.archivedPlans },
-          { id: 'ALL', label: 'All Plans', count: planStats?.totalPlans },
-          { id: 'TRASH', label: 'Recycle Bin' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => {
-              setActiveTab(tab.id as PlanTab);
-              setPage(1);
-            }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
-              activeTab === tab.id
-                ? 'bg-primary-100 text-primary shadow-2xs'
-                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-            }`}
-          >
-            <span>{tab.label}</span>
-            {typeof tab.count === 'number' && (
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  activeTab === tab.id ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Filter & Search Toolbar */}
+      {/* Multifaceted Filter Toolbar */}
       <FilterToolbar
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Search plans by name, description... (Press / to focus)"
+        searchPlaceholder="Search plans by name or description... (Press / to focus)"
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={(m) => setViewMode(m as ViewMode)}
         activeChips={[
-          ...(sortBy !== 'createdAt' || sortOrder !== 'desc'
+          ...(sortBy !== 'createdAt'
             ? [
                 {
                   id: 'sort',
-                  label: 'Sort',
-                  value: `${sortBy} (${sortOrder.toUpperCase()})`,
-                  onRemove: () => {
-                    setSortBy('createdAt');
-                    setSortOrder('desc');
-                  },
+                  label: 'Sort By',
+                  value: sortBy.toUpperCase(),
+                  onRemove: () => setSortBy('createdAt'),
+                },
+              ]
+            : []),
+          ...(sortOrder !== 'desc'
+            ? [
+                {
+                  id: 'order',
+                  label: 'Order',
+                  value: sortOrder.toUpperCase(),
+                  onRemove: () => setSortOrder('desc'),
                 },
               ]
             : []),
@@ -430,6 +327,7 @@ export const PlansPage: React.FC = () => {
           setSearchTerm('');
           setSortBy('createdAt');
           setSortOrder('desc');
+          setPage(1);
         }}
         totalResults={plans.length}
         totalLabel="Pricing Plans"
@@ -494,7 +392,7 @@ export const PlansPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors shadow-sm"
               >
                 <Plus size={15} strokeWidth={2.5} />
                 Create First Commercial Tier
@@ -550,110 +448,21 @@ export const PlansPage: React.FC = () => {
               />
             ))}
           </div>
-          <div className="hidden md:block bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="py-3 px-4">Tier Identity</th>
-                  <th className="py-3 px-4">Price / Term</th>
-                  <th className="py-3 px-4">Station Quota</th>
-                  <th className="py-3 px-4">Features</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-xs">
-                {plans.map((plan) => {
-                  const priceFormatted = (plan.price / 100).toLocaleString('en-IN', {
-                    maximumFractionDigits: 2,
-                  });
-                  const f = plan.features || {};
-
-                  return (
-                    <tr key={plan.id} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary flex items-center justify-center shrink-0">
-                            <Layers size={16} />
-                          </div>
-                          <div>
-                            <span className="font-bold text-gray-900 block">{plan.name}</span>
-                            <span className="text-[11px] text-gray-400 font-mono">{plan.id}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-gray-900">₹{priceFormatted}</span>
-                        <span className="text-[11px] text-gray-500 block">
-                          / {plan.durationDays} Days
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 font-semibold text-gray-700 bg-orange-50 text-orange-800 px-2 py-0.5 rounded-md border border-orange-100">
-                          <Laptop size={13} className="text-primary" />
-                          {plan.maxActivations} PCs
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {f.englishTyping && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                              English
-                            </span>
-                          )}
-                          {f.hindiTyping && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                              Hindi
-                            </span>
-                          )}
-                          {f.governmentExams && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                              Exams
-                            </span>
-                          )}
-                          {f.customBranding && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">
-                              Branding
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <StatusBadge
-                          status={plan.deletedAt ? 'TRASH' : plan.status}
-                          size="sm"
-                        />
-                      </td>
-
-                      <td className="py-3.5 px-4 text-right">
-                        <PlanActionsDropdown
-                          plan={plan}
-                          onEdit={(p) => setEditingPlan(p)}
-                          onToggleStatus={handleToggleStatus}
-                          onViewDetails={(p) => setInspectingPlan(p)}
-                          onDelete={(p) => {
-                            if (activeTab === 'TRASH') {
-                              setPlanToPurge(p);
-                            } else {
-                              setPlanToDelete(p);
-                            }
-                          }}
-                          onRestore={activeTab === 'TRASH' ? (p) => setPlanToRestore(p) : undefined}
-                          isDeletedView={activeTab === 'TRASH'}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <PlanTableView
+            plans={plans}
+            isDeletedView={activeTab === 'TRASH'}
+            onEdit={(p) => setEditingPlan(p)}
+            onToggleStatus={handleToggleStatus}
+            onViewDetails={(p) => setInspectingPlan(p)}
+            onDelete={(p) => {
+              if (activeTab === 'TRASH') {
+                setPlanToPurge(p);
+              } else {
+                setPlanToDelete(p);
+              }
+            }}
+            onRestore={activeTab === 'TRASH' ? (p) => setPlanToRestore(p) : undefined}
+          />
         </div>
       )}
 
@@ -689,41 +498,19 @@ export const PlansPage: React.FC = () => {
         onClose={() => setInspectingPlan(null)}
       />
 
-      {/* Confirmation: Soft Delete / Move to Trash */}
-      <ConfirmDialog
-        isOpen={!!planToDelete}
-        title="Move Commercial Plan to Trash?"
-        description={`Are you sure you want to move tier "${planToDelete?.name}" to trash? Existing active customer subscriptions will remain unaffected, but this plan will be removed from standard catalogs.`}
-        confirmLabel="Move to Trash"
-        variant="warning"
-        isPending={softDeleteMutation.isPending}
-        onConfirm={handleConfirmSoftDelete}
-        onClose={() => setPlanToDelete(null)}
-      />
-
-      {/* Confirmation: Restore */}
-      <ConfirmDialog
-        isOpen={!!planToRestore}
-        title="Restore Commercial Plan?"
-        description={`Do you want to restore tier "${planToRestore?.name}" back to active status?`}
-        confirmLabel="Restore Plan"
-        variant="info"
-        isPending={restoreMutation.isPending}
-        onConfirm={handleConfirmRestore}
-        onClose={() => setPlanToRestore(null)}
-      />
-
-      {/* Confirmation: Permanent Purge */}
-      <ConfirmDialog
-        isOpen={!!planToPurge}
-        title="Permanently Purge Commercial Plan?"
-        description={`WARNING: This action is destructive and irreversible. Tier "${planToPurge?.name}" (${planToPurge?.id}) will be permanently deleted from the database.`}
-        confirmLabel="Permanently Purge"
-        variant="critical"
-        confirmPhrase="DELETE"
-        isPending={permanentDeleteMutation.isPending}
-        onConfirm={handleConfirmPermanentPurge}
-        onClose={() => setPlanToPurge(null)}
+      <PlanConfirmModals
+        planToDelete={planToDelete}
+        planToRestore={planToRestore}
+        planToPurge={planToPurge}
+        isSoftDeletePending={softDeleteMutation.isPending}
+        isRestorePending={restoreMutation.isPending}
+        isPermanentDeletePending={permanentDeleteMutation.isPending}
+        onCloseDelete={() => setPlanToDelete(null)}
+        onCloseRestore={() => setPlanToRestore(null)}
+        onClosePurge={() => setPlanToPurge(null)}
+        onConfirmSoftDelete={handleConfirmSoftDelete}
+        onConfirmRestore={handleConfirmRestore}
+        onConfirmPermanentPurge={handleConfirmPermanentPurge}
       />
     </div>
   );

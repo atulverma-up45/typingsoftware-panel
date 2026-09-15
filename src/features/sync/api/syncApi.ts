@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { queryKeys } from "@/lib/queryKeys";
 import type { ApiSuccessEnvelope, PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type SyncEntityType = "DEVICE_ACTIVITY" | "LOCAL_SETTING";
 export type SyncOperationType = "CREATE" | "UPDATE" | "DELETE";
@@ -147,8 +148,8 @@ export const useSyncSimulator = () => {
       );
       return response.data;
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Sync simulation failed");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Sync simulation failed");
     },
   });
 };
@@ -176,8 +177,8 @@ export const useCleanupSyncHistory = () => {
         `Successfully purged ${data.deletedCount} stale idempotency records`,
       );
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to clean up sync logs");
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to clean up sync logs");
     },
   });
 };

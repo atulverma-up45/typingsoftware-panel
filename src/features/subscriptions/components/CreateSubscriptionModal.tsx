@@ -374,7 +374,7 @@ export const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = (
             <button
               type="submit"
               disabled={createSubscriptionMutation.isPending || !institutionId || !planId}
-              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-[#f27b4d] rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
               {createSubscriptionMutation.isPending
                 ? 'Provisioning...'

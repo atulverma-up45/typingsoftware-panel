@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/types/api";
+import { handleMutationError } from "@/lib/api/error";
 
 export type PlanStatus = "ACTIVE" | "ARCHIVED";
 
@@ -43,16 +45,7 @@ export interface PlanStats {
   averageMaxActivations: number;
 }
 
-export interface PaginatedPlansResponse {
-  data: Plan[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    timestamp?: string;
-  };
-}
+export type PaginatedPlansResponse = PaginatedResponse<Plan>;
 
 export interface PlanListParams {
   page?: number;
@@ -158,9 +151,8 @@ export const useCreatePlan = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Commercial plan created successfully");
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to create plan";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to create plan");
     },
   });
 };
@@ -184,9 +176,8 @@ export const useUpdatePlan = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan configuration updated successfully");
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to update plan";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update plan");
     },
   });
 };
@@ -216,10 +207,8 @@ export const useUpdatePlanStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success(`Plan marked as ${variables.data.status}`);
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to update plan status";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to update plan status");
     },
   });
 };
@@ -240,9 +229,8 @@ export const useSoftDeletePlan = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan archived / moved to trash");
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to archive plan";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to archive plan");
     },
   });
 };
@@ -263,9 +251,8 @@ export const useRestorePlan = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan restored successfully");
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to restore plan";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to restore plan");
     },
   });
 };
@@ -286,10 +273,8 @@ export const usePermanentDeletePlan = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.stats });
       toast.success("Plan permanently purged");
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || "Failed to permanently delete plan";
-      toast.error(message);
+    onError: (error: unknown) => {
+      handleMutationError(error, "Failed to permanently delete plan");
     },
   });
 };

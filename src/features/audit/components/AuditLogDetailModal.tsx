@@ -17,6 +17,7 @@ import {
   Clock,
 } from 'lucide-react';
 import type { AuditLog } from '../api/auditApi';
+import { AuditActionBadge } from './AuditActionBadge';
 import { toast } from 'sonner';
 
 interface AuditLogDetailModalProps {
@@ -79,25 +80,6 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
     setTimeout(() => setCopiedJson(false), 2000);
   };
 
-  const getActionBadge = () => {
-    const action = auditLog.action.toUpperCase();
-    let colorClass = 'bg-blue-50 text-blue-700 border-blue-200';
-
-    if (action.includes('DELETE') || action.includes('REVOKE') || action.includes('PURGE') || action.includes('SUSPEND')) {
-      colorClass = 'bg-rose-50 text-rose-700 border-rose-200';
-    } else if (action.includes('CREATE') || action.includes('ACTIVATE') || action.includes('PUBLISH') || action.includes('RESTORE') || action.includes('RENEW')) {
-      colorClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    } else if (action.includes('UPDATE') || action.includes('EDIT') || action.includes('STATUS')) {
-      colorClass = 'bg-amber-50 text-amber-700 border-amber-200';
-    }
-
-    return (
-      <span className={`text-xs font-bold font-mono px-2.5 py-1 rounded-lg border ${colorClass}`}>
-        {auditLog.action}
-      </span>
-    );
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
@@ -110,7 +92,7 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-gray-900">Audit Forensics Record</h2>
-                {getActionBadge()}
+                <AuditActionBadge action={auditLog.action} variant="prominent" />
               </div>
               <p className="text-xs text-gray-500 font-mono mt-0.5">{auditLog.id}</p>
             </div>
